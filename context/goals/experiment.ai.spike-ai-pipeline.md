@@ -125,7 +125,7 @@ Door          two-way: removing the container and images, deleting the
 
 ## Progress
 
-slices 0/3 committed · standards — · spec — · editor —
+slices 1/3 committed · standards — · spec — · editor —
 
 ## Decisions
 
