@@ -49,6 +49,11 @@ the checked-out branch and its files. Once the task merges, switch the clone to 
 tracks `origin/main`, and host-update pulls it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
+`mise run integration` probes the router from the laptop (`probe/`): every set A capability, with
+the build, sampling, and slots read from the pin and the preset. Its first run, with whether the
+router answers `/v1/responses` and whether transcription returns timestamps, is
+[the host finding](docs/findings/host.md).
+
 ## The question
 
 See `context/README.md`, "The question", and "The evidence".
