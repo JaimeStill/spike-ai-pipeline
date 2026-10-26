@@ -136,14 +136,26 @@ Go Elemental shape  (the standards the implementer can't load, made concrete)
               it beyond the listed client extensions. Native tier: the request's raw-JSON field,
               named Native, documented as native tier. Each wire format is an adapter beneath
               one interface, Format, defined where it is consumed, in the root package.
-  Packages    Root package `client` (module root): the model, Config, Client, Format, the API
-              error, embeddings, and transcription, one package because none is a growth area
-              or a weight on its own; a package is never split by topic alone
-              (topology-and-naming). `chatcompletions`: the Chat Completions adapter, named for
-              the target API, a package earned by growth (Messages and Open Responses follow as
-              siblings). Formats are packages in the base module, not sub-modules: none carries
-              a third-party dependency. No `internal/` until a test helper is shared by more
-              than one test package, then `internal/clienttest` (tests-and-docs).
+  Packages    Four layers, imports one way: protocol ← format ← format/<api>; client
+              imports protocol and format; no format imports client.
+                client (module root)  transport: Config, Client, Respond, Embed,
+                                      Transcribe, TokenSource, APIError
+                protocol              Open Responses: Request, Response, items, content
+                                      parts, Usage, Status, Validate, the client
+                                      extensions and their list
+                format                the Format contract converting protocol ⇄ wire,
+                                      and what formats share
+                format/completions    Chat Completions (/chat/completions, not the
+                                      legacy /completions); later format/messages,
+                                      format/responses
+              The splits are consumption boundaries, not topics: formats depend on the
+              protocol alone, callers build requests and items without the transport, and
+              format/ grows to three implementations (topology-and-naming). All are packages
+              of the base module, none a sub-module (no third-party weight).
+              `internal/clienttest` holds the httptest helper shared by test packages.
+              Conversion vocabulary: encode (protocol → wire), decode (wire → protocol);
+              each format's files are encode.go, decode.go, wire.go (unexported wire
+              types).
   Selection   A format is chosen by its typed constructor at the caller's composition root;
               no registry, no registration on import (dependencies, "selected by
               construction").
@@ -161,18 +173,19 @@ Go Elemental shape  (the standards the implementer can't load, made concrete)
   Surface     (sketch; names may change in BUILD with the reason recorded)
                 client.New(Config) (*Client, error)
                 Config{BaseURL string; Query url.Values; Token TokenSource;
-                       HTTP *http.Client; Format Format}       // Format required
+                       HTTP *http.Client; Format format.Format}  // Format required
                 type TokenSource func(context.Context) (string, error)
-                (*Client).Respond(ctx, *Request) (*Response, error)
+                (*Client).Respond(ctx, *protocol.Request) (*protocol.Response, error)
                 (*Client).Embed(ctx, EmbeddingRequest) (*Embeddings, error)
                 (*Client).Transcribe(ctx, TranscriptionRequest) (*Transcription, error)
-                type Format interface { route, request encoding, response and error decoding }
-                chatcompletions.New() *chatcompletions.Format
+                format.Format interface { Route; EncodeRequest; DecodeResponse; DecodeError }
+                completions.New() *completions.Format
                 *client.APIError   // errors.As
   Docs        One doc.go per API package holding only the package comment, which inventories
               every exported identifier with a one-clause role and lists the client
               extensions; every production symbol carries a doc comment (tests-and-docs).
-  Tests       Unit tier: black-box (`client_test`, `chatcompletions_test`), hermetic, against
+  Tests       Unit tier: black-box (`client_test`, `protocol_test`, `format_test`,
+              `completions_test`), hermetic, against
               an httptest server on a loopback port, asserting the wire request and decoded
               items; export_test.go only for a hook the API can't reach. The extension list is
               held by doc.go and review, not by a test that reads source (such a test is
@@ -381,6 +394,22 @@ slices 2/9 committed (caf1fca, f6c9c5b) · checkpoint standards pass (d6dd49a, a
   reads source (structure-sensitive).
 - client-core: BUILD checkpoints once, after slice 2, for the architect's read of the Go source.
   Rejected: running every slice to the session brief.
+- client-core (checkpoint): items and content parts stay value types; a *Message is refused at
+  run time, documented and tested. Rejected: pointer receivers.
+- client-core (checkpoint): Format.DecodeError returns message, type, and code as three strings;
+  the Client owns Status and Body. Rejected: a result struct or an *APIError.
+- client-core (checkpoint): four layers, imports one way: client (transport), protocol (Open
+  Responses), format (the contract and shared parts), format/<api> (each implementation). The
+  splits are consumption boundaries. Supersedes the single root package. Rejected: one root
+  package mixing the spec, the transport, and the contract.
+- client-core (checkpoint): the Open Responses package is `protocol`, as tau's is, leaving
+  `responses` to the Open Responses wire format. Rejected: responses; openresponses.
+- client-core (checkpoint): format packages are named for their endpoints: completions,
+  messages, responses. OpenAI's API is covered by completions and responses, with OpenAI-only
+  items reached natively; no `openai` package. Rejected: chatcompletions (long); chat
+  (fits Messages equally).
+- client-core (checkpoint): conversion is encode (protocol → wire) and decode (wire →
+  protocol), each format in encode.go, decode.go, and wire.go. Rejected: fold and unfold.
 
 ## Pending edits
 
