@@ -9,3 +9,6 @@ coverage.out
 
 # Untracked spike state.
 .state/
+
+# Logs a command in the docs writes at the root.
+*.log

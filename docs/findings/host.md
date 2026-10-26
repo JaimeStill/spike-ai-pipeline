@@ -105,12 +105,15 @@ changes the text, not whether timestamps come back.
 
 ## Commands, as run
 
-From the laptop, in this repository unless a `cd` says otherwise.
+From the laptop, at this repository's root, as run except in where files lived: each log the
+session wrote to its scratch directory is written beside the command here instead, and the
+hand-run requests read `probe/testdata/phrase.wav`, the byte-identical copy
+(`probe/testdata/README.md`) of the spike-model-hosting fixture they were run from.
 
 Bring gb10-2 current and load set A:
 
 ```sh
-cd /home/jaime/experiments/spike-ai-pipeline && mise run host-update > /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/95ded284-f2f9-4b38-9ae1-4b8cb3d94f19/scratchpad/host-update.log 2>&1; echo exit $?
+mise run host-update > host-update.log 2>&1; echo exit $?
 ```
 
 Its output (exit 0):
@@ -138,24 +141,23 @@ host-update: nothing changed: clone current, router at the pin, preset unchanged
 The clone on gb10-2 was at 62d32e2, one commit behind the laptop, a commit that changes only the
 goal record (`git diff --stat 62d32e2 bb39f4b`); the preset it mounts is the one the probe reads.
 
-The surfaces by hand, before the probe was written, with spike-model-hosting's copies of the same
-fixtures:
+The surfaces by hand, before the probe was written:
 
 ```sh
-cd /home/jaime/experiments/spike-model-hosting/hosting/probe/testdata && R=http://gb10-2:8080; curl -s "$R/health"; echo; curl -s "$R/models?autoload=false" | jq -c '.data[] | {id, s: .status.value}'; curl -s "$R/props?model=ggml-org/embeddinggemma-2-GGUF:Q8_0&autoload=false" | jq -c '{build_info, total_slots, p: .default_generation_settings.params | {temperature, top_p, top_k, min_p}}'; curl -s "$R/props?autoload=false" | jq -c '{build_info}'
+R=http://gb10-2:8080; curl -s "$R/health"; echo; curl -s "$R/models?autoload=false" | jq -c '.data[] | {id, s: .status.value}'; curl -s "$R/props?model=ggml-org/embeddinggemma-2-GGUF:Q8_0&autoload=false" | jq -c '{build_info, total_slots, p: .default_generation_settings.params | {temperature, top_p, top_k, min_p}}'; curl -s "$R/props?autoload=false" | jq -c '{build_info}'
 echo ---responses; time curl -s "$R/v1/responses?autoload=false" -H "Content-Type: application/json" -d '{"model": "ggml-org/gpt-oss-120b-GGUF:MXFP4", "input": "Say hello in one sentence.", "max_output_tokens": 1024}' | jq -c '{status, output: [.output[] | {type, content}]}'
-echo ---transcr-json; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=json -F file=@phrase.wav; echo
-echo ---verbose; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=verbose_json -F 'timestamp_granularities[]=word' -F 'timestamp_granularities[]=segment' -F file=@phrase.wav -w '\n%{http_code}\n'
+echo ---transcr-json; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=json -F file=@probe/testdata/phrase.wav; echo
+echo ---verbose; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=verbose_json -F 'timestamp_granularities[]=word' -F 'timestamp_granularities[]=segment' -F file=@probe/testdata/phrase.wav -w '\n%{http_code}\n'
 ```
 
 ```sh
-cd /home/jaime/experiments/spike-model-hosting/hosting/probe/testdata && R=http://gb10-2:8080; for rf in verbose_json srt vtt text; do echo "--- $rf"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=$rf -F file=@phrase.wav -w ' %{http_code}\n'; done; echo "--- json+granularities"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=json -F 'timestamp_granularities[]=word' -F 'timestamp_granularities[]=segment' -F file=@phrase.wav -w ' %{http_code}\n'; echo "--- no format"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F file=@phrase.wav -w ' %{http_code}\n'; curl -s "$R/props?model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0&autoload=false" | jq -c '{total_slots, p: .default_generation_settings.params | {temperature, top_p, top_k, min_p}}'
+R=http://gb10-2:8080; for rf in verbose_json srt vtt text; do echo "--- $rf"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=$rf -F file=@probe/testdata/phrase.wav -w ' %{http_code}\n'; done; echo "--- json+granularities"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F response_format=json -F 'timestamp_granularities[]=word' -F 'timestamp_granularities[]=segment' -F file=@probe/testdata/phrase.wav -w ' %{http_code}\n'; echo "--- no format"; curl -s "$R/v1/audio/transcriptions?autoload=false" -F model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0 -F file=@probe/testdata/phrase.wav -w ' %{http_code}\n'; curl -s "$R/props?model=ggml-org/gemma-4-E4B-it-GGUF:Q8_0&autoload=false" | jq -c '{total_slots, p: .default_generation_settings.params | {temperature, top_p, top_k, min_p}}'
 ```
 
 The probe, through the task and then verbose for its log lines:
 
 ```sh
-cd /home/jaime/experiments/spike-ai-pipeline && mise run integration -- 2>&1 | tail -5; cd probe && GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 go test -race -tags integration -count=1 -v ./... 2>&1 | tee /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/95ded284-f2f9-4b38-9ae1-4b8cb3d94f19/scratchpad/integration-v.log
+mise run integration -- 2>&1 | tail -5; GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 go test -race -tags integration -count=1 -v ./probe/... 2>&1 | tee integration-v.log
 ```
 
 Memory, after the probe:
@@ -171,5 +173,5 @@ ssh gb10-2 ps -o pid=,args= -p 2881274,2881500,2881570,2881602,2883000 | sed -E 
 The hermetic check:
 
 ```sh
-cd /home/jaime/experiments/spike-ai-pipeline && mise run check 2>&1 | tail -6
+mise run check 2>&1 | tail -6
 ```
