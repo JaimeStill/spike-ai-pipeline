@@ -175,7 +175,7 @@ Go Elemental shape  (the standards the implementer can't load, made concrete)
                 Config{BaseURL string; Query url.Values; Token TokenSource;
                        HTTP *http.Client; Format format.Format}  // Format required
                 type TokenSource func(context.Context) (string, error)
-                (*Client).Send(ctx, *protocol.Request) (*protocol.Response, error)
+                (*Client).Generate(ctx, *protocol.Request) (*protocol.Response, error)
                 (*Client).Embed(ctx, EmbeddingRequest) (*Embeddings, error)
                 (*Client).Transcribe(ctx, TranscriptionRequest) (*Transcription, error)
                 format.Format interface { Route; EncodeRequest; DecodeResponse; DecodeError }
@@ -410,9 +410,12 @@ slices 2/9 committed (caf1fca, f6c9c5b) · checkpoint: standards (d6dd49a, a86c8
   (fits Messages equally).
 - client-core (checkpoint): conversion is encode (protocol → wire) and decode (wire →
   protocol), each format in encode.go, decode.go, and wire.go. Rejected: fold and unfold.
-- client-core (checkpoint): the Client's chat method is Send, with Stream as its streamed
-  counterpart in client-streaming; the client sends a protocol request and returns the protocol
-  response. Rejected: Respond (the model responds, not the client).
+- client-core (checkpoint): the Client's protocol method is Generate, a capability verb beside
+  Embed and Transcribe, covering every protocol request (text, vision, audio input, tools,
+  reasoning, structured output); its streamed counterpart in client-streaming is
+  GenerateStream. Vision has no method of its own: an image is an InputImage part. Rejected:
+  Respond (the model responds, not the client); Send (names transport, not capability); Chat
+  (undersells vision and structured extraction).
 - client-core (checkpoint): the protocol's unit stays Item, the spec's term; Input and Output
   name its direction, and one value moves from Output to the next Input. Item's doc comment says
   so. Rejected: a rename (Turn, Event, Entry, Element, Unit).
