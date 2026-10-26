@@ -126,3 +126,14 @@
   running, since host-update fails on a stopped one rather than starting it.
 - coordinator · roadmap: the `host` task's summary says the router loads models on demand; it
   runs --no-models-autoload, and host-update loads set A through the load API.
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline` bullet (capstone): pipeline
+  storage for AI-assisted processing and semantic search. Source blobs stay in blob storage; the
+  database holds what the stages derive from them, each stage's output a versioned artifact
+  (source blob hash → extraction → chunk → embedding) keyed by its input and configuration hash
+  (model, revision, prompt, parameters, chunker version), so a stage reruns only when its input or
+  configuration changes. Embeddings live in registered embedding spaces (model, revision, dims,
+  metric, normalization, prompt template, chunker), vectors partitioned by space with one partial
+  ANN index each. A model change adds a space and re-embeds the stored chunks (blue/green, switched
+  after a recall evaluation), a chunker change re-chunks, and only an extractor change reruns
+  inference. Translation between spaces is limited to truncation and quantization within one
+  model; a learned mapping only bridges a migration. Settled at the capstone's plan round.
