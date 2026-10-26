@@ -78,7 +78,7 @@ Behaviors
       extending 2026-04-24, to be replaced when the spec adds an audio input part. The
       caller-facing Go type and constructor of an extension never carry the slug, so
       moving to a standard type later changes only the wire discriminator and the
-      format mappings, not callers' code. The list lives in the root package's doc.go.
+      format mappings, not callers' code. The list lives in the protocol package's doc.go.
   8.  The Chat Completions format folds input into messages:
         instructions                  a leading system message
         message                       a message of its role
@@ -245,7 +245,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 2/9 committed (caf1fca, f6c9c5b) · checkpoint standards pass (d6dd49a, a86c831), awaiting the architect · standards — · spec — · editor —
+slices 2/9 committed (caf1fca, f6c9c5b) · checkpoint: standards (d6dd49a, a86c831), restructure (5c8c320), awaiting the architect · standards — · spec — · editor —
 
 ## Decisions
 
