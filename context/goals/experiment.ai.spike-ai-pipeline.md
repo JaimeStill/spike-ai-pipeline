@@ -232,7 +232,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 0/9 committed · checkpoint (after slice 2) — · standards — · spec — · editor —
+slices 1/9 committed (caf1fca) · checkpoint (after slice 2) — · standards — · spec — · editor —
 
 ## Decisions
 
