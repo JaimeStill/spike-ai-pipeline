@@ -35,10 +35,11 @@ session starts with `mise run host-update`, on the laptop, which drives gb10-2 o
 root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
 architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
-changes nothing and says so. `HOST_UPDATE_HOST` names another host.
+changes nothing and says so. A stopped llama container fails the run, which names the command
+that starts it. `HOST_UPDATE_HOST` names another host.
 
-The clone fast-forwards its branch from its upstream. A task branch not yet merged has none, so
-a session delivers it from the laptop by push before running host-update:
+host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
+no upstream, so a session delivers it from the laptop by push before running host-update:
 
 ```sh
 git push ssh://gb10-2/~/repos/spike-ai-pipeline <branch>:refs/heads/<branch>
@@ -49,10 +50,10 @@ the checked-out branch and its files. Once the task merges, switch the clone to 
 tracks `origin/main`, and host-update pulls it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
-`mise run integration` probes the router from the laptop (`probe/`): every set A capability, with
-the build, sampling, and slots read from the pin and the preset. Its first run, with whether the
-router answers `/v1/responses` and whether transcription returns timestamps, is
-[the host finding](docs/findings/host.md).
+`mise run integration` probes the router from the laptop (`probe/`). It checks every set A
+capability, and checks the build, sampling, and slots against the pin and the preset.
+[The host finding](docs/findings/host.md) records its first run, including whether the router
+answers `/v1/responses` and whether transcription returns timestamps.
 
 ## The question
 

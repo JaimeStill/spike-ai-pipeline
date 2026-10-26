@@ -3,7 +3,7 @@
 Task `host`, behaviors 9 to 11 (`context/goals/experiment.ai.spike-ai-pipeline.md`, "Task brief ·
 host"). Measured 2026-10-26, from the laptop, against gb10-2's llama.cpp router serving set A.
 
-## The two results
+## Results: Responses and transcription timestamps
 
 | Question | Result |
 |---|---|
@@ -23,18 +23,18 @@ and `timestamps recorded`). Its log lines:
     router_test.go:404: recorded: transcription on ggml-org/gemma-4-E4B-it-GGUF:Q8_0 returns no timestamps in any form tried
 ```
 
-These are from a rerun against the probe as committed, to match its line numbers. The results are
-the first run's; only gpt-oss-120b's sampled reply differs ("Hello!" the first time).
+These lines come from a rerun of the committed probe, so their line numbers match the source. The
+first run gave the same results; only gpt-oss-120b's sampled reply differed ("Hello!").
 
 By hand, `srt`, `vtt`, and `text` are refused with the same 400 as `verbose_json`, and a request
 with no `response_format` answers as `json` does (commands below).
 
-What this means for the client: Responses is a usable surface on the router for gpt-oss-120b,
-so the setup decision that rejected it as "router support unverified" can be revisited at the
-client's plan round. Transcription is text only: the processing layer's seam alignment
-(evidence 5) can't lean on server timestamps and has to align on the overlapping words alone.
+For the client, Responses is a usable surface on the router for gpt-oss-120b, so the client's
+plan round can revisit the setup decision that rejected it as "router support unverified".
+Transcription returns text only, so the processing layer's seam alignment (evidence 5) aligns on
+the overlapping words alone, without server timestamps.
 
-## The record
+## Build, host stack, and network path
 
 - **Date:** 2026-10-26.
 - **llama.cpp build:** `b11669-620d2225c` (`/props` `build_info`), image
@@ -49,7 +49,7 @@ client's plan round. Transcription is text only: the processing layer's seam ali
   `ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0`, `ggml-org/gemma-4-E4B-it-GGUF:Q8_0`,
   `ggml-org/embeddinggemma-2-GGUF:Q8_0`.
 
-## The probe
+## The integration probe's checks
 
 `mise run integration` passed against gb10-2 (`SPIKE_ROUTER_URL` at its default, gb10-2's
 router). Every check passed: health; all four models loaded; the build at the pin; each model's
@@ -89,40 +89,40 @@ The desktop session's own processes (Xorg, gnome-shell, kitty) held 290 MiB more
 reports the container at 9.103 GiB of 121.6 GiB, which counts its host-side pages, not the CUDA
 allocations. About 19.2 GiB stays available with set A loaded.
 
-## Against spike-model-engines on gb10-1
+## Comparison with spike-model-engines on gb10-1
 
-spike-model-engines hasn't measured either surface yet. Its brief's behavior 15 probes responses
-on gpt-oss-120b and transcription on E4B on llama.cpp at the same build, b11669 (goal record
-`context/goals/experiment.hosting.spike-model-engines.md` in spike-model-engines, task
-`bench-gb10-container`), but at its commit `9bfa234` the task records slices 1/4 committed, with
-the probes written and not run ("cells not run"), and its finding's API probe table
-(`docs/findings/bench-gb10-container.md`, "API probes") is blank on both rows.
+spike-model-engines hasn't measured either surface yet. Its task `bench-gb10-container` probes
+responses on gpt-oss-120b and transcription on E4B on llama.cpp at the same build, b11669
+(behavior 15 of its brief, in `context/goals/experiment.hosting.spike-model-engines.md`). At its
+commit `9bfa234` the task records slices 1/4 committed, with the probes written and not run
+("cells not run"), and its finding's API probe table (`docs/findings/bench-gb10-container.md`,
+"API probes") is blank on both rows.
 
-What engines has written is the expected shape, in its probe instructions
-(`docs/engines/llama.cpp/api.md`, "Responses" and "Transcription", from commit `0c41696`): a
-working Responses surface is `completed` with a `reasoning` item and a `message` item, and the
-router "accepts only `response_format` `json`" for transcription. Both match what gb10-2 answers
-here. When engines runs its probes, the comparison is against measurement, not its expectation;
-its transcription clip (whisper.cpp's `jfk.wav`) differs from this probe's `phrase.wav`, which
-changes the text, not whether timestamps come back.
+spike-model-engines' probe instructions give the expected shape (`docs/engines/llama.cpp/api.md`,
+"Responses" and "Transcription", from commit `0c41696`): a working Responses surface is
+`completed` with a `reasoning` item and a `message` item, and the router "accepts only
+`response_format` `json`" for transcription. Both match what gb10-2 answers here. Once engines runs
+its probes, compare against its measurement instead of its expectation. Its transcription clip
+(whisper.cpp's `jfk.wav`) differs from this probe's `phrase.wav`, which changes the text, not
+whether timestamps come back.
 
 ## Commands, as run
 
-From the laptop, at this repository's root, unless a command says gb10-2, and as run except in
-where files lived: each log the session wrote to its scratch directory is written beside the
-command here instead, and the hand-run requests read `probe/testdata/phrase.wav`, the
-byte-identical copy (`probe/testdata/README.md`) of the spike-model-hosting fixture they were run
-from.
+Each command runs from the laptop at this repository's root unless it says gb10-2. Two things
+differ from the run, both in where files live: each log the session wrote to its scratch
+directory is written beside the command here, and the hand-run requests read
+`probe/testdata/phrase.wav`, a byte-identical copy (`probe/testdata/README.md`) of the
+spike-model-hosting fixture they read.
 
-Set gb10-2 up, once, before the first host-update. On gb10-2, clone the root:
+Set gb10-2 up once, before the first host-update. On gb10-2, clone the root:
 
 ```sh
 cd ~/repos && git clone https://github.com/JaimeStill/spike-ai-pipeline.git
 ```
 
-From the laptop, deliver the task branch, which has no upstream, then check it out on gb10-2
-(host-update has since set the clone's `git config receive.denyCurrentBranch updateInstead`, so a
-later push updates the checked-out branch and its files):
+From the laptop, deliver the task branch, which has no upstream, then check it out on gb10-2.
+host-update has since set the clone's `receive.denyCurrentBranch` to `updateInstead`, so a later
+push updates the checked-out branch and its files.
 
 ```sh
 git push ssh://gb10-2/~/repos/spike-ai-pipeline host:refs/heads/host

@@ -10,13 +10,16 @@
 #      from its upstream. A branch with no upstream, a task branch not yet merged, is left as it
 #      is: a session delivers it from the laptop by push (README.md, "gb10-2").
 #   3. Installs the router at the pin (engines/llama.env) with the copied engines scripts when it
-#      is absent, or moves it to the pin when it runs another image.
-#   4. Has the router re-read the preset when it changed since the router last read it.
+#      is absent, or moves it to the pin when it runs another image. A llama container that
+#      exists but isn't running fails the run, naming the command that starts it; host-update
+#      doesn't start it, since a session borrowing gb10-2 may have stopped it.
+#   4. Has the router re-read the preset when its digest differs from the one recorded when the
+#      router last read it (.state/preset.sha256 in the clone, untracked).
 #   5. Loads each model the preset names through the router's load API, and waits until all are
 #      loaded, or fails naming each that failed or didn't load in time.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
-#      address, then what changed, or that nothing did, and a clone with no upstream at another
-#      commit than the laptop's branch.
+#      address. Then it prints what changed, or that nothing did, and names a clone with no
+#      upstream whose commit differs from the laptop's branch.
 #
 # The environment overrides its defaults: HOST_UPDATE_HOST (gb10-2), HOST_UPDATE_CLONE
 # (repos/spike-ai-pipeline, from the home directory), and HOST_UPDATE_TIMEOUT (900 seconds, the

@@ -1,9 +1,10 @@
 # probe testdata
 
-Media the router probe sends to a model. Both are copied unchanged from spike-harness-driver
-(https://github.com/JaimeStill/spike-harness-driver), `clutch/examples/media/` at commit
-`9981a3e37466e6200c13b3dfcf0d2508cc164fbc`, whose README says how each was made. They are the
-files spike-model-hosting's probe sends (`hosting/probe/testdata/`), byte for byte.
+This directory holds the media the router probe sends to models. Both files are copied unchanged
+from spike-harness-driver (https://github.com/JaimeStill/spike-harness-driver),
+`clutch/examples/media/` at commit `9981a3e37466e6200c13b3dfcf0d2508cc164fbc`, whose README says
+how each was made. spike-model-hosting's probe sends the same files (`hosting/probe/testdata/`),
+byte for byte.
 
 - `shapes.png`: a red circle, a blue square, and a green triangle on white, 480 pixels square.
   The probe asks Gemma 4 26B-A4B to describe it.

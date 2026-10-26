@@ -125,7 +125,7 @@ Door          two-way: removing the container and images, deleting the
 
 ## Progress
 
-slices 3/3 committed · standards ✓ · spec ✓ · editor —
+slices 3/3 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
@@ -207,7 +207,30 @@ slices 3/3 committed · standards ✓ · spec ✓ · editor —
 - host: /v1/responses support and transcription timestamps are recorded, not asserted. The
   probe logs both and passes either way, and a findings page in the root carries them with
   the build, gb10-2's stack, and the network path. Rejected: failing the probe on either.
+- host: the preset's [*] keeps the engines preset's GB10 keys (n-gpu-layers = all,
+  dedup-cache-models) on top of hosting's set A values.
+- host: an unmerged branch reaches gb10-2 by `git push ssh://gb10-2/...` into the clone, which
+  host-update sets to receive.denyCurrentBranch=updateInstead; never through GitHub before
+  acceptance.
+- host: host-update counts `apt-get --simulate upgrade` Inst lines as pending upgrades. Rejected:
+  `apt list --upgradable`, which lists upgrades phasing defers.
+- host: a stopped llama container fails host-update instead of being started: a borrowing session
+  may hold it.
+- host: host-update reloads the preset when its sha256 differs from the one recorded in the
+  clone's untracked `.state/preset.sha256`.
+- host: the probe's tool call uses Chat Completions with tool_choice required.
+- host: findings live under `docs/findings/`.
+- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`); the setup
+  rejection of Responses as "router support unverified" is open at the client's plan round.
+- host: transcription returns no timestamps at b11669: only response_format json, and
+  timestamp_granularities is ignored; audio seams align on the overlapping words alone.
 
 ## Pending edits
 
-(none)
+- coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
+  sessions keep gb10-2 current; add that it serves set A from llama.cpp's router at
+  server-cuda13-b11669, kept current by the root's `mise run host-update` at each session's
+  start, and that a borrowing session restores the pipeline engine by leaving the llama container
+  running, since host-update fails on a stopped one rather than starting it.
+- coordinator · roadmap: the `host` task's summary says the router loads models on demand; it
+  runs --no-models-autoload, and host-update loads set A through the load API.
