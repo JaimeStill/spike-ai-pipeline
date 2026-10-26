@@ -245,7 +245,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 2/9 committed (caf1fca, f6c9c5b) · checkpoint: standards (d6dd49a, a86c831), restructure (5c8c320), accepted; slices 3–9 run without stopping · standards — · spec — · editor —
+slices 3/9 committed (caf1fca, f6c9c5b, 0d493da) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards — · spec — · editor —
 
 ## Decisions
 
