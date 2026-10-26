@@ -89,6 +89,8 @@ expect "ping_path prints nothing for a line that isn't a pong" \
 	"$(ping_path <<<'timeout waiting for ping reply')" ""
 expect "ping_path keeps a latency under a millisecond" \
 	"$(ping_path <<<'pong from gb10-2 (100.64.0.7) via 192.168.1.20:41641 in 870µs')" "direct, 870µs"
+expect "ping_path reads tailscale's 0s as under a millisecond" \
+	"$(ping_path <<<'pong from gb10-2 (100.64.0.7) via 192.168.1.20:41641 in 0s')" "direct, under 1ms"
 
 expect "redact removes IPv4 and IPv6 addresses" \
 	"$(redact <<<'on 100.64.0.7:8080 and [fd7a:115c:a1e0::1]:8080, fd7a:115c:a1e0::2; build 11669')" \

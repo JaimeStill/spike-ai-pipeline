@@ -119,10 +119,13 @@ model_states() {
 
 # The network path in a `tailscale ping` line, as "direct, <latency>" or "DERP(<region>),
 # <latency>", with no address: the line names the peer's tailnet address and, when direct, its
-# endpoint, and neither is printed or recorded. Prints nothing for a line that isn't a pong.
+# endpoint, and neither is printed or recorded. tailscale rounds the latency to the millisecond
+# and prints one under half a millisecond as 0s, which reads here as "under 1ms". Prints nothing
+# for a line that isn't a pong.
 ping_path() {
-	sed -nE -e 's/^pong from .* via (DERP\([^)]*\)) in ([^ ]+)$/\1, \2/p' \
-		-e 't' -e 's/^pong from .* via .* in ([^ ]+)$/direct, \1/p'
+	sed -nE -e 's/^pong from .* via (DERP\([^)]*\)) in ([^ ]+)$/\1, \2/' \
+		-e 't found' -e 's/^pong from .* via .* in ([^ ]+)$/direct, \1/' -e 't found' -e 'd' \
+		-e ':found' -e 's/, 0s$/, under 1ms/' -e 'p'
 }
 
 # Its input with every IPv4 address and every bracketed or Tailscale (fd7a:) IPv6 address
