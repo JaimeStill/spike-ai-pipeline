@@ -18,7 +18,12 @@ run = '''
 set -eu
 export GOWORK=off
 cd "$MISE_PROJECT_ROOT"
-git ls-files -z '*.sh' | xargs -0 -r shellcheck
+# Every tracked shell script: each .sh file, and each file whose first line is a sh or bash
+# shebang, such as the extensionless engines/engines-llama-* commands.
+git ls-files -z | while IFS= read -r -d '' f; do
+  case $f in *.sh) printf '%s\0' "$f"; continue ;; esac
+  head -n 1 "$f" | grep -Eq '^#!.*\b(ba)?sh\b' && printf '%s\0' "$f"
+done | xargs -0 -r shellcheck
 for mod in $GO_MODULES; do
   echo "check: $mod"
   cd "$MISE_PROJECT_ROOT/$mod"
