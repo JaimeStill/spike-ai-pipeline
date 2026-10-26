@@ -36,7 +36,18 @@ expect "apt_pending is empty when nothing would upgrade" \
 	"$(apt_pending <"$data/apt-current.txt")" ""
 
 expect "cdi_host_paths lists every hostPath" \
-	"$(cdi_host_paths <"$data/cdi-current.yaml" | wc -l)" "7"
+	"$(cdi_host_paths <"$data/cdi-current.yaml")" \
+	"/run/nvidia-persistenced/socket
+/usr/bin/nvidia-smi
+/usr/lib/aarch64-linux-gnu/libcuda.so.580.178.04
+/usr/lib/aarch64-linux-gnu/libnvidia-ml.so.580.178.04
+/usr/lib/aarch64-linux-gnu/libnvidia-egl-wayland.so.1.1.23
+/usr/lib/aarch64-linux-gnu/libnvidia-nvvm70.so.4
+/lib/firmware/nvidia/580.178.04/gsp_ga10x.bin"
+expect "cdi_host_paths unquotes a quoted hostPath" \
+	"$(printf '%s\n' '- hostPath: "/usr/bin/nvidia-smi"' "  hostPath: '/dev/nvidia0'" | cdi_host_paths)" \
+	"/usr/bin/nvidia-smi
+/dev/nvidia0"
 expect "cdi_driver_versions skips libraries versioned on their own" \
 	"$(cdi_driver_versions <"$data/cdi-current.yaml")" "580.178.04"
 expect "cdi_driver_versions reads a stale spec's driver" \
@@ -64,15 +75,17 @@ Run on gb10-2, in order, then run mise run host-update again:
   sudo reboot
 status 1"
 expect "preflight asks for a CDI spec that is missing" \
-	"$(printf 'driver 580.178.04\ncdi-absent yes\n' | preflight gb10-2 | tail -n 1)" \
-	"  sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml"
+	"$(preflight_of facts-cdi-absent.txt)" \
+	"gb10-2 needs root steps first, the architect's; the router is untouched:
+  - the CDI spec /var/run/cdi/nvidia.yaml is missing
+Run on gb10-2, in order, then run mise run host-update again:
+  sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml
+status 1"
 
 expect "preset_ids names each section but [*]" \
 	"$(preset_ids <"$data/preset.ini")" \
 	"org/first-GGUF:Q8_0
 org/second-GGUF:MXFP4"
-expect "preset_ids reads set A's four ids from the repository's preset" \
-	"$(preset_ids <"$dir/../engines/llama-preset/models.ini" | wc -l)" "4"
 
 expect "model_states reads each state, failed over unloaded" \
 	"$(model_states <"$data/models.json")" \

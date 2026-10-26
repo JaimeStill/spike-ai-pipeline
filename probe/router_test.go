@@ -269,11 +269,12 @@ func TestRouter(t *testing.T) {
 		}, 512)
 		t.Logf("%s: %q", visionModel, text)
 		// shapes.png is a red circle, a blue square, and a green triangle. Each shape and each
-		// colour must be named, in any phrasing; which colour goes with which shape isn't checked.
-		reply := strings.ToLower(text)
-		for _, word := range []string{"circle", "square", "triangle", "red", "blue", "green"} {
-			if !strings.Contains(reply, word) {
-				t.Errorf("%s: the description %q doesn't name %s", visionModel, text, word)
+		// colour must be named as a word of its own, singular or plural, in any phrasing, so
+		// "centered" doesn't pass for red; which colour goes with which shape isn't checked.
+		words := strings.FieldsFunc(strings.ToLower(text), func(r rune) bool { return !unicode.IsLetter(r) })
+		for _, want := range []string{"circle", "square", "triangle", "red", "blue", "green"} {
+			if !slices.Contains(words, want) && !slices.Contains(words, want+"s") {
+				t.Errorf("%s: the description %q doesn't name %s", visionModel, text, want)
 			}
 		}
 	})
@@ -521,6 +522,8 @@ func (r *router) post(t *testing.T, path string, body, out any) {
 	r.decode(t, http.MethodPost, path, "application/json", b, out)
 }
 
+// decode sends one request to path, with autoload=false, and decodes the JSON reply into out,
+// failing t on a transport error, a status other than 200, or a reply that doesn't decode.
 func (r *router) decode(t *testing.T, method, path, contentType string, body []byte, out any) {
 	t.Helper()
 	path = withNoAutoload(path)
@@ -701,6 +704,7 @@ func alphanumeric(s string) string {
 	}, s)
 }
 
+// readFile returns the file at path, failing t if it can't be read.
 func readFile(t *testing.T, path string) []byte {
 	t.Helper()
 	b, err := os.ReadFile(path)
