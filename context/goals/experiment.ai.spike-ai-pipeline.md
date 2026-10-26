@@ -245,7 +245,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec — · editor —
+slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · editor —
 
 ## Decisions
 
@@ -419,6 +419,25 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - client-core (checkpoint): the protocol's unit stays Item, the spec's term; Input and Output
   name its direction, and one value moves from Output to the next Input. Item's doc comment says
   so. Rejected: a rename (Turn, Event, Entry, Element, Unit).
+- client-core: max_output_tokens goes out as max_completion_tokens (llama.cpp b11669 aliases
+  it; OpenAI deprecated max_tokens).
+- client-core: Reasoning has no Status (the spec's reasoning item has none); Effort takes the
+  spec's enum (none, low, medium, high, xhigh); the request carries Effort only, since Chat
+  Completions has no form for the spec's reasoning summary. Reasoning with no assistant message
+  or call after it is dropped: llama.cpp refuses an assistant message of reasoning alone.
+- client-core: the Chat Completions envelope is `spike-ai-pipeline:completions/v1:` + base64 of
+  {"reasoning_content"}; a layout change takes a new prefix, and tests pin the literal.
+- client-core: Text carries the spec's PlainTextFormat and Verbosity beside JSONSchemaFormat
+  (both in the spec's TextParam, both expressible in Chat Completions); json_object, absent from
+  the spec's request formats, is reached through Native.
+- client-core: EmbeddingRequest has Native, with the same validation and clash check as the
+  protocol's; empty input strings are sent, as llama.cpp embeds them.
+- client-core: the OpenAI-style error body decodes in format.DecodeOpenAIError, shared by Chat
+  Completions and Embed/Transcribe; one Native validation and clash encoding live in
+  internal/native, which protocol, the formats, and client share.
+- client-core: TranscriptionRequest types Language and Prompt (llama.cpp honors both; Prompt
+  replaces its instruction); the file part goes as application/octet-stream, llama.cpp reading
+  the format from the bytes.
 
 ## Pending edits
 
