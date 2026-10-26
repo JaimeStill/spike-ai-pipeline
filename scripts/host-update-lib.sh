@@ -136,6 +136,23 @@ redact() {
 		-e 's/fd7a:[0-9A-Fa-f:]+/<redacted>/g'
 }
 
+# host-update's last line, from what the run found: $1 is the clone's lag, empty when the clone
+# is current, else what to say of it (a branch with no upstream whose commit isn't the laptop's,
+# with the push that delivers it); each further argument is a change the run made. The clone is
+# called current only when it is.
+summary() {
+	local lag=$1 joined
+	shift
+	if (($#)); then
+		printf -v joined '%s, ' "$@"
+		echo "host-update: changed: ${joined%, }${lag:+; $lag}"
+	elif [[ -n $lag ]]; then
+		echo "host-update: nothing changed, but $lag; router at the pin, preset unchanged, set A loaded"
+	else
+		echo "host-update: nothing changed: clone current, router at the pin, preset unchanged, set A loaded"
+	fi
+}
+
 # ---- Functions run on the host ----
 
 # The facts preflight reads, one per line as "<key> <value>": the running driver (or the error

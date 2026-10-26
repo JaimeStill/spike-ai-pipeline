@@ -15,7 +15,8 @@
 #   5. Loads each model the preset names through the router's load API, and waits until all are
 #      loaded, or fails naming each that failed or didn't load in time.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
-#      address, then what changed, or that nothing did.
+#      address, then what changed, or that nothing did, and a clone with no upstream at another
+#      commit than the laptop's branch.
 #
 # The environment overrides its defaults: HOST_UPDATE_HOST (gb10-2), HOST_UPDATE_CLONE
 # (repos/spike-ai-pipeline, from the home directory), and HOST_UPDATE_TIMEOUT (900 seconds, the
@@ -63,6 +64,7 @@ wait_healthy() {
 
 echo "host-update: $host"
 changes=()
+lag=
 
 # 1. Preflight, before anything on the host changes.
 if [[ -n ${HOST_UPDATE_FACTS:-} ]]; then
@@ -85,7 +87,9 @@ if [[ $upstream == - ]]; then
 	echo "clone: $branch at $after, which has no upstream: a session delivers it by push"
 	laptop=$(git -C "$MISE_PROJECT_ROOT" rev-parse --short --verify --quiet "refs/heads/$branch" || true)
 	if [[ -n $laptop && $laptop != "$after" ]]; then
-		echo "clone: the laptop's $branch is at $laptop; git push ssh://$host/~/$clone $branch:refs/heads/$branch delivers it"
+		push="git push ssh://$host/~/$clone $branch:refs/heads/$branch"
+		echo "clone: the laptop's $branch is at $laptop; $push delivers it"
+		lag="clone at $after, not the laptop's $branch at $laptop: deliver it with $push"
 	fi
 elif [[ $before != "$after" ]]; then
 	echo "clone: $branch fast-forwarded from $upstream, $before to $after"
@@ -195,9 +199,4 @@ done <<<"$(on_host host_stack)"
 path=$(tailscale ping "$host" 2>&1 | tail -n 1 | ping_path || true)
 printf '  %-8s %s\n' network "${path:-unknown: tailscale ping $host gave no pong} (tailscale ping from the laptop)"
 
-if ((${#changes[@]})); then
-	printf -v joined '%s, ' "${changes[@]}"
-	echo "host-update: changed: ${joined%, }"
-else
-	echo "host-update: nothing changed: clone current, router at the pin, preset unchanged, set A loaded"
-fi
+summary "$lag" "${changes[@]}"

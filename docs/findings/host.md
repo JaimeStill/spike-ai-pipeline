@@ -11,17 +11,20 @@ host"). Measured 2026-10-26, from the laptop, against gb10-2's llama.cpp router 
 | Does transcription return segment or word timestamps? | **No.** `/v1/audio/transcriptions` accepts only `response_format` `json`, which carries `text` and `usage` and no timestamps. `verbose_json` is refused with HTTP 400; `timestamp_granularities[]` is ignored under `json`. |
 
 The probe records both and asserts neither (`probe/router_test.go`, subtests `responses recorded`
-and `timestamps recorded`). Its log lines from the run:
+and `timestamps recorded`). Its log lines:
 
 ```
 === RUN   TestRouter/responses_recorded
-    router_test.go:364: recorded: /v1/responses on ggml-org/gpt-oss-120b-GGUF:MXFP4 answers: HTTP 200, status completed, output items [reasoning message], text "Hello!"
+    router_test.go:365: recorded: /v1/responses on ggml-org/gpt-oss-120b-GGUF:MXFP4 answers: HTTP 200, status completed, output items [reasoning message], text "Hello, nice to meet you!"
 === RUN   TestRouter/timestamps_recorded
-    router_test.go:393: recorded: transcription, verbose_json: HTTP 400, 0 segments, 0 words: {"error":{"code":400,"message":"Only 'json' response_format is supported for transcription","type":"invalid_request_error"}}
-    router_test.go:393: recorded: transcription, verbose_json with segment and word granularities: HTTP 400, 0 segments, 0 words: {"error":{"code":400,"message":"Only 'json' response_format is supported for transcription","type":"invalid_request_error"}}
-    router_test.go:393: recorded: transcription, json with segment and word granularities: HTTP 200, 0 segments, 0 words: {"type":"transcript.text.done","text":"The access code is 7429.","usage":{"type":"tokens","input_tokens":174,"output_tokens":11,"total_tokens":185,"input_tokens_details":{"cached_tokens":169}}}
-    router_test.go:403: recorded: transcription on ggml-org/gemma-4-E4B-it-GGUF:Q8_0 returns no timestamps in any form tried
+    router_test.go:394: recorded: transcription, verbose_json: HTTP 400, 0 segments, 0 words: {"error":{"code":400,"message":"Only 'json' response_format is supported for transcription","type":"invalid_request_error"}}
+    router_test.go:394: recorded: transcription, verbose_json with segment and word granularities: HTTP 400, 0 segments, 0 words: {"error":{"code":400,"message":"Only 'json' response_format is supported for transcription","type":"invalid_request_error"}}
+    router_test.go:394: recorded: transcription, json with segment and word granularities: HTTP 200, 0 segments, 0 words: {"type":"transcript.text.done","text":"The access code is 7429.","usage":{"type":"tokens","input_tokens":174,"output_tokens":11,"total_tokens":185,"input_tokens_details":{"cached_tokens":169}}}
+    router_test.go:404: recorded: transcription on ggml-org/gemma-4-E4B-it-GGUF:Q8_0 returns no timestamps in any form tried
 ```
+
+These are from a rerun against the probe as committed, to match its line numbers. The results are
+the first run's; only gpt-oss-120b's sampled reply differs ("Hello!" the first time).
 
 By hand, `srt`, `vtt`, and `text` are refused with the same 400 as `verbose_json`, and a request
 with no `response_format` answers as `json` does (commands below).
@@ -105,10 +108,55 @@ changes the text, not whether timestamps come back.
 
 ## Commands, as run
 
-From the laptop, at this repository's root, as run except in where files lived: each log the
-session wrote to its scratch directory is written beside the command here instead, and the
-hand-run requests read `probe/testdata/phrase.wav`, the byte-identical copy
-(`probe/testdata/README.md`) of the spike-model-hosting fixture they were run from.
+From the laptop, at this repository's root, unless a command says gb10-2, and as run except in
+where files lived: each log the session wrote to its scratch directory is written beside the
+command here instead, and the hand-run requests read `probe/testdata/phrase.wav`, the
+byte-identical copy (`probe/testdata/README.md`) of the spike-model-hosting fixture they were run
+from.
+
+Set gb10-2 up, once, before the first host-update. On gb10-2, clone the root:
+
+```sh
+cd ~/repos && git clone https://github.com/JaimeStill/spike-ai-pipeline.git
+```
+
+From the laptop, deliver the task branch, which has no upstream, then check it out on gb10-2
+(host-update has since set the clone's `git config receive.denyCurrentBranch updateInstead`, so a
+later push updates the checked-out branch and its files):
+
+```sh
+git push ssh://gb10-2/~/repos/spike-ai-pipeline host:refs/heads/host
+```
+
+```sh
+cd ~/repos/spike-ai-pipeline && git checkout host
+```
+
+On gb10-2, in the clone, the download tool (`hf version` printed 2.3.0):
+
+```sh
+MISE_ENV=host mise install uv pipx:huggingface_hub; MISE_ENV=host mise exec -- hf version
+```
+
+Still on gb10-2 in the clone, the three downloads, run in parallel under nohup, then the router
+image, the router, and a check for a partial download (none):
+
+```sh
+export MISE_ENV=host HF_HUB_CACHE=/srv/models HF_XET_HIGH_PERFORMANCE=1
+mise exec -- hf download ggml-org/gemma-4-26B-A4B-it-GGUF --include gemma-4-26B-A4B-it-Q4_0.gguf --include mmproj-gemma-4-26B-A4B-it-Q8_0.gguf
+mise exec -- hf download ggml-org/gemma-4-E4B-it-GGUF --include gemma-4-E4B-it-Q8_0.gguf --include mmproj-gemma-4-E4B-it-Q8_0.gguf
+mise exec -- hf download ggml-org/embeddinggemma-2-GGUF --include embeddinggemma-2-Q8_0.gguf
+docker pull ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
+engines/engines llama install
+find /srv/models -name '*.incomplete'
+```
+
+| Download | Size | Time |
+|---|---|---|
+| gemma-4-26B-A4B-it Q4_0 and its mmproj | 15 GB | 2213 s |
+| gemma-4-E4B-it Q8_0 and its mmproj | 8.1 GB | 1267 s |
+| embeddinggemma-2 Q8_0 | 296 MB | 721 s |
+| the router image | 7 GB | 2234 s |
 
 Bring gb10-2 current and load set A:
 
@@ -158,6 +206,12 @@ The probe, through the task and then verbose for its log lines:
 
 ```sh
 mise run integration -- 2>&1 | tail -5; GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 go test -race -tags integration -count=1 -v ./probe/... 2>&1 | tee integration-v.log
+```
+
+The rerun for the log lines quoted above, against the probe as committed:
+
+```sh
+GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 go test -race -tags integration -count=1 -v ./probe/ > probe-v.log 2>&1; echo exit $?
 ```
 
 Memory, after the probe:

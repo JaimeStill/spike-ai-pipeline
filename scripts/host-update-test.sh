@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Tests host-update's pure functions (scripts/host-update-lib.sh) against the fixtures in
 # scripts/testdata/host-update/: the preflight's reading of apt, the CDI spec, and the host's
-# facts, and the preset, model-state, network-path, and redaction readers. It touches no host and
-# reads no network. `mise run check` runs it; it prints each failure and exits 1 on any.
+# facts; the preset, model-state, network-path, and redaction readers; and the last line. It
+# touches no host and reads no network. `mise run check` runs it; it prints each failure and
+# exits 1 on any.
 set -euo pipefail
 
 dir=$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")
@@ -108,6 +109,20 @@ expect "ping_path reads tailscale's 0s as under a millisecond" \
 expect "redact removes IPv4 and IPv6 addresses" \
 	"$(redact <<<'on 100.64.0.7:8080 and [fd7a:115c:a1e0::1]:8080, fd7a:115c:a1e0::2; build 11669')" \
 	"on <redacted>:8080 and <redacted>:8080, <redacted>; build 11669"
+
+lag="clone at 62d32e2, not the laptop's host at bb39f4b: deliver it with git push ssh://gb10-2/~/repos/spike-ai-pipeline host:refs/heads/host"
+expect "summary calls a current clone current" \
+	"$(summary "")" \
+	"host-update: nothing changed: clone current, router at the pin, preset unchanged, set A loaded"
+expect "summary doesn't call a clone apart from the laptop current" \
+	"$(summary "$lag")" \
+	"host-update: nothing changed, but $lag; router at the pin, preset unchanged, set A loaded"
+expect "summary lists the changes" \
+	"$(summary "" "clone pulled" "preset reloaded")" \
+	"host-update: changed: clone pulled, preset reloaded"
+expect "summary lists the changes and the clone apart from the laptop" \
+	"$(summary "$lag" "preset reloaded")" \
+	"host-update: changed: preset reloaded; $lag"
 
 if ((failures)); then
 	echo "host-update-test: $failures failure(s)"
