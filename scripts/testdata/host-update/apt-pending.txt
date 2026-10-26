@@ -1,0 +1,21 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Keep also in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+The following upgrades have been deferred due to phasing:
+  libsystemd0
+The following NEW packages will be installed:
+  linux-image-7.0.0-1021-nvidia
+The following packages will be upgraded:
+  libnvidia-compute-580 nvidia-container-toolkit
+2 upgraded, 1 newly installed, 0 to remove and 1 not upgraded.
+Inst linux-image-7.0.0-1021-nvidia (7.0.0-1021.21 Ubuntu:24.04/noble-updates [arm64])
+Inst libnvidia-compute-580 [580.178.04-0ubuntu1] (580.180.01-0ubuntu1 NVIDIA:24.04 [arm64])
+Inst nvidia-container-toolkit [1.20.1-1] (1.20.2-1 nvidia [arm64])
+Conf linux-image-7.0.0-1021-nvidia (7.0.0-1021.21 Ubuntu:24.04/noble-updates [arm64])
+Conf libnvidia-compute-580 (580.180.01-0ubuntu1 NVIDIA:24.04 [arm64])
+Conf nvidia-container-toolkit (1.20.2-1 nvidia [arm64])

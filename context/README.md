@@ -54,7 +54,10 @@ between.
 
 ## Capability map
 
-- **host**: gb10-2's llama.cpp router serving set A, from scripts copied out of
-  spike-model-engines' `engines` suite, kept current by `mise run host-update`.
+- **host**: gb10-2's llama.cpp router serving set A. The router runs from spike-model-engines'
+  llama.cpp scripts, copied with the set A preset into `engines/`; `mise.host.toml` pins `hf`,
+  which stages the models on gb10-2; `mise run host-update` brings gb10-2 current and loads set A
+  at each session's start; `mise run integration` probes every capability (`probe/`); and
+  `docs/findings/host.md` records the first probe run.
 - **consumers**: the check that builds on the layers at their released tags.
 - **capstone**: the backend and web UI, once the gates clear.

@@ -6,7 +6,7 @@
 
 ## Tasks
 
-1. [ ] host
+1. [x] host
 2. [ ] client-core
 3. [ ] client-streaming
 4. [ ] client-messages
@@ -77,7 +77,52 @@
 - setup: pgvector on pgvector/pgvector:0.8.7-pg18, a declared native-tier extension; the
   workspace's extension strategy is written from this evidence by a v1.data task the intake
   writes.
+- host: Gemma 4 26B-A4B is set A's ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0, the id
+  spike-model-hosting measured and spike-harness-driver defaults to. Rejected: Google's QAT
+  Q4_0, which meets experiment.hosting's quantization floor; a swap is a set change for
+  spike-model-benchmarks.
+- host: host-update loads set A through the router's load API. The engines llama.cpp scripts
+  are copied verbatim from spike-model-engines 698f75c, keeping --no-models-autoload, and the
+  preset loads nothing at startup. Rejected: autoloading on a model's first request, which
+  would change the copied script.
+- host: gb10-2's preset takes spike-model-hosting's set A startup values (c 131072, 32768,
+  32768, 8192; 4 slots each; unified KV; card sampling). Rejected: the swept values; sizing
+  gb10-2 is spike-model-layout's.
+- host: `mise run host-update` runs on the laptop and drives gb10-2 over Tailscale SSH,
+  pulling the root's clone there, which the preset is mounted from. Rejected: a task run on
+  gb10-2 from its clone.
+- host: host-update stops on pending apt upgrades or a stale CDI spec: it prints the exact
+  root commands for the architect, exits nonzero, and leaves the router untouched. Rejected:
+  reporting and carrying on.
+- host: /v1/responses support and transcription timestamps are recorded, not asserted. The
+  probe logs both and passes either way, and a findings page in the root carries them with
+  the build, gb10-2's stack, and the network path. Rejected: failing the probe on either.
+- host: the preset's [*] keeps the engines preset's GB10 keys (n-gpu-layers = all,
+  dedup-cache-models) on top of hosting's set A values.
+- host: an unmerged branch reaches gb10-2 by `git push ssh://gb10-2/...` into the clone, which
+  host-update sets to receive.denyCurrentBranch=updateInstead; never through GitHub before
+  acceptance.
+- host: host-update counts `apt-get --simulate upgrade` Inst lines as pending upgrades. Rejected:
+  `apt list --upgradable`, which lists upgrades phasing defers.
+- host: a stopped llama container fails host-update instead of being started: a borrowing session
+  may hold it.
+- host: host-update reloads the preset when its sha256 differs from the one recorded in the
+  clone's untracked `.state/preset.sha256`.
+- host: the probe's tool call uses Chat Completions with tool_choice required.
+- host: findings live under `docs/findings/`.
+- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`); the setup
+  rejection of Responses as "router support unverified" is open at the client's plan round.
+- host: transcription returns no timestamps at b11669: only response_format json, and
+  timestamp_granularities is ignored; audio seams align on the overlapping words alone.
+- host: gb10-2's spike-model-engines clone is removed; spike-ai-pipeline's clone is gb10-2's
+  only engine source, and a borrow clones what it needs.
 
 ## Pending edits
 
-(none)
+- coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
+  sessions keep gb10-2 current; add that it serves set A from llama.cpp's router at
+  server-cuda13-b11669, kept current by the root's `mise run host-update` at each session's
+  start, and that a borrowing session restores the pipeline engine by leaving the llama container
+  running, since host-update fails on a stopped one rather than starting it.
+- coordinator · roadmap: the `host` task's summary says the router loads models on demand; it
+  runs --no-models-autoload, and host-update loads set A through the load API.

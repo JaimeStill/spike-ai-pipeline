@@ -1,0 +1,5 @@
+driver 580.178.04
+apt-pending libnvidia-compute-580
+apt-pending nvidia-container-toolkit
+cdi-driver 580.95.05
+cdi-missing /usr/lib/aarch64-linux-gnu/libcuda.so.580.95.05

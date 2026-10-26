@@ -1,0 +1,3 @@
+driver-error Failed to initialize NVML: Driver/library version mismatch
+reboot-required yes
+cdi-driver 580.178.04

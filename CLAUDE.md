@@ -15,7 +15,8 @@ from `context/README.md`.
 - **Dependencies:** published versions only, never a `replace` directive; the layers by tag.
 - **Host:** gb10-2, reserved for this spike (`standards-lab/context/ai-hosting.md`, "Hosts and
   access"). Sessions run steps that need no root over Tailscale SSH; root stays the architect's,
-  run from exact commands. gb10-2 only serves models.
+  run from exact commands. gb10-2 only serves models. Each session starts with
+  `mise run host-update`, which brings gb10-2 current and loads set A (`README.md`, "gb10-2").
 - **References:** the repositories this spike reads are keys in the coordinator's
   `references.toml` and `references.local.toml`: tau-protocol, tau-format, tau-provider,
   tau-agent, herald, spike-harness-driver, spike-model-hosting, spike-model-engines, go-core,
