@@ -26,6 +26,29 @@ This repository holds the spike's record, gb10-2's host scripts, the consumer ch
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
 UI on experiment.html's stack.
 
+## gb10-2
+
+gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,
+`~/repos/spike-ai-pipeline`, by the engines scripts in `engines/` (`engines/README.md`). Each
+session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale SSH
+(`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs a
+root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
+architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
+loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
+changes nothing and says so. `HOST_UPDATE_HOST` names another host.
+
+The clone fast-forwards its branch from its upstream. A task branch not yet merged has none, so
+a session delivers it from the laptop by push before running host-update:
+
+```sh
+git push ssh://gb10-2/~/repos/spike-ai-pipeline <branch>:refs/heads/<branch>
+```
+
+host-update sets the clone's `receive.denyCurrentBranch` to `updateInstead`, so the push updates
+the checked-out branch and its files. Once the task merges, switch the clone to `main`, which
+tracks `origin/main`, and host-update pulls it from then on:
+`ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
+
 ## The question
 
 See `context/README.md`, "The question", and "The evidence".

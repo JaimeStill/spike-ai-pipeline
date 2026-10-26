@@ -1,0 +1,6 @@
+{"data":[
+{"id":"ggml-org/embeddinggemma-2-GGUF:Q8_0","object":"model","status":{"value":"loaded","args":["/app/llama-server"]}},
+{"id":"ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","object":"model","status":{"value":"loading","args":["/app/llama-server"]}},
+{"id":"ggml-org/gemma-4-E4B-it-GGUF:Q8_0","object":"model","status":{"value":"unloaded"}},
+{"id":"ggml-org/gpt-oss-120b-GGUF:MXFP4","object":"model","status":{"value":"unloaded","failed":true,"exit_code":1}}
+]}

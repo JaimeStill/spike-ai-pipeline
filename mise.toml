@@ -24,6 +24,8 @@ git ls-files -z | while IFS= read -r -d '' f; do
   case $f in *.sh) printf '%s\0' "$f"; continue ;; esac
   head -n 1 "$f" | grep -Eq '^#!.*\b(ba)?sh\b' && printf '%s\0' "$f"
 done | xargs -0 -r shellcheck
+# host-update's pure functions, against their fixtures; no host, no network.
+scripts/host-update-test.sh
 for mod in $GO_MODULES; do
   echo "check: $mod"
   cd "$MISE_PROJECT_ROOT/$mod"
@@ -50,6 +52,12 @@ for mod in $GO_MODULES; do
   (cd "$MISE_PROJECT_ROOT/$mod" && go test -race -tags integration -count=1 ./...)
 done
 '''
+
+# Brings gb10-2 up to date and leaves set A loaded on its router, driving it over Tailscale SSH
+# from the laptop; run at each session's start. scripts/host-update.sh says what it does.
+[tasks.host-update]
+description = "Bring gb10-2 current and load set A on its router, over Tailscale SSH"
+run = "scripts/host-update.sh"
 
 [tasks.currency]
 description = "Report every requirement, Go version, and tool behind its latest; writes nothing"
