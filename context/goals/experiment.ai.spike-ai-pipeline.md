@@ -458,6 +458,11 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - client-core: granite's gb10-2 section is c 32768 with 4 slots (each slot its trained 8192),
   b = ub = 8192, embeddings = true, no pooling key (its GGUF declares CLS). Rejected: c 8192
   (2048 per slot).
+- client-core: host-update restarts a running llama container whose preset mount is dead (the
+  container sees no /etc/llama-preset/models.ini because a delivery recreated
+  engines/llama-preset/), then reloads; it still never starts a stopped container. The copied
+  engines scripts stay untouched. Rejected: recording the gap for a later host task; mounting
+  the clone's engines/ (an edit to a copied script).
 
 ## Pending edits
 
