@@ -150,6 +150,13 @@ Door          one-way for the release: tag v0.3.0 is pushed. The code is two-way
 Release       spike-ai-pipeline-client v0.3.0
 ```
 
+## Progress
+
+- slice 1 (unary text): client e1f4e3d; check passes; integration passes on gb10-2 (chat,
+  incomplete, unknown model, vision through both formats). Interim: thinking blocks dropped
+  until slice 2; unsupported inputs, Native, and streaming refused as "not yet supported".
+  Checkpoint pending.
+
 ## Decisions
 
 - setup: four repositories: spike-ai-pipeline (root: record, host scripts, consumer check, later
