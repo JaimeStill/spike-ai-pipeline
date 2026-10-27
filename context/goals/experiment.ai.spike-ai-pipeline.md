@@ -158,7 +158,10 @@ Release       spike-ai-pipeline-client v0.3.0
   Checkpoint passed.
 - slice 2 (tools, reasoning, effort, structured output, native tier): client 13c9fb4; check and
   integration pass (named/allowed choices, structured output, effort recorded on messages).
-  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint pending.
+  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint passed; withStatus and
+  itemID stay duplicated per adapter until a third format needs them.
+- slice 3 (streaming): client 9850637; check and integration pass (stream text, function call,
+  reasoning round trip, cancel through both formats). Checkpoint pending.
 
 ## Decisions
 
