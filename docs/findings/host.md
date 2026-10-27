@@ -256,7 +256,7 @@ embeddings on; CLS pooling, as its GGUF declares.
   `/srv/models` by hf 2.3.0 in 9 s. EmbeddingGemma 2's file stays in the store, read by nothing,
   so the router still lists its cache entry, `unloaded`.
 - **A dead preset mount, and the fix:** delivering the branch replaced the clone's
-  `host/llama-preset/` directory, which left the running container's bind mount on the old,
+  `engines/llama-preset/` directory (now `host/llama-preset/`), which left the running container's bind mount on the old,
   empty one. The reload then failed: `/models?reload=1` returned HTTP 500, "preset file does not
   exist: /etc/llama-preset/models.ini". host-update now checks the mount and restarts a running
   router that can't see the preset the clone has, which binds the directory afresh; it still never
