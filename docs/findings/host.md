@@ -229,3 +229,60 @@ The hermetic check:
 ```sh
 mise run check 2>&1 | tail -6
 ```
+
+## 2026-10-27: set A's embedding model is granite-embedding-english-r2
+
+Task `client-core`. Set A's embedding model changed from EmbeddingGemma 2
+(`ggml-org/embeddinggemma-2-GGUF:Q8_0`) to IBM's granite-embedding-english-r2
+(`mrutkows/granite-embedding-english-r2-GGUF:BF16`), because vLLM can't serve EmbeddingGemma 2 on
+the GB10 and set A has to serve on both engines (`context/goals/experiment.ai.spike-ai-pipeline.md`,
+Decisions, "client-core: set A's embedding model…"). The sections above record the first run, with
+EmbeddingGemma 2, and stay as measured. The preset's section and its reasons are in
+`engines/llama-preset/models.ini`: c 32768 over 4 slots, each its trained 8192; b = ub = 8192;
+embeddings on; CLS pooling, as its GGUF declares.
+
+- **Staging:** `granite-embedding-english-r2-bf16.gguf`, 299,876,704 bytes, downloaded into
+  `/srv/models` by hf 2.3.0 in 9 s. EmbeddingGemma 2's file stays in the store, read by nothing,
+  so the router still lists its cache entry, `unloaded`.
+- **A dead preset mount, and the fix:** delivering the branch replaced the clone's
+  `engines/llama-preset/` directory, which left the running container's bind mount on the old,
+  empty one. The reload then failed: `/models?reload=1` returned HTTP 500, "preset file does not
+  exist: /etc/llama-preset/models.ini". host-update now checks the mount and restarts a running
+  router that can't see the preset the clone has, which binds the directory afresh; it still never
+  starts a stopped router. Its run printed `router: restarted, since it couldn't see
+  /etc/llama-preset/models.ini, which the clone has (a dead preset mount)` and requested the four
+  loads. One `/models` poll during the loads was refused ("Could not connect to server"), which the
+  run reported as the router not listing gpt-oss-120b, and it exited 1. A second run, with no
+  change between, found all four loaded (exit 0, "nothing changed").
+- **The load:** granite loaded with 4 slots of n_ctx 8192 (`/props`), its llama-server holding
+  863 MiB of GPU memory (`nvidia-smi`), against EmbeddingGemma 2's 1525 MiB.
+- **The probe:** `mise run integration` passed, every check as before, with granite's embedding at
+  768 dimensions. By hand, the probe's input ("The access code is seven four two nine.", 11 tokens)
+  embeds to a vector of norm 1.0000000085: llama.cpp normalizes the embedding.
+
+The commands, from the laptop at this repository's root unless they say gb10-2. On gb10-2, in the
+clone:
+
+```sh
+export MISE_ENV=host HF_HUB_CACHE=/srv/models HF_XET_HIGH_PERFORMANCE=1
+mise exec -- hf download mrutkows/granite-embedding-english-r2-GGUF --include granite-embedding-english-r2-bf16.gguf
+```
+
+Delivering the branch to the clone, which was on `main`, then host-update and the probe:
+
+```sh
+git push ssh://gb10-2/~/repos/spike-ai-pipeline client-core:refs/heads/client-core
+ssh gb10-2 git -C repos/spike-ai-pipeline switch client-core
+mise run host-update
+curl -s "http://gb10-2:8080/models?autoload=false" | jq -c '.data[] | {id, s: .status.value}'
+mise run integration
+```
+
+The norm, the slots, and the memory:
+
+```sh
+R=http://gb10-2:8080; M=mrutkows/granite-embedding-english-r2-GGUF:BF16
+curl -s "$R/v1/embeddings" -H 'Content-Type: application/json' -d "{\"model\":\"$M\",\"input\":\"The access code is seven four two nine.\",\"encoding_format\":\"float\"}" | jq -c '{n: (.data[0].embedding|length), norm: ([.data[0].embedding[]|.*.]|add|sqrt), usage}'
+curl -s "$R/props?model=$M&autoload=false" | jq -c '{build_info, total_slots, n_ctx: .default_generation_settings.n_ctx}'
+ssh gb10-2 nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader
+```
