@@ -136,6 +136,35 @@ redact() {
 		-e 's/fd7a:[0-9A-Fa-f:]+/<redacted>/g'
 }
 
+# What host-update does with the router, from the state clone_router_state prints (on stdin):
+# install when no llama container exists; update when it runs an image other than the pin;
+# stopped when it exists but isn't running, which host-update leaves to whoever stopped it;
+# restart when it runs but can't see the preset the clone has (a dead preset mount: the
+# directory its bind mount named was replaced, as a checkout that recreates it does); else
+# current.
+router_action() {
+	local key value pin='' image=- status=- mount=-
+	while read -r key value; do
+		case $key in
+		pin) pin=$value ;;
+		image) image=$value ;;
+		status) status=$value ;;
+		mount) mount=$value ;;
+		esac
+	done
+	if [[ $image == - ]]; then
+		echo install
+	elif [[ $image != "$pin" ]]; then
+		echo update
+	elif [[ $status != running ]]; then
+		echo stopped
+	elif [[ $mount == dead ]]; then
+		echo restart
+	else
+		echo current
+	fi
+}
+
 # host-update's last line, from what the run found: $1 is the clone's lag, empty when the clone
 # is current, else what to say of it (a branch with no upstream whose commit isn't the laptop's,
 # with the push that delivers it); each further argument is a change the run made. The clone is
@@ -200,19 +229,36 @@ clone_pull() {
 	echo "$branch $before $(git rev-parse --short HEAD) $upstream"
 }
 
-# The router's state, from the clone at $1, as three lines: "pin <image>" (engines/llama.env),
-# "image <image the llama container runs, or ->", and "status <the container's status, or ->".
+# The router's state, from the clone at $1, as four lines: "pin <image>" (engines/llama.env),
+# "image <image the llama container runs, or ->", "status <the container's status, or ->", and
+# "mount <live, dead, or ->": live when the running container sees the preset at
+# /etc/llama-preset/models.ini, dead when it doesn't although the clone has
+# engines/llama-preset/models.ini, and - when the container isn't running or the clone has no
+# preset.
 clone_router_state() {
 	# shellcheck source=engines/llama.env
 	source "$1/engines/llama.env"
 	echo "pin $LLAMA_IMAGE"
-	local image=- status=-
+	local image=- status=- mount=-
 	if [[ -n $(docker container ls --all --quiet --filter 'name=^llama$') ]]; then
 		image=$(docker container inspect --format '{{.Config.Image}}' llama)
 		status=$(docker container inspect --format '{{.State.Status}}' llama)
 	fi
+	if [[ $status == running && -f $1/engines/llama-preset/models.ini ]]; then
+		if docker exec llama test -f /etc/llama-preset/models.ini </dev/null; then
+			mount=live
+		else
+			mount=dead
+		fi
+	fi
 	echo "image $image"
 	echo "status $status"
+	echo "mount $mount"
+}
+
+# Restarts the running llama container, which binds its mounts afresh from their host paths.
+host_router_restart() {
+	docker restart llama >/dev/null
 }
 
 # Runs the copied engines command `engines llama <verb>` from the clone at $1, with no stdin.

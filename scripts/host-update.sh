@@ -12,9 +12,14 @@
 #   3. Installs the router at the pin (engines/llama.env) with the copied engines scripts when it
 #      is absent, or moves it to the pin when it runs another image. A llama container that
 #      exists but isn't running fails the run, naming the command that starts it; host-update
-#      doesn't start it, since a session borrowing gb10-2 may have stopped it.
+#      doesn't start it, since a session borrowing gb10-2 may have stopped it. A running one
+#      whose preset mount is dead, unable to see /etc/llama-preset/models.ini although the clone
+#      has engines/llama-preset/models.ini, is restarted, which binds the clone's preset directory
+#      afresh: a checkout or push that recreates the directory leaves the old mount empty. Then it
+#      waits, bounded, for the router's health check.
 #   4. Has the router re-read the preset when its digest differs from the one recorded when the
-#      router last read it (.state/preset.sha256 in the clone, untracked).
+#      router last read it (.state/preset.sha256 in the clone, untracked). A router installed,
+#      moved, or restarted this run read the preset as it started, so its digest is recorded.
 #   5. Loads each model the preset names through the router's load API, and waits until all are
 #      loaded, or fails naming each that failed or didn't load in time.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
@@ -101,27 +106,39 @@ else
 	echo "clone: $branch at $after, current with $upstream"
 fi
 
-# 3. The router, at the pin.
+# 3. The router, at the pin, reading the clone's preset.
+router_facts=$(on_host clone_router_state "$clone")
 declare -A router_state
 while read -r key value; do
 	router_state[$key]=$value
-done <<<"$(on_host clone_router_state "$clone")"
+done <<<"$router_facts"
 pin=${router_state[pin]}
 restarted=
-if [[ ${router_state[image]} == - ]]; then
+case $(router_action <<<"$router_facts") in
+install)
 	on_host clone_engines "$clone" install
 	changes+=("router installed at the pin")
 	restarted=yes
-elif [[ ${router_state[image]} != "$pin" ]]; then
+	;;
+update)
 	on_host clone_engines "$clone" update
 	changes+=("router moved to the pin")
 	restarted=yes
-elif [[ ${router_state[status]} != running ]]; then
+	;;
+stopped)
 	echo "host-update: llama on $host is ${router_state[status]}; docker start llama starts it, on $host" >&2
 	exit 1
-else
+	;;
+restart)
+	on_host host_router_restart
+	echo "router: restarted, since it couldn't see /etc/llama-preset/models.ini, which the clone has (a dead preset mount)"
+	changes+=("router restarted for its dead preset mount")
+	restarted=yes
+	;;
+*)
 	echo "router: at the pin, $pin"
-fi
+	;;
+esac
 wait_healthy 120
 
 # 4. The preset. A router started this run read the preset as it is now.
