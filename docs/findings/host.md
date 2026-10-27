@@ -254,6 +254,10 @@ embeddings on; CLS pooling, as its GGUF declares.
   loads. One `/models` poll during the loads was refused ("Could not connect to server"), which the
   run reported as the router not listing gpt-oss-120b, and it exited 1. A second run, with no
   change between, found all four loaded (exit 0, "nothing changed").
+- **A refused poll, and the fix:** host-update's load loop now reads a `/models` request that
+  fails (refused, non-2xx, or not the JSON expected) as a router not ready yet and keeps polling
+  until its deadline; only a listing that lacks a preset model fails the run at once. Its run with
+  the fix, at `54d55cb`, exited 0: "nothing changed", all four of set A loaded.
 - **The load:** granite loaded with 4 slots of n_ctx 8192 (`/props`), its llama-server holding
   863 MiB of GPU memory (`nvidia-smi`), against EmbeddingGemma 2's 1525 MiB.
 - **The probe:** `mise run integration` passed, every check as before, with granite's embedding at
