@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Tests host-update's pure functions (scripts/host-update-lib.sh) against the fixtures in
 # scripts/testdata/host-update/: the preflight's reading of apt, the CDI spec, and the host's
-# facts; the router's next step; the preset, model-state, network-path, and redaction readers;
-# and the last line. It touches no host and reads no network. `mise run check` runs it; it prints
-# each failure and exits 1 on any.
+# facts; the router's next step; the preset, model-state, poll, network-path, and redaction
+# readers; and the last line. It touches no host and reads no network. `mise run check` runs it;
+# it prints each failure and exits 1 on any.
 set -euo pipefail
 
 dir=$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")
@@ -105,6 +105,20 @@ expect "router_action installs a router that is absent" \
 	"$(router_action <"$data/router-absent.txt")" "install"
 expect "router_action moves a router off another image before minding its mount" \
 	"$(router_action <"$data/router-other-image.txt")" "update"
+
+expect "poll_states gives each id its state, and absent when the listing lacks it" \
+	"$(poll_states ok mrutkows/granite-embedding-english-r2-GGUF:BF16 ggml-org/gpt-oss-120b-GGUF:MXFP4 \
+		org/missing-GGUF:Q8_0 <"$data/models.json")" \
+	"mrutkows/granite-embedding-english-r2-GGUF:BF16 loaded
+ggml-org/gpt-oss-120b-GGUF:MXFP4 failed
+org/missing-GGUF:Q8_0 absent"
+expect "poll_states keeps waiting on a poll that failed, never absent" \
+	"$(poll_states failed ggml-org/gpt-oss-120b-GGUF:MXFP4 org/missing-GGUF:Q8_0 </dev/null)" \
+	"ggml-org/gpt-oss-120b-GGUF:MXFP4 unanswered
+org/missing-GGUF:Q8_0 unanswered"
+expect "poll_states keeps waiting on a listing that isn't JSON" \
+	"$(poll_states ok ggml-org/gpt-oss-120b-GGUF:MXFP4 <"$data/models-not-json.txt")" \
+	"ggml-org/gpt-oss-120b-GGUF:MXFP4 unanswered"
 
 expect "ping_path reads a direct path without its addresses" \
 	"$(ping_path <<<'pong from gb10-2 (100.64.0.7) via 192.168.1.20:41641 in 2ms')" "direct, 2ms"

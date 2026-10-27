@@ -117,6 +117,32 @@ model_states() {
 	jq -r '.data[] | "\(.id) \(if .status.failed then "failed" else .status.value end)"'
 }
 
+# Each model id given, as "<id> <state>", for host-update's load loop: its state in the router's
+# GET /models JSON on stdin (model_states'), or absent when the listing lacks it. $1 is the poll's
+# outcome: ok, or failed when the request failed (refused, timed out, non-2xx); a failed poll, or
+# a listing that isn't the JSON expected, gives every id as unanswered, a router not ready yet,
+# never absent.
+poll_states() {
+	local outcome=$1 listing id value
+	shift
+	local -A state=()
+	if [[ $outcome == ok ]] && listing=$(model_states 2>/dev/null); then
+		while read -r id value; do
+			[[ -n $id ]] && state[$id]=$value
+		done <<<"$listing"
+	else
+		cat >/dev/null
+		outcome=failed
+	fi
+	for id; do
+		if [[ $outcome == ok ]]; then
+			echo "$id ${state[$id]:-absent}"
+		else
+			echo "$id unanswered"
+		fi
+	done
+}
+
 # The network path in a `tailscale ping` line, as "direct, <latency>" or "DERP(<region>),
 # <latency>", with no address: the line names the peer's tailnet address and, when direct, its
 # endpoint, and neither is printed or recorded. tailscale rounds the latency to the millisecond

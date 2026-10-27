@@ -21,7 +21,9 @@
 #      router last read it (.state/preset.sha256 in the clone, untracked). A router installed,
 #      moved, or restarted this run read the preset as it started, so its digest is recorded.
 #   5. Loads each model the preset names through the router's load API, and waits until all are
-#      loaded, or fails naming each that failed or didn't load in time.
+#      loaded, or fails naming each that failed or didn't load in time. A poll the router doesn't
+#      answer, refused or non-2xx, is a router not ready yet: polling goes on until the deadline,
+#      and only a listing that lacks a model the preset names fails the run at once.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
 #      address. Then it prints what changed, or that nothing did, and names a clone with no
 #      upstream whose commit differs from the laptop's branch.
@@ -167,33 +169,38 @@ if ((${#ids[@]} == 0)); then
 fi
 declare -A requested=()
 deadline=$((SECONDS + timeout))
+unanswered=
 while :; do
-	declare -A state=()
-	while read -r id value; do
-		state[$id]=$value
-	done < <(curl -fsS --max-time 30 "$router/models" | model_states)
+	# A request that fails, refused or non-2xx, is a router not ready yet, as just after it starts.
+	outcome=ok
+	listing=$(curl -fsS --max-time 30 "$router/models" 2>/dev/null) || outcome=failed
+	if [[ $outcome == failed && -z $unanswered ]]; then
+		echo "models: the router didn't answer $router/models; polling until the deadline"
+		unanswered=yes
+	fi
 	waiting=() failed=()
-	for id in "${ids[@]}"; do
-		case ${state[$id]:-absent} in
+	while read -r id value; do
+		case $value in
 		loaded) ;;
 		failed) failed+=("$id") ;;
 		absent)
 			echo "host-update: the router doesn't list $id, which the preset names" >&2
 			exit 1
 			;;
-		loading) waiting+=("$id") ;;
+		loading | unanswered) waiting+=("$id") ;;
 		*)
 			waiting+=("$id")
-			if [[ -z ${requested[$id]:-} ]]; then
+			# A load request that fails is retried at the next poll.
+			if [[ -z ${requested[$id]:-} ]] &&
 				curl -fsS --max-time 30 -X POST "$router/models/load" \
 					-H 'Content-Type: application/json' \
-					-d "$(jq -cn --arg id "$id" '{model: $id}')" >/dev/null
+					-d "$(jq -cn --arg id "$id" '{model: $id}')" >/dev/null; then
 				echo "models: loading $id"
 				requested[$id]=yes
 			fi
 			;;
 		esac
-	done
+	done < <(poll_states "$outcome" "${ids[@]}" <<<"$listing")
 	if ((${#failed[@]})); then
 		printf 'host-update: failed to load on %s: %s\n' "$host" "${failed[@]}" >&2
 		exit 1
