@@ -37,7 +37,10 @@ architect; otherwise it pulls the clone, moves the router to the pin, reloads a 
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
 changes nothing and says so. A stopped llama container fails the run, which names the command
 that starts it. A running one that can't see the clone's preset, because a delivery recreated
-`host/llama-preset/` under its bind mount, is restarted. `HOST_UPDATE_HOST` names another host.
+`host/llama-preset/` under its bind mount, is restarted; one whose preset mount is sourced
+anywhere else, as the old `engines/llama-preset/` before the scripts moved to `host/`, is
+re-created on the same image with the mount moved, by `host/engines llama update`.
+`HOST_UPDATE_HOST` names another host.
 
 host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
 no upstream, so a session delivers it from the laptop by push before running host-update:

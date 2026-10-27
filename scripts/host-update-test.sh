@@ -99,6 +99,12 @@ expect "router_action leaves a running router at the pin with a live preset moun
 	"$(router_action <"$data/router-live.txt")" "current"
 expect "router_action restarts a running router whose preset mount is dead" \
 	"$(router_action <"$data/router-dead-mount.txt")" "restart"
+expect "router_action moves a preset mount the clone's scripts left behind, never restarting it" \
+	"$(router_action <"$data/router-moved.txt")" "move"
+expect "router_action moves a preset mount sourced elsewhere even while it sees a preset" \
+	"$(sed 's/^mount dead$/mount live/' "$data/router-moved.txt" | router_action)" "move"
+expect "router_action moves a running router with no preset mount" \
+	"$(sed 's/^source .*/source -/' "$data/router-live.txt" | router_action)" "move"
 expect "router_action leaves a stopped router stopped" \
 	"$(router_action <"$data/router-stopped.txt")" "stopped"
 expect "router_action installs a router that is absent" \

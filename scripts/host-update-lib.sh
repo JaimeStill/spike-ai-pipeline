@@ -164,18 +164,23 @@ redact() {
 
 # What host-update does with the router, from the state clone_router_state prints (on stdin):
 # install when no llama container exists; update when it runs an image other than the pin;
-# stopped when it exists but isn't running, which host-update leaves to whoever stopped it;
-# restart when it runs but can't see the preset the clone has (a dead preset mount: the
-# directory its bind mount named was replaced, as a checkout that recreates it does); else
-# current.
+# stopped when it exists but isn't running, which host-update leaves to whoever stopped it; move
+# when it runs the pin but its preset mount's source isn't the clone's preset directory, or it has
+# none, as when the clone's scripts moved from engines/ to host/ under it; restart when it runs
+# but can't see the preset the clone has (a dead preset mount: the directory its bind mount named
+# was replaced, as a checkout that recreates it does); else current. Move precedes restart, since
+# restarting a container whose mount source moved away rebinds a directory that is gone, which
+# Docker recreates empty.
 router_action() {
-	local key value pin='' image=- status=- mount=-
+	local key value pin='' image=- status=- mount=- preset=- mount_source=-
 	while read -r key value; do
 		case $key in
 		pin) pin=$value ;;
 		image) image=$value ;;
 		status) status=$value ;;
 		mount) mount=$value ;;
+		preset) preset=$value ;;
+		source) mount_source=$value ;;
 		esac
 	done
 	if [[ $image == - ]]; then
@@ -184,6 +189,8 @@ router_action() {
 		echo update
 	elif [[ $status != running ]]; then
 		echo stopped
+	elif [[ $mount_source == - || $mount_source != "$preset" ]]; then
+		echo move
 	elif [[ $mount == dead ]]; then
 		echo restart
 	else
@@ -255,17 +262,20 @@ clone_pull() {
 	echo "$branch $before $(git rev-parse --short HEAD) $upstream"
 }
 
-# The router's state, from the clone at $1, as four lines: "pin <image>" (host/llama.env),
-# "image <image the llama container runs, or ->", "status <the container's status, or ->", and
+# The router's state, from the clone at $1, as six lines: "pin <image>" (host/llama.env),
+# "image <image the llama container runs, or ->", "status <the container's status, or ->",
 # "mount <live, dead, or ->": live when the running container sees the preset at
 # /etc/llama-preset/models.ini, dead when it doesn't although the clone has
 # host/llama-preset/models.ini, and - when the container isn't running or the clone has no
-# preset.
+# preset; "preset <the clone's preset directory, or ->", absolute, as the copied engines scripts
+# name it (llama.sh's LLAMA_PRESET_DIR, which they bind); and "source <the host directory the
+# container's /etc/llama-preset binds, or ->" (llama.sh's llama_preset_mount). The last two are -
+# when the container isn't running.
 clone_router_state() {
 	# shellcheck source=host/llama.env
 	source "$1/host/llama.env"
 	echo "pin $LLAMA_IMAGE"
-	local image=- status=- mount=-
+	local image=- status=- mount=- preset=- mount_source=- host_dir
 	if [[ -n $(docker container ls --all --quiet --filter 'name=^llama$') ]]; then
 		image=$(docker container inspect --format '{{.Config.Image}}' llama)
 		status=$(docker container inspect --format '{{.State.Status}}' llama)
@@ -277,9 +287,28 @@ clone_router_state() {
 			mount=dead
 		fi
 	fi
+	if [[ $status == running ]]; then
+		# llama.sh sourced from its resolved path, as engines-llama-update sources it, so the
+		# directory reads exactly as the one update compares the mount source with; in a subshell,
+		# so its variables and functions stay out of this one.
+		host_dir=$(dirname "$(readlink -f -- "$1/host/llama.sh")")
+		preset=$(
+			# shellcheck source=host/llama.sh
+			source "$host_dir/llama.sh"
+			echo "$LLAMA_PRESET_DIR"
+		)
+		mount_source=$(
+			# shellcheck source=host/llama.sh
+			source "$host_dir/llama.sh"
+			llama_preset_mount
+		)
+		mount_source=${mount_source:--}
+	fi
 	echo "image $image"
 	echo "status $status"
 	echo "mount $mount"
+	echo "preset $preset"
+	echo "source $mount_source"
 }
 
 # Restarts the running llama container, which binds its mounts afresh from their host paths.

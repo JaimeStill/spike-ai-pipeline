@@ -2,3 +2,5 @@ pin ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
 image ghcr.io/ggml-org/llama.cpp:server-cuda13-b11000
 status running
 mount dead
+preset /home/jaime/repos/spike-ai-pipeline/host/llama-preset
+source /home/jaime/repos/spike-ai-pipeline/engines/llama-preset

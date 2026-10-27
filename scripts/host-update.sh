@@ -13,13 +13,19 @@
 #      is absent, or moves it to the pin when it runs another image. A llama container that
 #      exists but isn't running fails the run, naming the command that starts it; host-update
 #      doesn't start it, since a session borrowing gb10-2 may have stopped it. A running one
-#      whose preset mount is dead, unable to see /etc/llama-preset/models.ini although the clone
-#      has host/llama-preset/models.ini, is restarted, which binds the clone's preset directory
-#      afresh: a checkout or push that recreates the directory leaves the old mount empty. Then it
-#      waits, bounded, for the router's health check.
+#      whose preset mount is sourced anywhere but the clone's host/llama-preset, as one started
+#      before the clone's scripts moved from engines/ to host/, is re-created on the same image
+#      with the mount moved, by the copied engines update, which pulls nothing; restarting it
+#      would rebind the vanished directory, which Docker recreates empty. A running one whose
+#      preset mount, sourced from the clone's preset directory, is dead, unable to see
+#      /etc/llama-preset/models.ini although the clone has host/llama-preset/models.ini, is
+#      restarted, which binds the clone's preset directory afresh: a checkout or push that
+#      recreates the directory leaves the old mount empty. Then it waits, bounded, for the
+#      router's health check.
 #   4. Has the router re-read the preset when its digest differs from the one recorded when the
 #      router last read it (.state/preset.sha256 in the clone, untracked). A router installed,
-#      moved, or restarted this run read the preset as it started, so its digest is recorded.
+#      moved, re-created with its mount moved, or restarted this run read the preset as it
+#      started, so its digest is recorded.
 #   5. Loads each model the preset names through the router's load API, and waits until all are
 #      loaded, or fails naming each that failed or didn't load in time. A poll the router doesn't
 #      answer, refused, non-2xx, or not the JSON expected, is a router not ready yet: polling goes
@@ -131,6 +137,14 @@ update)
 stopped)
 	echo "host-update: llama on $host is ${router_state[status]}; docker start llama starts it, on $host" >&2
 	exit 1
+	;;
+move)
+	# engines llama update re-creates the container on the pinned image, pulling nothing, with its
+	# preset mount on the clone's host/llama-preset; it starts with --no-models-autoload, so step
+	# 5 loads set A afresh.
+	on_host clone_engines "$clone" update
+	changes+=("router's preset mount moved to the clone's host/llama-preset")
+	restarted=yes
 	;;
 restart)
 	on_host host_router_restart
