@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** client-streaming
+- **Branch:** client-streaming
 
 ## Tasks
 
@@ -18,229 +18,220 @@
 10. [ ] audio
 11. [ ] streams
 
-## Task brief · client-core
+## Task brief · client-streaming
 
 ```
-Problem       The client is an empty module, and processing, the root, and evidence 1 and 3
-              all need a released model client before they can start. This task gives the
-              client a stable request and response model built on Open Responses' item model
-              (spec 2026-04-24, the stateless subset), Chat Completions as the first wire
-              format folded into and out of it, embeddings and transcription beside it, CI,
-              and v0.1.0, so the layers above can build on it by tag.
+Problem       v0.1.0 returns a response only once the model has finished, so a caller shows
+              nothing for the tens of seconds gpt-oss-120b spends reasoning, can't stop a
+              generation part way, and gets no help with an overloaded endpoint. Evidence 1
+              needs chat, tools, and the reasoning round trip streamed as well as unstreamed,
+              and evidence 6 needs a stream that processing can cancel. This task streams
+              Generate as Open Responses' semantic events (spec 2026-04-24). It adds an SSE
+              decoder written to the full WHATWG spec on the standard library alone, an
+              accumulator that folds the events into the Response Generate would return,
+              cancellation, and the opt-in retry policy. Tags client v0.2.0.
 
 Behaviors
-  1.  Building a client from a Config (base URL, query, token source, the caller's
-      http.Client) refuses a missing http.Client, a missing or relative base URL, a base
-      URL that carries a query or fragment, and a non-http(s) scheme. It makes no request.
-      Later changes to the caller's query values don't reach requests.
-  2.  Every request goes to the base URL plus its route, with exactly one slash between
-      them, and carries the Config's query. The token source is called once per request:
-      a non-empty token is sent as a bearer token, an empty one sends no Authorization
-      header, and a source error fails the request before anything is sent.
-  3.  A non-2xx reply comes back as a typed API error with the status, the endpoint's
-      error message, and its type and code when it has them, matchable with errors.As.
-      A transport failure or cancelled context comes back wrapped and matchable with
-      errors.Is. The library sets no timeout, retry, or limit of its own.
-  4.  The model follows Open Responses' item model, stateless subset, using the spec's
-      names.
-        Request:  model, instructions, input (a list of items), tools, tool_choice,
-                  text.format, reasoning.effort, max_output_tokens, and a raw-JSON
-                  extension field
-        Response: output (a list of items), status, incomplete_details, and usage
-                  (input_tokens, output_tokens, total_tokens,
-                  output_tokens_details.reasoning_tokens)
-      Items:
-        message              role user, system, developer, or assistant. User content
-                             is input_text, input_image, and the audio extension in
-                             behavior 6; assistant content is output_text and refusal.
-        function_call        call_id, name, arguments (a JSON string)
-        function_call_output call_id, and output as a string or input_text parts
-        reasoning            content (reasoning_text parts), summary (summary_text
-                             parts), and encrypted_content, opaque and format-owned
-      An item's id and status are carried when the format supplies them. Input
-      reasoning items stay inside the spec: content is never sent on input. A format
-      that must resend reasoning writes what it needs into encrypted_content, as a
-      versioned envelope of its own, when it unfolds a reply, and reads it back when it
-      folds; an envelope written by another format is dropped, never sent.
-  5.  The chat format is a value of the Format interface, chosen by typed constructor at
-      the composition root; there is no registry. A request with no model, no input, or
-      an item the format can't express is refused before anything is sent.
-  6.  Content parts:
-        input_text   sent as text; a message that is a single input_text goes as a
-                     plain string
-        input_image  image_url as a data URL or remote URL, and detail; sent as image_url
-        audio        the client extension spike-ai-pipeline:input_audio, holding the clip's
-                     bytes and format (wav, mp3). Chat Completions sends it as input_audio.
-  7.  Client extensions of the spec. Each one follows the spec's extension rule: its type
-      is prefixed with the implementor slug, spike-ai-pipeline. All of them are listed in
-      one documented place, each with the spec version it extends and the standard
-      feature that would replace it. In this task the list has one entry: audio input,
-      extending 2026-04-24, to be replaced when the spec adds an audio input part. The
-      caller-facing Go type and constructor of an extension never carry the slug, so
-      moving to a standard type later changes only the wire discriminator and the
-      format mappings, not callers' code. The list lives in the protocol package's doc.go.
-  8.  The Chat Completions format folds input into messages:
-        instructions                  a leading system message
-        message                       a message of its role
-        a run of reasoning, assistant one assistant message: content from output_text,
-          message and function_call   reasoning_content from the reasoning items'
-          items                       Chat Completions envelopes, tool_calls from the
-                                      calls, each call's id taken from its call_id
-        function_call_output          a role tool message, tool_call_id from its call_id
-      Unfolding the reply gives output in a fixed order: a reasoning item from
-      reasoning_content (as content, and in the format's envelope), then a message item with output_text, then one function_call
-      item per tool call.
-      finish_reason maps to status:
-        stop, tool_calls  completed
-        length            incomplete, reason max_output_tokens
-        content_filter    incomplete, reason content_filter
-      reasoning.effort goes out as reasoning_effort.
-  9.  Tools are function tools: name, description, parameters (a JSON Schema), and
-      strict. tool_choice is auto, none, required, a named function {type function,
-      name}, or allowed_tools {tools, mode}, each sent in its Chat Completions form.
-  10. text.format json_schema (name, schema, strict) is sent as response_format
-      json_schema. The output_text is the JSON the model produced.
-  11. A request's raw-JSON extension field is merged into the top level of the wire body
-      (native tier, documented as such). It is separate from the client extensions in
-      behavior 7. A key that clashes with a field the typed model sets is refused before
-      anything is sent.
-  12. Embeddings sit outside the Format interface, on the OpenAI-compatible shape. One or
-      more inputs come back as one []float32 per input, in input order, plus usage. The
-      wire encoding is base64 little-endian float32, and an embedding whose byte length
-      isn't a multiple of 4 is an error.
-  13. Transcription sits outside the Format interface. It uploads a clip (any io.Reader,
-      a file name, and a model) as multipart without holding the whole clip in memory,
-      and returns the text and usage. A context cancelled during the upload stops it.
-  14. The base module imports only the standard library, and the check fails on any
-      other import.
-  15. CI runs the check on every pull request into main and every push to it. A pushed
-      v* tag creates the GitHub release from that version's CHANGELOG section. Currency
-      reports a GitHub Action pinned below its latest release.
-  16. The integration tier passes against set A on gb10-2:
-        chat                                        gpt-oss-120b
-        a function_call (tool_choice required)      gpt-oss-120b
-        a reasoning and function_call round trip,   gpt-oss-120b
-          ending completed
-        text.format json_schema                     gpt-oss-120b
-        input_image description                     gemma-4-26B-A4B
-        audio input in chat                         gemma-4-E4B
-        transcription                               gemma-4-E4B
-        a 768-dimension embedding                   granite-embedding-english-r2
-      It records what a named function and allowed_tools tool_choice return, and passes
-      either way: llama.cpp b11669 treats both as auto.
+  1.  The SSE decoder follows the WHATWG event-stream parsing rules:
+        - CR, LF, and CRLF line endings, and a leading BOM stripped
+        - comment lines ignored; a field with no colon is a name with empty value
+        - one leading space after the colon removed
+        - data lines joined with "\n"; event names the type
+        - an id holding NUL is ignored; retry is accepted as digits only
+        - an event is dispatched at a blank line, never at end of stream without one
+        - unknown fields are ignored
+      It reads the body as the bytes arrive, holding only the event being built. It never
+      reconnects, and it never sends Last-Event-ID.
+  2.  The protocol gains Open Responses' streaming events as a closed Event sum type,
+      under the spec's names. Each event carries its sequence_number and, where the
+      spec gives them, output_index, content_index, and item_id:
+        state      response.created, and the terminal response.completed,
+                   response.incomplete, and response.failed, each with the Response
+        items      response.output_item.added and response.output_item.done
+        parts      response.content_part.added and response.content_part.done
+        deltas     response.output_text.delta and .done, response.refusal.delta and
+                   .done, response.reasoning.delta and .done (reasoning_text),
+                   response.function_call_arguments.delta and .done
+      Status gains the spec's in_progress. Summary events, annotations, and logprobs
+      are outside the subset.
+  3.  The Chat Completions format turns its chunks into events in the spec's order. A
+      stream opens with response.created and closes with one terminal event, whose
+      Response holds the finished output and the usage. Each item it produces gets its
+      own events, in v0.1.0's output order: reasoning, then message, then function
+      calls. For each item:
+        - output_item.added, then content_part.added for each content part
+        - that part's deltas and its .done, then content_part.done
+        - output_item.done carrying the whole item
+      A reasoning item's output_item.done carries the format's encrypted_content
+      envelope, as Generate's does. Tool-call fragments are assembled by their index:
+      the first fragment carries call_id and name, and later ones add argument text.
+      finish_reason maps to status as in v0.1.0. The format treats data [DONE] as the
+      end of the stream; a stream that ends after finish_reason without [DONE] is also
+      complete.
+  4.  The streamed Chat Completions request always sends stream true and
+      stream_options.include_usage true. The unstreamed request sends stream false.
+      Because stream is a typed field in both encodings, a Native stream or
+      stream_options key is refused as a clash, before anything is sent.
+  5.  (*Client).GenerateStream(ctx, req) returns an iter.Seq2 of events and errors, and
+      it is lazy: nothing is validated, encoded, or sent until the sequence is ranged.
+        - A refused request, a token source error, or a non-2xx reply (the same
+          *APIError as Generate) is yielded as the sequence's only pair.
+        - The request asks Accept text/event-stream.
+        - Breaking out of the loop closes the body, and no goroutine outlives the loop.
+        - Each range sends a new request; the doc says so.
+  6.  An error during the stream ends the sequence with one error pair, and no event
+      follows it:
+        - a dropped connection, or a stream ending before its terminal event:
+          io.ErrUnexpectedEOF, matchable with errors.Is
+        - a cancelled or expired context: the context's error, wrapped, matchable
+          with errors.Is
+        - an error frame from the server (data {"error": {...}}): a typed stream
+          error with its message, type, and code, matchable with errors.As
+        - a chunk the format can't decode: a decode error
+      Cancelling closes the connection, which stops the router's generation.
+      llama.cpp's 30-second ping comments are ignored.
+  7.  protocol.Accumulator folds events in the caller's own loop. Add(event) takes each
+      event in turn and refuses one that doesn't follow the events before it, such as a
+      delta for an item that wasn't added. Response() returns the Response folded so far.
+      After a terminal event it equals the terminal event's Response, and for the same
+      reply it equals what Generate decodes. After a broken stream it holds the
+      partial output, with status in_progress.
+  8.  Retry is a Config field, unset by default; unset, nothing is retried. The policy
+      sets the most attempts, a base delay, and a most delay. New refuses a policy with
+      fewer than one attempt, a negative delay, or a base delay above the most delay.
+      With a policy:
+        - Generate and Embed, and GenerateStream before its first byte, retry 408,
+          429, 503, and a connection failure before any response
+        - nothing else is retried: never a 500, another status, or a started stream
+        - each attempt calls the token source again and resends the same encoded body
+        - the wait is exponential backoff with full jitter, capped at the most delay
+        - a Retry-After, in seconds or as an HTTP date, replaces the backoff
+        - a Retry-After longer than the most delay, or a wait past the context's
+          deadline, returns the last error at once
+        - a context cancelled while waiting returns the context's error
+        - the last attempt's error is returned as v0.1.0 returns it
+      Transcribe is never retried, because its clip is a one-shot reader uploaded as it
+      is read; its doc says so. Timeouts stay the caller's: the context, and the
+      transport's ResponseHeaderTimeout, never http.Client.Timeout. The library sets no
+      timeout or limit.
+  9.  The base module still imports only the standard library (depguard), and the
+      check passes.
+  10. The integration tier passes against set A on gb10-2, every v0.1.0 test plus:
+        streamed text, its accumulated Response completed with usage   gpt-oss-120b
+        a streamed function_call (tool_choice required)                gpt-oss-120b
+        a streamed reasoning and function_call round trip, the         gpt-oss-120b
+          accumulated output sent back, ending completed
+        a context cancelled mid-stream: the context's error, and a      gpt-oss-120b
+          partial Response, status in_progress, holding the text so far
+      Retry is proven by unit tests only: the router can't answer 408, 429, or 503
+      on demand.
 
 Go Elemental shape  (the standards the implementer can't load, made concrete)
-  Tiers       The client presents model inference as a service in two tiers (service-tiers).
-              Standard tier: Open Responses' stateless subset, the external standard the
-              library takes as its baseline (baseline-standards); nothing of ours hardens into
-              it beyond the listed client extensions. Native tier: the request's raw-JSON field,
-              named Native, documented as native tier. Each wire format is an adapter beneath
-              one interface, Format, defined where it is consumed, in the root package.
-  Packages    Four layers, imports one way: protocol ← format ← format/<api>; client
-              imports protocol and format; no format imports client.
-                client (module root)  transport: Config, Client, Respond, Embed,
-                                      Transcribe, TokenSource, APIError
-                protocol              Open Responses: Request, Response, items, content
-                                      parts, Usage, Status, Validate, the client
-                                      extensions and their list
-                format                the Format contract converting protocol ⇄ wire,
-                                      and what formats share
-                format/completions    Chat Completions (/chat/completions, not the
-                                      legacy /completions); later format/messages,
-                                      format/responses
-              The splits are consumption boundaries, not topics: formats depend on the
-              protocol alone, callers build requests and items without the transport, and
-              format/ grows to three implementations (topology-and-naming). All are packages
-              of the base module, none a sub-module (no third-party weight).
-              `internal/clienttest` holds the httptest helper shared by test packages.
-              Conversion vocabulary: encode (protocol → wire), decode (wire → protocol);
-              each format's files are encode.go, decode.go, wire.go (unexported wire
-              types).
-  Selection   A format is chosen by its typed constructor at the caller's composition root;
-              no registry, no registration on import (dependencies, "selected by
-              construction").
-  Policy      The library ships none: no default model, token budget, timeout, retry, or
-              size limit; the caller's http.Client and context carry them (baseline-standards).
-  Validation  Config validates once, in New, before any effect; a request validates before
-              the token source is called or anything is sent (validation-first). New returns
-              an error; it never panics (a library, not a composition root).
-  Types       A type is introduced only when it adds something: *http.Client, url.Values,
-              jsontext.Value used as-is, no pass-through wrappers. Items and content parts are
-              closed sum types (an interface with an unexported method), Go names from the
-              spec's (Message, FunctionCall, FunctionCallOutput, Reasoning; InputText,
-              InputImage, InputAudio, OutputText, Refusal, ReasoningText, SummaryText). A time
-              the library returns is in time.UTC (utc-times).
+  Tiers       Streaming stays in the standard tier: the spec's events under the spec's
+              names, nothing of ours added. The native tier is unchanged, apart from the
+              stream keys behaviour 4 refuses.
+  Packages    The four layers and their import direction stay as they are. The SSE
+              decoder is an internal package of the base module, used by the client and
+              by no API package; exporting it later only adds to the API. Event and the
+              Accumulator live in protocol, since folding the spec's events is the same
+              for every format. The chunk-to-event translator lives in
+              format/completions, in its decode file, with its chunk wire types beside
+              the reply's.
+  Contract    Format gains required methods, a stream encoder and a stateful stream
+              decoder. Pre-1.0, semver allows the change in a minor version, and the
+              CHANGELOG marks it as breaking for a format written outside the module. The
+              decoder takes each SSE event's type and data, returns the protocol events it
+              makes, and is told when the stream has ended. A new decoder serves each
+              stream, so a Format value stays safe for concurrent use.
+  Policy      Retry is the caller's policy, set in Config. STANDARDS.md's "ships no policy"
+              line, the Config doc, and the README become: the library sets no timeout,
+              retry, or limit unless the caller does; retry is opt-in.
+  Iteration   iter.Seq2 from the standard library, ranged once per request. No channel and
+              no goroutine feeds it: the decoder pulls from the body inside the range
+              loop.
   Surface     (sketch; names may change in BUILD with the reason recorded)
-                client.New(Config) (*Client, error)
-                Config{BaseURL string; Query url.Values; Token TokenSource;
-                       HTTP *http.Client; Format format.Format}  // Format required
-                type TokenSource func(context.Context) (string, error)
-                (*Client).Generate(ctx, *protocol.Request) (*protocol.Response, error)
-                (*Client).Embed(ctx, EmbeddingRequest) (*Embeddings, error)
-                (*Client).Transcribe(ctx, TranscriptionRequest) (*Transcription, error)
-                format.Format interface { Route; EncodeRequest; DecodeResponse; DecodeError }
-                completions.New() *completions.Format
-                *client.APIError   // errors.As
-  Docs        One doc.go per API package holding only the package comment, which inventories
-              every exported identifier with a one-clause role and lists the client
-              extensions; every production symbol carries a doc comment (tests-and-docs).
-  Tests       Unit tier: black-box (`client_test`, `protocol_test`, `format_test`,
-              `completions_test`), hermetic, against
-              an httptest server on a loopback port, asserting the wire request and decoded
-              items; export_test.go only for a hook the API can't reach. The extension list is
-              held by doc.go and review, not by a test that reads source (such a test is
-              structure-sensitive). Integration tier: `-tags integration`, in a root-level
-              `integration` package that drives the exported API black-box.
-  Checkpoint  BUILD stops once, after slice 2 and a standards-review pass, with a short
-              checkpoint brief of the exported surface for the architect's source read; a
-              redirect goes to the implementer before slice 3.
-  Release     CHANGELOG in Keep-a-Changelog form with a standing [Unreleased] and link
-              references; release preparation lands by PR; the tag is pushed only after main's
-              CI passes; the release job is serialized per tag (release-and-ci). The ruleset on
-              main and Dependabot security updates (no dependabot.yml) are the architect's
-              GitHub admin steps.
+                (*Client).GenerateStream(ctx, *protocol.Request)
+                    iter.Seq2[protocol.Event, error]
+                type protocol.Event interface{ ... }   // closed; spec-named event types
+                type protocol.Accumulator struct{ ... }
+                (*Accumulator).Add(protocol.Event) error
+                (*Accumulator).Response() *protocol.Response
+                protocol.StatusInProgress
+                Config{ ...; Retry *RetryPolicy }
+                RetryPolicy{MaxAttempts int; BaseDelay, MaxDelay time.Duration}
+                *client.StreamError   // an error frame; errors.As
+                format.Format += EncodeStreamRequest, NewStreamDecoder
+  Docs        Every package comment's inventory gains the new identifiers, each with a
+              one-clause role. The protocol doc names the streaming subset (behaviour 2)
+              and what it leaves out. GenerateStream's doc states its laziness, its error
+              pairs, and that each range sends a new request.
+  Tests       Unit tests, hermetic:
+                - SSE decoder: table tests over each rule in behaviour 1
+                - completions: recorded router streams (text, tool call, reasoning,
+                  length, error frame) translated to event sequences, and folded to the
+                  Response that DecodeResponse gives for the same reply
+                - client_test: GenerateStream and retry against an httptest server
+                  (early break closes the body; dropped connection; cancel; 408, 429,
+                  and 503 retried; 500 and a started stream not retried;
+                  Retry-After in both forms)
+              The backoff's jitter source is replaced only through export_test.go.
+              Integration tier: the same root package, -tags integration.
+  Checkpoint  BUILD stops after every slice, once it is committed with the check passing,
+              with a short checkpoint brief: the source files the slice changed, the
+              exported surface it added or changed, and its demo's result, for the
+              architect to read the source. A redirect goes to the implementer before the
+              next slice. Slice 2's checkpoint also follows a standards-review pass, since
+              the Event, Accumulator, GenerateStream, and Format surface lands there.
+  Release     As in v0.1.0: CHANGELOG [v0.2.0] with the Format change marked as
+              breaking; the release preparation lands by PR; the tag is pushed only
+              after main's CI passes.
 
-Test seams    The client's exported API: Config, the client constructor, a request of items
-              through a Format value, embeddings, and transcription. Unit tests drive it
-              against an httptest server, asserting the request on the wire and the decoded
-              items. The integration tier drives the same API against SPIKE_ROUTER_URL.
+Test seams    The client's exported API: GenerateStream ranged with an Accumulator, and the
+              Config's retry policy, driven against an httptest server that writes SSE as
+              written. completions' stream decoder is driven directly on recorded router
+              streams, as its unstreamed decoder is. The integration tier drives the same
+              API against SPIKE_ROUTER_URL.
 
 Slices
-  1. CI and the gate: CI pair, CHANGELOG, depguard stdlib-only, currency's action-pin scan.
-     Demo: check passes; currency current with workflow pins scanned. (14, 15)
-  2. Text chat end to end: Config, client, API error, item model with message items,
-     Format interface, Chat Completions fold/unfold for messages and instructions, status
-     and usage, raw-JSON extension merging. Demo: integration chat on gpt-oss-120b.
-     (1–5, 8, 11, 16)
-  3. Image and audio input, audio as the first client extension with the list and its
-     test. Demo: integration on gemma-4-26B-A4B and gemma-4-E4B. (6, 7, 16)
-  4. Tools: function tools, every tool_choice form, function_call and function_call_output
-     items and their folding. Demo: integration function_call on gpt-oss-120b, named and
-     allowed_tools recorded. (8, 9, 16)
-  5. Reasoning: items unfolded from reasoning_content and folded back; reasoning.effort.
-     Demo: integration round trip on gpt-oss-120b ending completed. (4, 8, 16)
-  6. Structured output: text.format json_schema. Demo: strict schema on gpt-oss-120b
-     decoded into a struct. (10, 16)
-  7. Embeddings. Demo: 768-dimension embeddings on granite-embedding-english-r2, in order. (12, 16)
-  8. Transcription. Demo: the phrase clip on gemma-4-E4B, "The access code is 7429."
-     (13, 16)
-  9. Release v0.1.0: README current, CHANGELOG dated, tag pushed after main's CI passes.
-     Demo: the GitHub release, and `go list -m
-     github.com/JaimeStill/spike-ai-pipeline-client@v0.1.0` resolves. (15)
+  1. The SSE decoder: the internal package and its table tests over every parsing rule.
+     Demo: the check passes, depguard included. (1, 9)
+  2. Streamed text end to end:
+       - Event (state, item, part, and the output_text and refusal events), in_progress
+       - the Format additions, and stream as a typed field in both encodings
+       - completions' translator for messages, finish_reason, and usage
+       - lazy GenerateStream, and the Accumulator for messages
+     Demo: integration streamed text on gpt-oss-120b, accumulated with usage.
+     (2–5, 7, 10)
+  3. Tool-call deltas: function_call events, argument fragments assembled by index,
+     and their fold. Demo: integration streamed function_call on gpt-oss-120b.
+     (2, 3, 7, 10)
+  4. Reasoning deltas and the round trip: reasoning events, the envelope on the
+     reasoning item's output_item.done, and the accumulated output sent back. Demo:
+     integration streamed round trip on gpt-oss-120b ending completed. (2, 3, 7, 10)
+  5. Cancellation and failure during the stream: context cancellation, a dropped
+     connection, the error frame, ping comments, and the partial Response in
+     in_progress. Demo: integration cancel mid-stream on gpt-oss-120b. (6, 7, 10)
+  6. Retry: the Config policy and its checks in New; 408, 429, 503, and failure before
+     any response; Retry-After; backoff with jitter; Transcribe exempt. Demo: the
+     unit tests, against httptest. (8)
+  7. Release v0.2.0: README, STANDARDS.md, and the package docs current; CHANGELOG
+     dated; the tag pushed after main's CI passes. Demo: the GitHub release, and `go
+     list -m github.com/JaimeStill/spike-ai-pipeline-client@v0.2.0` resolves. (9)
 
-Out of scope  Streaming, SSE, semantic events, accumulator, retry (client-streaming);
-              Anthropic Messages (client-messages); Open Responses as a wire format
-              (client-responses, v0.4.0); server-side state (store, previous_response_id,
-              background, item_reference, compaction); input_file, input_video, image
-              content in function_call_output; annotations and logprobs; text-to-speech;
-              transcription timestamps; the ruleset on main (architect's GitHub admin step);
-              a CI integration job.
+Out of scope  Anthropic Messages and its SSE events (client-messages); Open Responses as a
+              wire format, decoding the router's /v1/responses stream (client-responses);
+              reasoning summary events, output_text annotations, and logprobs; streamed
+              vision and audio integration tests (input parts don't change the stream);
+              reconnecting or resuming a stream (Last-Event-ID); retrying Transcribe or a
+              started stream; streamed embeddings or transcription; an exported SSE
+              package; Collect and other helpers over the Accumulator; a CI integration
+              job.
 
-Door          one-way for the v0.1.0 tag (checksum database pins it; never re-cut).
-              Everything else two-way: confined to spike-ai-pipeline-client, nothing
-              depends on it until the tag.
+Door          one-way for the v0.2.0 tag (the checksum database pins it; never re-cut).
+              Everything else two-way: confined to spike-ai-pipeline-client, and v0.1.0's
+              consumers move only when they take v0.2.0.
 
-Release       v0.1.0 (spike-ai-pipeline-client)
+Release       v0.2.0 (spike-ai-pipeline-client)
 ```
 
 ## Decisions
@@ -270,7 +261,9 @@ Release       v0.1.0 (spike-ai-pipeline-client)
   structured output, reasoning returned and sent back; embeddings ([]float32); transcription. No
   text-to-speech: the router has no route for it.
 - setup: streaming is an iter.Seq2 of typed deltas with an accumulator, over an in-house SSE
-  decoder written to the full spec. Rejected: tau's goroutine-fed channel.
+  decoder written to the full spec. Rejected: tau's goroutine-fed channel; a third-party SSE
+  library, which the base module's standard-library-only rule forbids (Go's standard library
+  has no SSE client).
 - setup: retry is opt-in and off by default: 408, 429, 503, and pre-response connection failures
   only, honoring Retry-After, never a 500 or a started stream. Timeouts come from the context and
   ResponseHeaderTimeout, never http.Client.Timeout.
@@ -469,6 +462,55 @@ Release       v0.1.0 (spike-ai-pipeline-client)
   load request; only a listing that lacks a preset model, a failed load, or the deadline fails
   the run. Without it the first run after a restart exited 1 on a refused poll. Rejected:
   leaving the restart path to fail its first run.
+- client-streaming: streamed events are Open Responses' semantic streaming events (spec
+  2026-04-24) under the spec's names, a closed protocol.Event type; Chat Completions turns its
+  chunks into them, and client-responses will decode them almost as-is. Rejected: the client's
+  own short deltas (text, reasoning, tool-call fragment, done).
+- client-streaming: Chat Completions emits the spec's full per-item sequence (output_item and
+  content_part added/done around each part's deltas), opened by response.created and closed by
+  one terminal event. Rejected: emitting deltas alone.
+- client-streaming: streaming is required of every Format: a stream encoder and a stateful
+  stream decoder, a change v0.2.0 marks as breaking for a format written outside the module.
+  Rejected: an optional streaming interface found by type assertion.
+- client-streaming: GenerateStream(ctx, req) returns iter.Seq2[protocol.Event, error] and is
+  lazy: it sends when ranged, a refused request, token error, or non-2xx reply is its only
+  pair, breaking out closes the body, and each range sends a new request. Rejected: an eager
+  (iter.Seq2, error) that sends at the call.
+- client-streaming: protocol.Accumulator is a value the caller feeds in its own loop, Add(event)
+  then Response(). Rejected: a Collect function that consumes the whole sequence.
+- client-streaming: a stream that breaks mid-response leaves the Accumulator's partial Response,
+  status in_progress (the spec's, added to Status); an error frame is a typed stream error with
+  message, type, and code. Rejected: no Response after a broken stream.
+- client-streaming: the streamed Chat Completions request always sends
+  stream_options.include_usage, so the accumulated Response carries usage; llama.cpp sends none
+  without it. Rejected: leaving it to Native.
+- client-streaming: retry is a Config field, unset meaning off, applied by the Client to each
+  attempt, calling the token source again and resending the same encoded body. Rejected: an
+  http.RoundTripper the caller wraps around its transport (resends a stale token, depends on
+  GetBody).
+- client-streaming: the retry policy is a fixed struct (most attempts, base delay, most delay)
+  with exponential backoff and full jitter, checked in New. Rejected: a caller function deciding
+  each delay (invites retrying a 500).
+- client-streaming: a Retry-After longer than the policy's most delay, or a wait past the
+  context's deadline, returns the last error at once. Rejected: waiting the full Retry-After.
+- client-streaming: Transcribe is never retried; its clip is a one-shot reader uploaded as it
+  is read. Generate, GenerateStream before its first byte, and Embed retry. Rejected: retrying
+  when the reader is an io.Seeker.
+- client-streaming: the integration tier streams text, a function_call, and the reasoning and
+  function_call round trip on gpt-oss-120b, and cancels a stream midway; retry is proven by unit
+  tests only, as the router can't answer 408, 429, or 503 on demand. Rejected: streamed vision
+  and audio on the Gemma models.
+- client-streaming: the SSE decoder is an internal package of the base module. Rejected:
+  exporting it for processing and the root (no second consumer; the capstone serves SSE rather
+  than reads it).
+- client-streaming: stream is a typed field in both Chat Completions encodings (false
+  unstreamed, true streamed), so a Native stream or stream_options key is refused as a clash
+  before anything is sent; v0.1.0 sent a Native "stream": true and then couldn't decode the
+  reply. Rejected: leaving stream to Native.
+- client-streaming: BUILD checkpoints after every slice for the architect's read of the source
+  it changed (the architect's call at approval, as last session), with a standards-review pass
+  before slice 2's. Rejected: one checkpoint after slice 2; running every slice to the session
+  brief.
 
 ## Pending edits
 
