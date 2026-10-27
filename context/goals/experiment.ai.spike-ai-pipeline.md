@@ -1,13 +1,13 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** client-core
-- **Branch:** client-core
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] host
-2. [ ] client-core
+2. [x] client-core
 3. [ ] client-streaming
 4. [ ] client-messages
 5. [ ] client-responses
@@ -242,10 +242,6 @@ Door          one-way for the v0.1.0 tag (checksum database pins it; never re-cu
 
 Release       v0.1.0 (spike-ai-pipeline-client)
 ```
-
-## Progress
-
-slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · surface (2e56895) + embedding swap (root 6ac6026, e738c96, 54d55cb; client ce6d136) · standards 2 (client 6795861, 8557ea0; root 09a4af6) · spec 2 (no gaps) · editor (done)
 
 ## Decisions
 
