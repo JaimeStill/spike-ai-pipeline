@@ -221,7 +221,7 @@ Slices
      Demo: integration round trip on gpt-oss-120b ending completed. (4, 8, 16)
   6. Structured output: text.format json_schema. Demo: strict schema on gpt-oss-120b
      decoded into a struct. (10, 16)
-  7. Embeddings. Demo: 768-dimension embeddings on embeddinggemma-2, in order. (12, 16)
+  7. Embeddings. Demo: 768-dimension embeddings on granite-embedding-english-r2, in order. (12, 16)
   8. Transcription. Demo: the phrase clip on gemma-4-E4B, "The access code is 7429."
      (13, 16)
   9. Release v0.1.0: README current, CHANGELOG dated, tag pushed after main's CI passes.
@@ -245,7 +245,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · surface (2e56895) + embedding swap (root 6ac6026, e738c96, 54d55cb; client ce6d136) · standards 2 (client 6795861, 8557ea0; root 09a4af6) · spec 2 (no gaps) · editor —
+slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · surface (2e56895) + embedding swap (root 6ac6026, e738c96, 54d55cb; client ce6d136) · standards 2 (client 6795861, 8557ea0; root 09a4af6) · spec 2 (no gaps) · editor (done)
 
 ## Decisions
 
@@ -340,8 +340,10 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
   clone's untracked `.state/preset.sha256`.
 - host: the probe's tool call uses Chat Completions with tool_choice required.
 - host: findings live under `docs/findings/`.
-- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`); the setup
-  rejection of Responses as "router support unverified" is open at the client's plan round.
+- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`), which reopened
+  the setup rejection of Responses as "router support unverified". client-core settled it:
+  Anthropic Messages stays the second format, and Open Responses becomes the third,
+  client-responses.
 - host: transcription returns no timestamps at b11669: only response_format json, and
   timestamp_granularities is ignored; audio seams align on the overlapping words alone.
 - host: gb10-2's spike-model-engines clone is removed; spike-ai-pipeline's clone is gb10-2's
@@ -377,21 +379,24 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - client-core: reasoning goes back on input through encrypted_content: each format writes a
   versioned envelope of its own there when it unfolds a reply (Chat Completions: the
   reasoning_content text; later Anthropic: thinking text and signature), reads it back when it
-  folds, and drops another format's envelope. Input reasoning items never carry content.
-  Rejected: content on input reasoning items as a listed deviation from the spec.
+  folds, and drops another format's envelope. A format never sends an input reasoning item's
+  content: it ignores it, as the spec's input reasoning item has none. Rejected: content on
+  input reasoning items as a listed deviation from the spec.
 - client-core: max_output_tokens is a typed request field, in the spec's stateless subset.
 - client-core: the client follows service-tiers: Open Responses' stateless subset is the
-  standard tier, the request's Native raw-JSON field the native tier, each wire format an
-  adapter package beneath Format, named for its target API. Root package `client` holds the
-  model, Config, Client, Format, errors, embeddings, and transcription; `chatcompletions` is a
-  package, not a sub-module. Rejected: splitting by topic; sub-modules without third-party
-  weight.
+  standard tier, the request's Native raw-JSON field the native tier, and each wire format an
+  adapter package beneath Format, named for its target API, not a sub-module. Rejected: splitting
+  by topic; sub-modules without third-party weight. The package layout first planned here, one
+  root package `client` holding the model, Config, Client, Format, errors, embeddings, and
+  transcription, with a `chatcompletions` package, is superseded by the four layers
+  (checkpoint, below).
 - client-core: Format is a required Config field, chosen once by typed constructor at the
-  caller's composition root. Rejected: a Format argument on every Respond call.
+  caller's composition root. Rejected: a Format argument on every Generate call.
 - client-core: the integration tier is a root-level `integration` package, `-tags
   integration`, driving the exported API black-box. Rejected: tagged files beside each package.
-- client-core: the extension list lives in the root doc.go, held by review. Rejected: a test that
-  reads source (structure-sensitive).
+- client-core: the extension list lives in one doc.go, held by review: the root's at first,
+  `protocol/doc.go` since the four layers. Rejected: a test that reads source
+  (structure-sensitive).
 - client-core: BUILD checkpoints once, after slice 2, for the architect's read of the Go source.
   Rejected: running every slice to the session brief.
 - client-core (checkpoint): items and content parts stay value types; a *Message is refused at
@@ -453,8 +458,8 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - client-core: set A's embedding model is granite-embedding-english-r2
   (`mrutkows/granite-embedding-english-r2-GGUF:BF16`), replacing EmbeddingGemma 2, which vLLM
   can't serve on GB10 (coordinator ai-hosting.md, "Set A's embedding model"); the swap lands in
-  client-core, so v0.1.0's evidence is on the set A that stays. Supersedes the host lines naming
-  EmbeddingGemma 2. Rejected: a root task of its own after client-core.
+  client-core, so v0.1.0's evidence is on the set A that stays. Supersedes EmbeddingGemma 2 as
+  the host task staged and loaded it. Rejected: a root task of its own after client-core.
 - client-core: granite's gb10-2 section is c 32768 with 4 slots (each slot its trained 8192),
   b = ub = 8192, embeddings = true, no pooling key (its GGUF declares CLS). Rejected: c 8192
   (2048 per slot).
@@ -476,8 +481,10 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
   server-cuda13-b11669, kept current by the root's `mise run host-update` at each session's
   start, and that a borrowing session restores the pipeline engine by leaving the llama container
   running, since host-update fails on a stopped one rather than starting it.
-- coordinator · roadmap: the `host` task's summary says the router loads models on demand; it
-  runs --no-models-autoload, and host-update loads set A through the load API.
+- coordinator · roadmap, the `host` task's summary: the router runs --no-models-autoload, and
+  host-update loads set A through the load API, where the summary says it loads models on demand;
+  and the staged GGUFs name granite-embedding-english-r2 BF16 where they name embeddinggemma-2
+  Q8_0.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline` bullet (capstone): pipeline
   storage for AI-assisted processing and semantic search. Source blobs stay in blob storage; the
   database holds what the stages derive from them, each stage's output a versioned artifact
@@ -492,12 +499,24 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - coordinator · roadmap: add task `client-responses` to experiment.ai.spike-ai-pipeline after
   `client-messages` ("The Open Responses format": the Open Responses wire format, near identity
   over the client's Open Responses-based model, with its semantic streaming events, proven
-  against the router's `/v1/responses`; tags client v0.4.0); extend evidence 2 in its README and
-  the roadmap to a third format, Open Responses, the model's own baseline; and reword the
-  `client-core` summary: the stable model is Open Responses' item model, stateless subset.
-- coordinator · roadmap: `client-core`'s repos gain `spike-ai-pipeline` (set A's embedding model
-  swapped to granite-embedding-english-r2 in the root's preset and probe); the `host` task's
-  summary names embeddinggemma-2 Q8_0 among the staged GGUFs, now granite-embedding-english-r2
-  BF16; the spike summary's "is to change" sentence becomes done.
+  against the router's `/v1/responses`; tags client v0.4.0), and extend evidence 2 in its README
+  and the roadmap to a third format, Open Responses, the model's own baseline.
+- coordinator · roadmap, the `client-core` task: its summary says the stable model is Open
+  Responses' item model, stateless subset, and its repos gain `spike-ai-pipeline`, where set A's
+  embedding model was swapped to granite-embedding-english-r2 in the preset and probe.
+- coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
+  change" to granite-embedding-english-r2 says it changed.
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
+  v0.1.0:
+
+  > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
+  >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
+  >   libraries, on the standard library alone. Its protocol is Open Responses (spec 2026-04-24)
+  >   in its stateless subset; client extensions, audio input first, fill the spec's gaps and are
+  >   removed when it adopts them. Four layers import one way: the `client` transport, with
+  >   Generate, Embed, and Transcribe; `protocol`; the `format` contract; and a `format/<api>`
+  >   adapter per wire format, named by endpoint and chosen by typed constructor: `completions`
+  >   now, `messages` (Anthropic Messages) and `responses` planned. Streaming, with opt-in retry,
+  >   is planned next.
 - coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
   granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).

@@ -241,6 +241,12 @@ EmbeddingGemma 2, and stay as measured. The preset's section and its reasons are
 `engines/llama-preset/models.ini`: c 32768 over 4 slots, each its trained 8192; b = ub = 8192;
 embeddings on; CLS pooling, as its GGUF declares.
 
+- **llama.cpp build:** the router reports `version: 0.7.0-dev (build 11669, commit 620d2225c)`,
+  as host-update's record prints it.
+- **gb10-2's stack:** Ubuntu 24.04.5 LTS, DGX OS 7.6.0; kernel 7.0.0-1019-nvidia; driver
+  580.178.04; CUDA 13.0; Docker 29.6.2; NVIDIA Container Toolkit 1.20.1.
+- **The laptop's network path:** direct, under 1 ms (tailscale ping from the laptop, as
+  host-update reports it).
 - **Staging:** `granite-embedding-english-r2-bf16.gguf`, 299,876,704 bytes, downloaded into
   `/srv/models` by hf 2.3.0 in 9 s. EmbeddingGemma 2's file stays in the store, read by nothing,
   so the router still lists its cache entry, `unloaded`.
