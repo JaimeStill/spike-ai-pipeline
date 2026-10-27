@@ -22,8 +22,9 @@
 #      moved, or restarted this run read the preset as it started, so its digest is recorded.
 #   5. Loads each model the preset names through the router's load API, and waits until all are
 #      loaded, or fails naming each that failed or didn't load in time. A poll the router doesn't
-#      answer, refused or non-2xx, is a router not ready yet: polling goes on until the deadline,
-#      and only a listing that lacks a model the preset names fails the run at once.
+#      answer, refused, non-2xx, or not the JSON expected, is a router not ready yet: polling goes
+#      on until the deadline, and only a listing that lacks a model the preset names fails the run
+#      at once.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
 #      address. Then it prints what changed, or that nothing did, and names a clone with no
 #      upstream whose commit differs from the laptop's branch.
