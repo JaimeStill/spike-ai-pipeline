@@ -189,7 +189,7 @@ router_action() {
 		echo update
 	elif [[ $status != running ]]; then
 		echo stopped
-	elif [[ $mount_source == - || $mount_source != "$preset" ]]; then
+	elif [[ $mount_source != "$preset" ]]; then
 		echo move
 	elif [[ $mount == dead ]]; then
 		echo restart
