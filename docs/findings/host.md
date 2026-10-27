@@ -3,10 +3,10 @@
 Task `host`, behaviors 9 to 11 (`context/goals/experiment.ai.spike-ai-pipeline.md`, "Task brief ·
 host"). Measured 2026-10-26, from the laptop, against gb10-2's llama.cpp router serving set A.
 
-This finding's script paths were rewritten from `engines/` to `host/` by the host-scripts task,
-after the rename (spike-model-engines' host-rename, 7cd0ddb; the root's copy from d285b06). The
-commands were run on gb10-2 with the `engines/` paths, as `engines/engines llama install`; they
-read `host/` here, and nothing else changed: no result did.
+The commands here name the scripts' current directory, `host/`. They ran on gb10-2 from
+`engines/`, as `engines/engines llama install`, before spike-model-engines renamed the directory
+(host-rename, 7cd0ddb) and the host-scripts task re-copied the scripts from d285b06 under `host/`.
+Only the paths were rewritten; no result changed.
 
 ## Results: Responses and transcription timestamps
 
@@ -256,15 +256,15 @@ embeddings on; CLS pooling, as its GGUF declares.
   `/srv/models` by hf 2.3.0 in 9 s. EmbeddingGemma 2's file stays in the store, read by nothing,
   so the router still lists its cache entry, `unloaded`.
 - **A dead preset mount, and the fix:** delivering the branch replaced the clone's
-  `engines/llama-preset/` directory (now `host/llama-preset/`), which left the running container's bind mount on the old,
-  empty one. The reload then failed: `/models?reload=1` returned HTTP 500, "preset file does not
-  exist: /etc/llama-preset/models.ini". host-update now checks the mount and restarts a running
-  router that can't see the preset the clone has, which binds the directory afresh; it still never
-  starts a stopped router. Its run printed `router: restarted, since it couldn't see
-  /etc/llama-preset/models.ini, which the clone has (a dead preset mount)` and requested the four
-  loads. One `/models` poll during the loads was refused ("Could not connect to server"), which the
-  run reported as the router not listing gpt-oss-120b, and it exited 1. A second run, with no
-  change between, found all four loaded (exit 0, "nothing changed").
+  `engines/llama-preset/` directory (now `host/llama-preset/`), which left the running container's
+  bind mount on the old, empty one. The reload then failed: `/models?reload=1` returned HTTP 500,
+  "preset file does not exist: /etc/llama-preset/models.ini". host-update now checks the mount and
+  restarts a running router that can't see the preset the clone has, which binds the directory
+  afresh; it still never starts a stopped router. Its run printed `router: restarted, since it
+  couldn't see /etc/llama-preset/models.ini, which the clone has (a dead preset mount)` and
+  requested the four loads. One `/models` poll during the loads was refused ("Could not connect to
+  server"), which the run reported as the router not listing gpt-oss-120b, and it exited 1. A second
+  run, with no change between, found all four loaded (exit 0, "nothing changed").
 - **A refused poll, and the fix:** host-update's load loop now reads a `/models` request that
   fails (refused, non-2xx, or not the JSON expected) as a router not ready yet and keeps polling
   until its deadline; only a listing that lacks a preset model fails the run at once. Its run with

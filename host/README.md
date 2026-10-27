@@ -20,11 +20,11 @@ at commit `d285b06`:
 
 spike-model-engines also runs llama.cpp natively (`llama-native.sh`, the
 `engines-llama-native-*` commands, `llama-router.service`, and `llama-router.sudoers`); those files
-are deliberately not copied, since gb10-2 serves from the container.
+aren't copied, since gb10-2 serves from the container.
 
-They are never edited here; a change comes as a new copy from a later commit, with this record
-updated. With spike-model-engines checked out beside this repository, this prints nothing when the
-copies match their source:
+The copies are never edited here; a change comes as a new copy from a later commit, with the commit
+and file list above updated. With spike-model-engines checked out beside this repository, this
+prints nothing when the copies match their source:
 
 ```sh
 for f in engines engines.sh engines-llama-install engines-llama-update engines-llama-uninstall llama.env llama.sh llama-release.sh; do
