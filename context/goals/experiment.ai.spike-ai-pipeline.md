@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** client-messages
-- **Branch:** client-messages
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -10,7 +10,7 @@
 2. [x] client-core
 3. [x] host-scripts
 4. [x] client-streaming
-5. [ ] client-messages
+5. [x] client-messages
 6. [ ] client-responses
 7. [ ] tools
 8. [ ] documents
@@ -149,28 +149,6 @@ Door          one-way for the release: tag v0.3.0 is pushed. The code is two-way
               adds a format and changes no existing contract.
 Release       spike-ai-pipeline-client v0.3.0
 ```
-
-## Progress
-
-- slice 1 (unary text): client e1f4e3d; check passes; integration passes on gb10-2 (chat,
-  incomplete, unknown model, vision through both formats). Interim: thinking blocks dropped
-  until slice 2; unsupported inputs, Native, and streaming refused as "not yet supported".
-  Checkpoint passed.
-- slice 2 (tools, reasoning, effort, structured output, native tier): client 13c9fb4; check and
-  integration pass (named/allowed choices, structured output, effort recorded on messages).
-  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint passed.
-- slice 3 (streaming): client 9850637; check and integration pass (stream text, function call,
-  reasoning round trip, cancel through both formats). Checkpoint passed.
-- slice 4 (full run): client 7431f93 (one "recorded:" line per unasserted outcome); one verbose
-  integration run passed in 90.6s, every Generate/GenerateStream scenario through both formats
-  (audio completions-only). On messages the router maps named and allowed_tools choices to
-  required, yet gpt-oss made no call and looped to the 1024 bound (~21s each). Checkpoint
-  passed.
-- slice 5 (release preparation): client 6b69ea7 (v0.3.0 CHANGELOG entry, README, capability map,
-  package docs); check passes.
-- final standards review: 2f71794, f7c7f01 (no behavior change); check passes.
-- spec review: no gaps. One verbose integration run passed in 88.5s on gb10-2 (router b11669),
-  every Generate/GenerateStream scenario through both formats. v0.3.0 prepared, not tagged.
 
 ## Decisions
 
