@@ -1,14 +1,14 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** host-scripts
-- **Branch:** host-scripts
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] host
 2. [x] client-core
-3. [ ] host-scripts
+3. [x] host-scripts
 4. [x] client-streaming
 5. [ ] client-messages
 6. [ ] client-responses
@@ -77,10 +77,6 @@ Out of scope  the native llama.cpp method and vLLM on gb10-2; semver reporting i
               rewriting historical Decisions beyond the superseding line
 Door          two-way (no release; gb10-2's mount can be moved back by the same update)
 ```
-
-## Progress
-
-slices 4/4 committed · standards ✓ (607fd05, 6bade43) · spec ✓ no gaps · editor ✓
 
 ## Decisions
 
