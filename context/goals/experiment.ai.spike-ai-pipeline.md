@@ -1,238 +1,86 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** host-scripts
+- **Branch:** host-scripts
 
 ## Tasks
 
 1. [x] host
 2. [x] client-core
-3. [x] client-streaming
-4. [ ] client-messages
-5. [ ] client-responses
-6. [ ] tools
-7. [ ] documents
-8. [ ] office-cli
-9. [ ] office
-10. [ ] audio
-11. [ ] streams
+3. [ ] host-scripts
+4. [x] client-streaming
+5. [ ] client-messages
+6. [ ] client-responses
+7. [ ] tools
+8. [ ] documents
+9. [ ] office-cli
+10. [ ] office
+11. [ ] audio
+12. [ ] streams
 
-## Task brief · client-streaming
+## Task brief · experiment.ai.spike-ai-pipeline · host-scripts
 
 ```
-Problem       v0.1.0 returns a response only once the model has finished, so a caller shows
-              nothing for the tens of seconds gpt-oss-120b spends reasoning, can't stop a
-              generation part way, and gets no help with an overloaded endpoint. Evidence 1
-              needs chat, tools, and the reasoning round trip streamed as well as unstreamed,
-              and evidence 6 needs a stream that processing can cancel. This task streams
-              Generate as Open Responses' semantic events (spec 2026-04-24). It adds an SSE
-              decoder written to the full WHATWG spec on the standard library alone, an
-              accumulator that folds the events into the Response Generate would return,
-              cancellation, and the opt-in retry policy. Tags client v0.2.0.
+Problem       spike-model-engines renamed engines/ to host/ (host-rename, 7cd0ddb), and
+              llama-gb10-native (d285b06, its main's tip) then added llama-release.sh, a
+              version argument, and a refusal while a native llama-router unit runs. The
+              root still carries the 698f75c copy under engines/, so its diff check names a
+              path the source no longer has, and gb10-2 still mounts the preset from
+              engines/. Moving the directory naively breaks gb10-2: host-update would read
+              the vanished mount as dead and restart the container without a preset. This
+              task re-copies the scripts from d285b06 under host/ and teaches host-update to
+              move the mount, so gb10-2 matches gb10-1.
 
 Behaviors
-  1.  The SSE decoder follows the WHATWG event-stream parsing rules:
-        - CR, LF, and CRLF line endings, and a leading BOM stripped
-        - comment lines ignored; a field with no colon is a name with empty value
-        - one leading space after the colon removed
-        - data lines joined with "\n"; event names the type
-        - an id holding NUL is ignored; retry is accepted as digits only
-        - an event is dispatched at a blank line, never at end of stream without one
-        - unknown fields are ignored
-      It reads the body as the bytes arrive, holding only the event being built. It never
-      reconnects, and it never sends Last-Event-ID.
-  2.  The protocol gains Open Responses' streaming events as a closed Event sum type,
-      under the spec's names. Each event carries its sequence_number and, where the
-      spec gives them, output_index, content_index, and item_id:
-        state      response.created, and the terminal response.completed,
-                   response.incomplete, and response.failed, each with the Response
-        items      response.output_item.added and response.output_item.done
-        parts      response.content_part.added and response.content_part.done
-        deltas     response.output_text.delta and .done, response.refusal.delta and
-                   .done, response.reasoning.delta and .done (reasoning_text),
-                   response.function_call_arguments.delta and .done
-      Status gains the spec's in_progress. Summary events, annotations, and logprobs
-      are outside the subset.
-  3.  The Chat Completions format turns its chunks into events in the spec's order. A
-      stream opens with response.created and closes with one terminal event, whose
-      Response holds the finished output and the usage. Each item it produces gets its
-      own events, in v0.1.0's output order: reasoning, then message, then function
-      calls. For each item:
-        - output_item.added, then content_part.added for each content part
-        - that part's deltas and its .done, then content_part.done
-        - output_item.done carrying the whole item
-      A reasoning item's output_item.done carries the format's encrypted_content
-      envelope, as Generate's does. Tool-call fragments are assembled by their index:
-      the first fragment carries call_id and name, and later ones add argument text.
-      finish_reason maps to status as in v0.1.0. The format treats data [DONE] as the
-      end of the stream; a stream that ends after finish_reason without [DONE] is also
-      complete.
-  4.  The streamed Chat Completions request always sends stream true and
-      stream_options.include_usage true. The unstreamed request sends stream false.
-      Because stream is a typed field in both encodings, a Native stream or
-      stream_options key is refused as a clash, before anything is sent.
-  5.  (*Client).GenerateStream(ctx, req) returns an iter.Seq2 of events and errors, and
-      it is lazy: nothing is validated, encoded, or sent until the sequence is ranged.
-        - A refused request, a token source error, or a non-2xx reply (the same
-          *APIError as Generate) is yielded as the sequence's only pair.
-        - The request asks Accept text/event-stream.
-        - Breaking out of the loop closes the body, and no goroutine outlives the loop.
-        - Each range sends a new request; the doc says so.
-  6.  An error during the stream ends the sequence with one error pair, and no event
-      follows it:
-        - a dropped connection, or a stream ending before its terminal event:
-          io.ErrUnexpectedEOF, matchable with errors.Is
-        - a cancelled or expired context: the context's error, wrapped, matchable
-          with errors.Is
-        - an error frame from the server (data {"error": {...}}): a typed stream
-          error with its message, type, and code, matchable with errors.As
-        - a chunk the format can't decode: a decode error
-      Cancelling closes the connection, which stops the router's generation.
-      llama.cpp's 30-second ping comments are ignored.
-  7.  protocol.Accumulator folds events in the caller's own loop. Add(event) takes each
-      event in turn and refuses one that doesn't follow the events before it, such as a
-      delta for an item that wasn't added. Response() returns the Response folded so far.
-      After a terminal event it equals the terminal event's Response, and for the same
-      reply it equals what Generate decodes. After a broken stream it holds the
-      partial output, with status in_progress.
-  8.  Retry is a Config field, unset by default; unset, nothing is retried. The policy
-      sets the most attempts, a base delay, and a most delay. New refuses a policy with
-      fewer than one attempt, a negative delay, or a base delay above the most delay.
-      With a policy:
-        - Generate and Embed, and GenerateStream before its first byte, retry 408,
-          429, 503, and a connection failure before any response
-        - nothing else is retried: never a 500, another status, or a started stream
-        - each attempt calls the token source again and resends the same encoded body
-        - the wait is exponential backoff with full jitter, capped at the most delay
-        - a Retry-After, in seconds or as an HTTP date, replaces the backoff
-        - a Retry-After longer than the most delay, or a wait past the context's
-          deadline, returns the last error at once
-        - a context cancelled while waiting returns the context's error
-        - the last attempt's error is returned as v0.1.0 returns it
-      Transcribe is never retried, because its clip is a one-shot reader uploaded as it
-      is read; its doc says so. Timeouts stay the caller's: the context, and the
-      transport's ResponseHeaderTimeout, never http.Client.Timeout. The library sets no
-      timeout or limit.
-  9.  The base module still imports only the standard library (depguard), and the
-      check passes.
-  10. The integration tier passes against set A on gb10-2, every v0.1.0 test plus:
-        streamed text, its accumulated Response completed with usage   gpt-oss-120b
-        a streamed function_call (tool_choice required)                gpt-oss-120b
-        a streamed reasoning and function_call round trip, the         gpt-oss-120b
-          accumulated output sent back, ending completed
-        a context cancelled mid-stream: the context's error, and a      gpt-oss-120b
-          partial Response, status in_progress, holding the text so far
-      Retry is proven by unit tests only: the router can't answer 408, 429, or 503
-      on demand.
+  1.  The root's host/ holds spike-model-engines' llama.cpp container scripts copied
+      byte-identical from d285b06: engines, engines.sh, engines-llama-install,
+      engines-llama-update, engines-llama-uninstall, llama.env, llama.sh, and
+      llama-release.sh. Neither the native method's files nor vLLM's are copied. The
+      root's own preset lives at host/llama-preset; engines/ no longer exists.
+  2.  The README's diff check names d285b06 and those 8 files, and running it prints
+      nothing.
+  3.  Every live reference to the old path (README, context README, currency, host-update,
+      the probe, lint config, mise comments, preset header comments) names host/; currency
+      still reads the llama.cpp pin from the copied llama.env and stays exit 0.
+  4.  host-update recognizes a new router state, "moved": the llama container is running
+      with its preset mount sourced anywhere other than the clone's host/llama-preset. In
+      that state it runs the copied `host/engines llama update`, which re-creates the
+      container on the same image with the mount moved and pulls nothing. The moved check
+      precedes the dead-mount restart, so a vanished engines/ source is never restarted.
+      A fixture under the hermetic check proves the state and the action chosen.
+  5.  The other router states keep their behavior: a stopped container still fails
+      host-update; a matching mount with an unchanged preset digest does nothing; a changed
+      digest still reloads.
+  6.  docs/findings/host.md's commands name host/, with a note that the rename commit
+      rewrote the paths and no result changed.
+  7.  On gb10-2, after the branch reaches the clone, `mise run host-update` moves the mount
+      to host/llama-preset with no root step, and the router answers set A on 8080 (the
+      integration tier passes).
+  8.  The goal record lists host-scripts after client-core, supersedes the "copied verbatim
+      from 698f75c" decision with d285b06, drops the stale host-scripts pending edit, and
+      adds a coordinator pending edit: the roadmap's host-scripts proof names d285b06
+      (llama-gb10-native's merge) where it names host-rename's merge commit.
 
-Go Elemental shape  (the standards the implementer can't load, made concrete)
-  Tiers       Streaming stays in the standard tier: the spec's events under the spec's
-              names, nothing of ours added. The native tier is unchanged, apart from the
-              stream keys behaviour 4 refuses.
-  Packages    The four layers and their import direction stay as they are. The SSE
-              decoder is an internal package of the base module, used by the client and
-              by no API package; exporting it later only adds to the API. Event and the
-              Accumulator live in protocol, since folding the spec's events is the same
-              for every format. The chunk-to-event translator lives in
-              format/completions, in its decode file, with its chunk wire types beside
-              the reply's.
-  Contract    Format gains required methods, a stream encoder and a stateful stream
-              decoder. Pre-1.0, semver allows the change in a minor version, and the
-              CHANGELOG marks it as breaking for a format written outside the module. The
-              decoder takes each SSE event's type and data, returns the protocol events it
-              makes, and is told when the stream has ended. A new decoder serves each
-              stream, so a Format value stays safe for concurrent use.
-  Policy      Retry is the caller's policy, set in Config. STANDARDS.md's "ships no policy"
-              line, the Config doc, and the README become: the library sets no timeout,
-              retry, or limit unless the caller does; retry is opt-in.
-  Iteration   iter.Seq2 from the standard library, ranged once per request. No channel and
-              no goroutine feeds it: the decoder pulls from the body inside the range
-              loop.
-  Surface     (sketch; names may change in BUILD with the reason recorded)
-                (*Client).GenerateStream(ctx, *protocol.Request)
-                    iter.Seq2[protocol.Event, error]
-                type protocol.Event interface{ ... }   // closed; spec-named event types
-                type protocol.Accumulator struct{ ... }
-                (*Accumulator).Add(protocol.Event) error
-                (*Accumulator).Response() *protocol.Response
-                protocol.StatusInProgress
-                Config{ ...; Retry *RetryPolicy }
-                RetryPolicy{MaxAttempts int; BaseDelay, MaxDelay time.Duration}
-                *client.StreamError   // an error frame; errors.As
-                format.Format += EncodeStreamRequest, NewStreamDecoder
-  Docs        Every package comment's inventory gains the new identifiers, each with a
-              one-clause role. The protocol doc names the streaming subset (behaviour 2)
-              and what it leaves out. GenerateStream's doc states its laziness, its error
-              pairs, and that each range sends a new request.
-  Tests       Unit tests, hermetic:
-                - SSE decoder: table tests over each rule in behaviour 1
-                - completions: recorded router streams (text, tool call, reasoning,
-                  length, error frame) translated to event sequences, and folded to the
-                  Response that DecodeResponse gives for the same reply
-                - client_test: GenerateStream and retry against an httptest server
-                  (early break closes the body; dropped connection; cancel; 408, 429,
-                  and 503 retried; 500 and a started stream not retried;
-                  Retry-After in both forms)
-              The backoff's jitter source is replaced only through export_test.go.
-              Integration tier: the same root package, -tags integration.
-  Checkpoint  BUILD stops after every slice, once it is committed with the check passing,
-              with a short checkpoint brief: the source files the slice changed, the
-              exported surface it added or changed, and its demo's result, for the
-              architect to read the source. A redirect goes to the implementer before the
-              next slice. Slice 2's checkpoint also follows a standards-review pass, since
-              the Event, Accumulator, GenerateStream, and Format surface lands there.
-  Release     As in v0.1.0: CHANGELOG [v0.2.0] with the Format change marked as
-              breaking; the release preparation lands by PR; the tag is pushed only
-              after main's CI passes.
-
-Test seams    The client's exported API: GenerateStream ranged with an Accumulator, and the
-              Config's retry policy, driven against an httptest server that writes SSE as
-              written. completions' stream decoder is driven directly on recorded router
-              streams, as its unstreamed decoder is. The integration tier drives the same
-              API against SPIKE_ROUTER_URL.
-
-Slices
-  1. The SSE decoder: the internal package and its table tests over every parsing rule.
-     Demo: the check passes, depguard included. (1, 9)
-  2. Streamed text end to end:
-       - Event (state, item, part, and the output_text and refusal events), in_progress
-       - the Format additions, and stream as a typed field in both encodings
-       - completions' translator for messages, finish_reason, and usage
-       - lazy GenerateStream, and the Accumulator for messages
-     Demo: integration streamed text on gpt-oss-120b, accumulated with usage.
-     (2–5, 7, 10)
-  3. Tool-call deltas: function_call events, argument fragments assembled by index,
-     and their fold. Demo: integration streamed function_call on gpt-oss-120b.
-     (2, 3, 7, 10)
-  4. Reasoning deltas and the round trip: reasoning events, the envelope on the
-     reasoning item's output_item.done, and the accumulated output sent back. Demo:
-     integration streamed round trip on gpt-oss-120b ending completed. (2, 3, 7, 10)
-  5. Cancellation and failure during the stream: context cancellation, a dropped
-     connection, the error frame, ping comments, and the partial Response in
-     in_progress. Demo: integration cancel mid-stream on gpt-oss-120b. (6, 7, 10)
-  6. Retry: the Config policy and its checks in New; 408, 429, 503, and failure before
-     any response; Retry-After; backoff with jitter; Transcribe exempt. Demo: the
-     unit tests, against httptest. (8)
-  7. Release v0.2.0: README, STANDARDS.md, and the package docs current; CHANGELOG
-     dated; the tag pushed after main's CI passes. Demo: the GitHub release, and `go
-     list -m github.com/JaimeStill/spike-ai-pipeline-client@v0.2.0` resolves. (9)
-
-Out of scope  Anthropic Messages and its SSE events (client-messages); Open Responses as a
-              wire format, decoding the router's /v1/responses stream (client-responses);
-              reasoning summary events, output_text annotations, and logprobs; streamed
-              vision and audio integration tests (input parts don't change the stream);
-              reconnecting or resuming a stream (Last-Event-ID); retrying Transcribe or a
-              started stream; streamed embeddings or transcription; an exported SSE
-              package; Collect and other helpers over the Accumulator; a CI integration
-              job.
-
-Door          one-way for the v0.2.0 tag (the checksum database pins it; never re-cut).
-              Everything else two-way: confined to spike-ai-pipeline-client, and v0.1.0's
-              consumers move only when they take v0.2.0.
-
-Release       v0.2.0 (spike-ai-pipeline-client)
+Test seams    host-update's router-state classifier over fixture `docker inspect` output
+              (the hermetic check); the README's diff check; `mise run integration` against
+              gb10-2's router
+Slices        1. Copy and rename: host/ from d285b06 (8 files), preset moved, every live
+                 reference and the diff check updated; check passes.
+              2. host-update's moved state, with its fixture, ahead of the dead-mount
+                 restart; check passes.
+              3. Findings paths rewritten with the rename note.
+              4. gb10-2: push the branch to the clone, run host-update, see the mount move,
+                 run the integration tier.
+Out of scope  the native llama.cpp method and vLLM on gb10-2; semver reporting in currency
+              (the source leads with releases since d285b06; the root's own later change);
+              rewriting historical Decisions beyond the superseding line
+Door          two-way (no release; gb10-2's mount can be moved back by the same update)
 ```
+
+## Progress
+
+slices 0/4 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -566,6 +414,16 @@ Release       v0.2.0 (spike-ai-pipeline-client)
 - client-streaming: the integration tier is v0.1.0's, integration/ (package integration_test,
   -tags integration), where the brief's Tests line says "the same root package".
 
+- host-scripts: the root's host/ copies spike-model-engines d285b06 (llama-gb10-native's merge,
+  its main's tip), not host-rename's 7cd0ddb, which the roadmap named. Supersedes the host
+  decision "copied verbatim from spike-model-engines 698f75c".
+- host-scripts: host-update gains a "moved" router state that runs `host/engines llama update`
+  to move the preset mount. Rejected: running the update over SSH by hand once.
+- host-scripts: docs/findings/host.md's paths are rewritten to host/ with a rename note,
+  following spike-model-engines' fe8bbeb.
+- host-scripts: only the container set plus llama-release.sh is copied. Rejected: the native
+  method's files; gb10-2 serves from the container, which has proven as performant as native.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -611,9 +469,9 @@ Release       v0.2.0 (spike-ai-pipeline-client)
   >   `completions` now, `messages` (Anthropic Messages) and `responses` planned. GenerateStream
   >   yields Open Responses' streaming events, which a `protocol.Accumulator` folds into the
   >   Response Generate returns. Retry is opt-in.
-- spike-ai-pipeline · this record's Tasks: the roadmap's `host-scripts` task (after
-  `client-core`, waiting on spike-model-engines' `host-rename`) is missing; it joins Tasks at the
-  next plan or start, so the record and the roadmap agree.
+- coordinator · roadmap, the `host-scripts` task: its summary and proof name d285b06
+  (llama-gb10-native's merge) where they name host-rename's merge commit, and its summary
+  says the container scripts plus llama-release.sh are copied.
 - architecture · a retro candidate: "follow the spec wherever possible", the architect's standing
   rule for the client (client-streaming), may belong in STANDARDS.md or the architecture layer as
   a standard.
