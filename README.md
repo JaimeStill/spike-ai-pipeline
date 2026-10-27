@@ -57,7 +57,8 @@ tracks `origin/main`, and host-update pulls it from then on:
 `mise run integration` probes the router from the laptop (`probe/`). It checks every set A
 capability, and checks the build, sampling, and slots against the pin and the preset.
 [The host finding](docs/findings/host.md) records its runs, including whether the router answers
-`/v1/responses` and whether transcription returns timestamps.
+`/v1/responses` and whether transcription returns timestamps, and what the router's
+`/v1/messages` drops, from the client's integration run.
 
 ## The question
 

@@ -301,3 +301,40 @@ curl -s "$R/v1/embeddings" -H 'Content-Type: application/json' -d "{\"model\":\"
 curl -s "$R/props?model=$M&autoload=false" | jq -c '{build_info, total_slots, n_ctx: .default_generation_settings.n_ctx}'
 ssh gb10-2 nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader
 ```
+
+## 2026-10-27: the router's `/v1/messages`
+
+Task `client-messages`. The client's Messages format (spike-ai-pipeline-client `format/messages`)
+ran every Generate and GenerateStream scenario of the client's integration tier against gb10-2's
+router, beside Chat Completions, and the run passed in 88.5 s. The router, at the same build,
+`version: 0.7.0-dev (build 11669, commit 620d2225c)`, answers `/v1/messages` as follows:
+
+- **The request:** the router rebuilds the body as a Chat Completions request. It drops
+  `output_config`, so structured output came back as prose and reasoning effort had no consistent
+  effect. It also drops a tool's `strict` and the `none` tool choice.
+- **Named tool choices:** the router maps a named tool choice and an `allowed_tools` choice to
+  required, yet gpt-oss-120b made no call under either. It repeated its answer, "4", until the
+  1024-token bound, and each reply came back `incomplete` after about 21 s. Through Chat
+  Completions the same requests completed with "4" in under 1 s.
+- **Reasoning:** a reply's thinking blocks carry an empty signature. Sending them back works,
+  since the router reads the thinking text and ignores the signature.
+- **The stream:** every `content_block_stop` arrives at the end of the reply, so blocks are open
+  at the same time. A stream error frame, read from the source at 620d2225c
+  (`tools/server/server-context.cpp:5037-5046`) and not seen in a run, is `event: error` with
+  data `{"code","message","type":"server_error"}`, with no `"type":"error"`.
+
+The run's recorded lines for the dropped hints and choices:
+
+```
+reasoning_test.go:87: recorded: messages TestReasoningEffort: effort none: status completed, 75 bytes of reasoning, 39 output tokens
+reasoning_test.go:87: recorded: messages TestReasoningEffort: effort low: status completed, 350 bytes of reasoning, 139 output tokens
+reasoning_test.go:87: recorded: messages TestReasoningEffort: effort high: status completed, 214 bytes of reasoning, 77 output tokens
+structured_test.go:48: recorded: messages TestStructuredOutput: output_text decodes as the schema's object: did not hold; output_text "The capital of France is **Paris**.", error jsontext: invalid character 'T' at start of value
+tools_test.go:155: recorded: messages TestNamedToolChoices/named_function_get_weather: named function get_weather: status incomplete, output [output_text "4We need to output the number alone, no extra text.4444The answer is 4.44…
+tools_test.go:155: recorded: messages TestNamedToolChoices/allowed_tools_get_weather,_required: allowed_tools get_weather, required: status incomplete, output [output_text "44No further.That is final.4Oops repeated. …
+tools_test.go:155: recorded: messages TestNamedToolChoices/none: none: status completed, output [output_text "4"]
+```
+
+The run is the client's integration tier run verbose, from the laptop in
+spike-ai-pipeline-client at `f7c7f01`:
+`GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 mise exec -- go test -race -tags integration -count=1 -v ./...`.

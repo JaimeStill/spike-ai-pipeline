@@ -158,15 +158,19 @@ Release       spike-ai-pipeline-client v0.3.0
   Checkpoint passed.
 - slice 2 (tools, reasoning, effort, structured output, native tier): client 13c9fb4; check and
   integration pass (named/allowed choices, structured output, effort recorded on messages).
-  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint passed; withStatus and
-  itemID stay duplicated per adapter until a third format needs them.
+  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint passed.
 - slice 3 (streaming): client 9850637; check and integration pass (stream text, function call,
   reasoning round trip, cancel through both formats). Checkpoint passed.
 - slice 4 (full run): client 7431f93 (one "recorded:" line per unasserted outcome); one verbose
   integration run passed in 90.6s, every Generate/GenerateStream scenario through both formats
   (audio completions-only). On messages the router maps named and allowed_tools choices to
   required, yet gpt-oss made no call and looped to the 1024 bound (~21s each). Checkpoint
-  pending.
+  passed.
+- slice 5 (release preparation): client 6b69ea7 (v0.3.0 CHANGELOG entry, README, capability map,
+  package docs); check passes.
+- final standards review: 2f71794, f7c7f01 (no behavior change); check passes.
+- spec review: no gaps. One verbose integration run passed in 88.5s on gb10-2 (router b11669),
+  every Generate/GenerateStream scenario through both formats. v0.3.0 prepared, not tagged.
 
 ## Decisions
 
@@ -557,6 +561,26 @@ Release       spike-ai-pipeline-client v0.3.0
   model_context_window_exceeded maps to incomplete max_output_tokens; pause_turn is an error,
   since the client has no server tools.
 - client-messages: /v1/messages/count_tokens is out of scope, with no backlog entry.
+- client-messages (checkpoint): withStatus and itemID stay duplicated in each adapter until a
+  third format needs them.
+- client-messages (checkpoint): the anthropic-version stays an unexported constant: a new version
+  is new code and a new release.
+- client-messages: the Messages stream decoder lives in its own stream.go. completions keeps its
+  decoder in decode.go, and is not split to match.
+- client-messages: a run of reasoning that no assistant message or function_call follows is
+  dropped on encode, as completions drops it.
+- client-messages: adjacent user messages and function_call_outputs join one user turn, results
+  first; two plain user messages join too.
+- client-messages: a tool with no parameters sends input_schema `{"type":"object"}`.
+- client-messages: streamed tool arguments keep the stream's spacing, since the Accumulator
+  requires an item's done arguments to equal its joined deltas.
+- client-messages: the stream decoder refuses out-of-place events, such as a second text block
+  opening in a message while the first is open, and ignores event and delta types it doesn't know.
+- client-messages: streamed usage takes input tokens from message_start and output tokens from
+  message_delta.
+- client-messages: integration logs every outcome it doesn't assert as one `recorded: <format>
+  <scenario>: <outcome>` line: effort and the named, allowed_tools, and none choices on both
+  formats, and structured output on messages.
 
 ## Pending edits
 
@@ -612,5 +636,7 @@ Release       spike-ai-pipeline-client v0.3.0
 - coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
   granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).
 - coordinator · context/ai-hosting.md, "Hosts and access" (optional): llama.cpp b11669's
-  `/v1/messages` rebuilds a request as Chat Completions, dropping output_config, named and none
-  tool choices, and a tool's strict; its stream error frame carries no `"type":"error"`.
+  `/v1/messages` rebuilds a request as Chat Completions. It drops output_config, a tool's strict,
+  and the none tool choice. It maps named and allowed_tools choices to required, yet gpt-oss-120b
+  made no call under either and repeated its answer to the 1024-token bound. Its stream error
+  frame carries no `"type":"error"`.
