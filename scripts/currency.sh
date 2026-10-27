@@ -2,7 +2,7 @@
 # currency reports every dependency and toolchain that trails its latest
 # release, one line each, and exits non-zero when it reports any: the Go
 # modules, the mise tools of mise.toml and of the host environment
-# (mise.host.toml, hf's), and the llama.cpp pin (engines/llama.env). It reads
+# (mise.host.toml, hf's), and the llama.cpp pin (host/llama.env). It reads
 # the network and writes nothing. Run it through `mise run currency`.
 #
 # Each scan captures its command's output in a variable before reading it, so
@@ -44,11 +44,11 @@ while read -r line; do
 	[ -n "$line" ] && report "$line"
 done <<<"$outdated"
 
-# The llama.cpp pin (engines/llama.env, copied from spike-model-engines) against the b-build the
+# The llama.cpp pin (host/llama.env, copied from spike-model-engines) against the b-build the
 # notes of llama.cpp's latest semver release name ("Nightly build:"), as spike-model-engines'
 # currency reads it. A pin that trails is moved by a new copy of llama.env, not an edit here.
-# shellcheck source=engines/llama.env
-source engines/llama.env
+# shellcheck source=host/llama.env
+source host/llama.env
 release=$(curl -fsSL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest)
 latest=$(jq -r '.body | capture("Nightly build:[^b]*(?<b>b[0-9]+)").b' <<<"$release")
 tag=$(jq -r .tag_name <<<"$release")
@@ -56,6 +56,6 @@ if [ -z "$latest" ]; then
 	echo "currency: llama.cpp $tag's notes name no b-build (\"Nightly build:\")" >&2
 	exit 2
 fi
-[ "$latest" = "$LLAMA_BUILD" ] || report "engines/llama.env: llama.cpp $LLAMA_BUILD -> $latest ($tag)"
+[ "$latest" = "$LLAMA_BUILD" ] || report "host/llama.env: llama.cpp $LLAMA_BUILD -> $latest ($tag)"
 
 exit "$stale"

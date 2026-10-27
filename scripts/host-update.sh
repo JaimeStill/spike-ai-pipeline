@@ -9,12 +9,12 @@
 #   2. Pulls the root's clone on gb10-2 (~/repos/spike-ai-pipeline), fast-forwarding its branch
 #      from its upstream. A branch with no upstream, a task branch not yet merged, is left as it
 #      is: a session delivers it from the laptop by push (README.md, "gb10-2").
-#   3. Installs the router at the pin (engines/llama.env) with the copied engines scripts when it
+#   3. Installs the router at the pin (host/llama.env) with the copied engines scripts when it
 #      is absent, or moves it to the pin when it runs another image. A llama container that
 #      exists but isn't running fails the run, naming the command that starts it; host-update
 #      doesn't start it, since a session borrowing gb10-2 may have stopped it. A running one
 #      whose preset mount is dead, unable to see /etc/llama-preset/models.ini although the clone
-#      has engines/llama-preset/models.ini, is restarted, which binds the clone's preset directory
+#      has host/llama-preset/models.ini, is restarted, which binds the clone's preset directory
 #      afresh: a checkout or push that recreates the directory leaves the old mount empty. Then it
 #      waits, bounded, for the router's health check.
 #   4. Has the router re-read the preset when its digest differs from the one recorded when the

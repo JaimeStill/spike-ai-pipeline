@@ -255,22 +255,22 @@ clone_pull() {
 	echo "$branch $before $(git rev-parse --short HEAD) $upstream"
 }
 
-# The router's state, from the clone at $1, as four lines: "pin <image>" (engines/llama.env),
+# The router's state, from the clone at $1, as four lines: "pin <image>" (host/llama.env),
 # "image <image the llama container runs, or ->", "status <the container's status, or ->", and
 # "mount <live, dead, or ->": live when the running container sees the preset at
 # /etc/llama-preset/models.ini, dead when it doesn't although the clone has
-# engines/llama-preset/models.ini, and - when the container isn't running or the clone has no
+# host/llama-preset/models.ini, and - when the container isn't running or the clone has no
 # preset.
 clone_router_state() {
-	# shellcheck source=engines/llama.env
-	source "$1/engines/llama.env"
+	# shellcheck source=host/llama.env
+	source "$1/host/llama.env"
 	echo "pin $LLAMA_IMAGE"
 	local image=- status=- mount=-
 	if [[ -n $(docker container ls --all --quiet --filter 'name=^llama$') ]]; then
 		image=$(docker container inspect --format '{{.Config.Image}}' llama)
 		status=$(docker container inspect --format '{{.State.Status}}' llama)
 	fi
-	if [[ $status == running && -f $1/engines/llama-preset/models.ini ]]; then
+	if [[ $status == running && -f $1/host/llama-preset/models.ini ]]; then
 		if docker exec llama test -f /etc/llama-preset/models.ini </dev/null; then
 			mount=live
 		else
@@ -289,14 +289,14 @@ host_router_restart() {
 
 # Runs the copied engines command `engines llama <verb>` from the clone at $1, with no stdin.
 clone_engines() {
-	"$1/engines/engines" llama "$2" </dev/null
+	"$1/host/engines" llama "$2" </dev/null
 }
 
 # The preset's digest and the digest of the preset the router last read, as "<current>
 # <recorded, or ->". The record is .state/preset.sha256 in the clone, untracked.
 clone_preset_digest() {
 	local current recorded=-
-	current=$(sha256sum "$1/engines/llama-preset/models.ini" | cut -d' ' -f1)
+	current=$(sha256sum "$1/host/llama-preset/models.ini" | cut -d' ' -f1)
 	[[ -r $1/.state/preset.sha256 ]] && recorded=$(<"$1/.state/preset.sha256")
 	echo "$current $recorded"
 }
@@ -309,7 +309,7 @@ clone_preset_record() {
 
 # The preset the router serves, from the clone at $1.
 clone_preset() {
-	cat "$1/engines/llama-preset/models.ini"
+	cat "$1/host/llama-preset/models.ini"
 }
 
 # The llama.cpp build the router runs, as its llama-server prints it.

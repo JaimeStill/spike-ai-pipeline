@@ -25,8 +25,8 @@ import (
 
 // The files that configure the router, read for every expectation below.
 const (
-	presetPath = "../engines/llama-preset/models.ini"
-	pinPath    = "../engines/llama.env"
+	presetPath = "../host/llama-preset/models.ini"
+	pinPath    = "../host/llama.env"
 )
 
 // Set A's roles: the model each capability probe sends to. The preset names the set and its
