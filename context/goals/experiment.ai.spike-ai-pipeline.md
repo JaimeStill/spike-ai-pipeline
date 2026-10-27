@@ -1,14 +1,14 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** client-streaming
-- **Branch:** client-streaming
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
 1. [x] host
 2. [x] client-core
-3. [ ] client-streaming
+3. [x] client-streaming
 4. [ ] client-messages
 5. [ ] client-responses
 6. [ ] tools
