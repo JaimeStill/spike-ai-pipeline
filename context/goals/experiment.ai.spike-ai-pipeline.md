@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** client-messages
+- **Branch:** client-messages
 
 ## Tasks
 
@@ -19,63 +19,135 @@
 11. [ ] audio
 12. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · host-scripts
+## Task brief · experiment.ai.spike-ai-pipeline · client-messages
 
 ```
-Problem       spike-model-engines renamed engines/ to host/ (host-rename, 7cd0ddb), and
-              llama-gb10-native (d285b06, its main's tip) then added llama-release.sh, a
-              version argument, and a refusal while a native llama-router unit runs. The
-              root still carries the 698f75c copy under engines/, so its diff check names a
-              path the source no longer has, and gb10-2 still mounts the preset from
-              engines/. Moving the directory naively breaks gb10-2: host-update would read
-              the vanished mount as dead and restart the container without a preset. This
-              task re-copies the scripts from d285b06 under host/ and teaches host-update to
-              move the mount, so gb10-2 matches gb10-1.
+Problem       Evidence 2 needs a second wire format under the same request and response
+              model, with no change to callers. The client speaks only Chat Completions.
+              llama.cpp b11669's router serves Anthropic Messages at /v1/messages: it rebuilds
+              each request as Chat Completions, keeps a fixed list of keys, and drops the rest.
+              It streams Anthropic's typed events, with thinking blocks whose signature is
+              empty. This task adds the Messages format as an owned adapter on the standard
+              library, proves it against set A on gb10-2 with the same test code as Chat
+              Completions, and tags client v0.3.0.
 
 Behaviors
-  1.  The root's host/ holds spike-model-engines' llama.cpp container scripts copied
-      byte-identical from d285b06: engines, engines.sh, engines-llama-install,
-      engines-llama-update, engines-llama-uninstall, llama.env, llama.sh, and
-      llama-release.sh. Neither the native method's files nor vLLM's are copied. The
-      root's own preset lives at host/llama-preset; engines/ no longer exists.
-  2.  The README's diff check names d285b06 and those 8 files, and running it prints
-      nothing.
-  3.  Every live reference to the old path (README, context README, currency, host-update,
-      the probe, lint config, mise comments, preset header comments) names host/; currency
-      still reads the llama.cpp pin from the copied llama.env and stays exit 0.
-  4.  host-update recognizes a new router state, "moved": the llama container is running
-      with its preset mount sourced anywhere other than the clone's host/llama-preset. In
-      that state it runs the copied `host/engines llama update`, which re-creates the
-      container on the same image with the mount moved and pulls nothing. The moved check
-      precedes the dead-mount restart, so a vanished engines/ source is never restarted.
-      A fixture under the hermetic check proves the state and the action chosen.
-  5.  The other router states keep their behavior: a stopped container still fails
-      host-update; a matching mount with an unchanged preset digest does nothing; a changed
-      digest still reloads.
-  6.  docs/findings/host.md's commands name host/, with a note that the rename commit
-      rewrote the paths and no result changed.
-  7.  On gb10-2, after the branch reaches the clone, `mise run host-update` moves the mount
-      to host/llama-preset with no root step, and the router answers set A on 8080 (the
-      integration tier passes).
-  8.  The goal record lists host-scripts after client-core, supersedes the "copied verbatim
-      from 698f75c" decision with d285b06, drops the stale host-scripts pending edit, and
-      adds a coordinator pending edit: the roadmap's host-scripts proof names d285b06
-      (llama-gb10-native's merge) where it names host-rename's merge commit.
+  1.  A messages format, built by its constructor and set as Config.Format, posts to
+      "messages" below the base URL and sends the header anthropic-version: 2026-10-21. The
+      package documentation pins that version. The token goes as Authorization: Bearer, as for
+      every format. The base module still imports only the standard library, and the strict
+      import rule passes.
+  2.  The request carries the model and max_tokens from MaxOutputTokens. A request whose
+      MaxOutputTokens is zero is refused at encode, before the token source is called or
+      anything is sent. Instructions become the top-level system field. A system or developer
+      message stays in its place as a system-role message of text blocks.
+  3.  A user message's parts become text and image blocks. An image's data URL becomes a
+      base64 source with its media type, and any other URL a url source. An image's detail is
+      dropped, and InputAudio is refused at encode. A function_call_output becomes a
+      tool_result block in a user message: its output string, or its parts as text blocks.
+      Adjacent tool results and user content join one user turn, results first.
+  4.  An assistant run (its reasoning, its message, and the function_calls after it) becomes
+      one assistant message: thinking blocks, then text blocks, then tool_use blocks. A
+      tool_use block's id is the call_id, and its input is the arguments parsed as JSON, with
+      empty arguments sent as {}. A refusal part sent back goes as a text block. Reasoning goes
+      out through its encrypted_content alone, under the client-core rule for reasoning: this
+      format's envelope becomes a thinking block (thinking text and signature) or a
+      redacted_thinking block (its data). A reasoning item with no envelope, another format's,
+      or a malformed one is dropped and never an error.
+  5.  Tools go out as name, description, input_schema, and strict. Tool choice maps auto to
+      auto, required to any, none to none, and a named function to {"type":"tool","name"}. An
+      allowed_tools choice sends only the allowed tools, with its mode mapped the same way.
+      Reasoning effort none sends thinking {"type":"disabled"}. Effort low to xhigh sends
+      thinking {"type":"adaptive"} plus output_config.effort of the same name. A JSON-schema
+      text format sends output_config.format {type json_schema, schema}, dropping the format's
+      name and description. Plain text sends nothing, and verbosity is dropped. The package
+      documentation lists every hint it drops.
+  6.  A reply decodes into protocol output in block order:
+      - A thinking block becomes a Reasoning item: its content the thinking text, and its
+        encrypted_content the envelope `spike-ai-pipeline:messages/v1:` + base64 of
+        {"thinking","signature"}. Tests pin that literal.
+      - A redacted_thinking block becomes a Reasoning item with no content, its envelope
+        holding the block's data.
+      - Each run of consecutive text blocks becomes one assistant message, one output_text
+        part per block.
+      - Each tool_use block becomes a function_call: its id the call_id, its input as JSON
+        text the arguments.
+      Each item's id is "<message id>/<output index>". Only the last item takes the response's
+      status, and the items before it are completed. stop_reason maps to the status:
+        end_turn, tool_use, stop_sequence     completed
+        max_tokens, model_context_window_exceeded   incomplete, max_output_tokens
+        refusal                               incomplete, content_filter
+        pause_turn, or any other              an error
+      Usage: InputTokens is input_tokens plus cache_read_input_tokens and
+      cache_creation_input_tokens; OutputTokens is output_tokens; TotalTokens is their sum.
+  7.  The native tier merges into the top level of the body. A member that clashes with one
+      the typed fields set is refused at encode, as is stream, which is always typed (false
+      unstreamed, true streamed). The router keeps only the members it reads, such as
+      temperature, top_p, top_k, and chat_template_kwargs. The package documentation says so.
+  8.  A non-2xx reply is an *APIError whose message and type are decoded from either body
+      shape: Anthropic's {"type":"error","error":{...}} or llama.cpp's
+      {"error":{"code","message","type"}}.
+  9.  A streamed request becomes the spec's semantic events, opened by response.created
+      (from message_start) and closed by one terminal event (at message_stop, by the table in
+      behaviour 6):
+      - A thinking block becomes a reasoning item with its reasoning_text part. Its thinking
+        deltas become reasoning deltas. Its signature delta is kept, and the item's
+        output_item.done carries the envelope.
+      - A text block becomes a part of the open assistant message, or opens one.
+      - A tool_use block becomes a function_call item. Its input_json deltas become argument
+        deltas.
+      Items and parts may be open at the same time and each closes at its own block's stop,
+      since the router closes every block only at the end. message_delta's stop_reason and
+      usage join the terminal Response. Ping events and comments change nothing, and an event
+      type the decoder doesn't know is ignored. The folded Response equals DecodeResponse's
+      for the same reply.
+  10. In a stream, an error frame in either shape, recognized from its data alone, ends the
+      stream with ErrorEvent and then response.failed, holding the output made before it:
+      Anthropic's {"type":"error",...}, or a body with a message whose type isn't a Messages
+      event, as llama.cpp's is. A stream that ends before message_stop ends with an error
+      matching io.ErrUnexpectedEOF. The Format and StreamDecoder contracts don't change.
+  11. Every Generate and GenerateStream scenario runs on gb10-2 through both formats from one
+      piece of test code, the format the only difference, and every scenario sets
+      MaxOutputTokens. Covered: chat, vision, tools, the reasoning round trip on gpt-oss-120b,
+      structured output, streamed text, a streamed function_call, and a cancel mid-stream.
+      Recorded but not asserted, passing either way, because the router drops their keys:
+      structured output's JSON validity, the named and none tool choices, and reasoning
+      effort's effect. Audio input on Messages is proven refused by a unit test.
+  12. The module README, the context capability map, the format package documentation, and
+      the CHANGELOG describe the Messages format; the CHANGELOG has a v0.3.0 entry.
 
-Test seams    host-update's router-state classifier over fixture `docker inspect` output
-              (the hermetic check); the README's diff check; `mise run integration` against
-              gb10-2's router
-Slices        1. Copy and rename: host/ from d285b06 (8 files), preset moved, every live
-                 reference and the diff check updated; check passes.
-              2. host-update's moved state, with its fixture, ahead of the dead-mount
-                 restart; check passes.
-              3. Findings paths rewritten with the rename note.
-              4. gb10-2: push the branch to the clone, run host-update, see the mount move,
-                 run the integration tier.
-Out of scope  the native llama.cpp method and vLLM on gb10-2; semver reporting in currency
-              (the source leads with releases since d285b06; the root's own later change);
-              rewriting historical Decisions beyond the superseding line
-Door          two-way (no release; gb10-2's mount can be moved back by the same update)
+Test seams    the Format methods called directly in unit tests (EncodeRequest, DecodeResponse,
+              EncodeStreamRequest, NewStreamDecoder, DecodeError) over recorded router and
+              Anthropic bodies and event sequences; the integration tier driving
+              client.Generate and GenerateStream black-box against gb10-2, once per format
+Slices        1. Unary text: the constructor, route, version header, max_tokens refusal,
+                 Instructions and in-place system messages, text and image parts, audio
+                 refused, decoding text replies (stop-reason table, usage, item ids), and both
+                 error bodies. The integration tier runs the chat and vision scenarios through
+                 both formats on gb10-2. Check passes. Checkpoint.
+              2. Tools and reasoning: tools, the tool-choice mapping, allowed_tools narrowing,
+                 tool_use and tool_result, the envelope round trip (thinking and
+                 redacted_thinking), effort, structured output, and the Native clash rules.
+                 The tools, reasoning round-trip, and structured scenarios run through both
+                 formats on gb10-2 (the structured, named-choice, and effort results recorded).
+                 Check passes. Checkpoint, after a standards-review pass.
+              3. Streaming: the stream encoder and the stateful decoder (open parts at the same
+                 time, signature folded into the envelope, ping and unknown events, both
+                 error-frame shapes, an early end). The streamed text, function_call,
+                 reasoning, and cancel scenarios run through both formats on gb10-2. Check
+                 passes. Checkpoint.
+              4. Every scenario through both formats in one run of the integration tier, with
+                 the recorded results written into the run's log. Check passes. Checkpoint.
+              5. Release preparation: the CHANGELOG's v0.3.0 entry, the module README, the
+                 context capability map, and the package docs (dropped hints, version pin,
+                 envelope). Check passes. Checkpoint.
+Out of scope  /v1/messages/count_tokens and any token-counting operation; Anthropic's server
+              tools, citations, documents, and prompt caching; budget_tokens as a typed field
+              (reachable through Native); auth by x-api-key; streamed vision and audio; the
+              Open Responses format (client-responses)
+Door          one-way for the release: tag v0.3.0 is pushed. The code is two-way: the change
+              adds a format and changes no existing contract.
+Release       spike-ai-pipeline-client v0.3.0
 ```
 
 ## Decisions
@@ -426,6 +498,48 @@ Door          two-way (no release; gb10-2's mount can be moved back by the same 
 - host-scripts: clone_router_state sources the copied llama.sh for LLAMA_PRESET_DIR and
   llama_preset_mount, so host-update compares the same strings the update script does.
 
+- client-messages: the Messages format is owned, in the base module as format/messages, on
+  encoding/json/v2. Rejected: anthropic-sdk-go v2.4.0, which brings the AWS and Google SDKs,
+  OpenTelemetry, and gjson, and retries twice by default through its own transport.
+- client-messages: the stream decoder recognizes an error frame from its data alone: Anthropic's
+  `{"type":"error",...}`, or a body with a message whose type isn't a Messages event, as llama.cpp
+  b11669's `{"code","message","type":"server_error"}` is. Rejected: passing the SSE event name,
+  which would change StreamDecoder.Decode.
+- client-messages: a Messages request with MaxOutputTokens zero is refused at encode (Anthropic
+  requires max_tokens). Rejected: sending none, which the router fills with a 4096 default.
+- client-messages: effort none sends thinking disabled; low to xhigh sends adaptive thinking plus
+  output_config.effort of the same name. The router ignores both, so integration records the
+  effect. Rejected: llama.cpp's chat_template_kwargs.reasoning_effort, reachable through Native.
+- client-messages: a JSON-schema text format sends output_config.format (schema only; name and
+  description dropped). The router drops it, so integration records the result. Rejected:
+  refusing structured output on Messages.
+- client-messages: the format sends anthropic-version 2026-10-21, pinned in its package doc.
+  Rejected: 2023-06-01.
+- client-messages: system and developer messages go in place as system-role messages;
+  Instructions are the top-level system field. Rejected: moving them into system.
+- client-messages: hints Messages can't express (image detail, verbosity, strict on the router)
+  are dropped and listed in the package doc; only InputAudio is refused, and a refusal part goes
+  back as text. Rejected: refusing them.
+- client-messages: an allowed_tools choice sends only the allowed tools, its mode mapped (auto to
+  auto, required to any, none to none). Rejected: refusing it.
+- client-messages: stop_reason refusal is incomplete with reason content_filter. Rejected:
+  completed with a refusal part.
+- client-messages: every Generate and GenerateStream scenario runs through both formats from the
+  same test code; structured output, named tool choice, and effort are recorded, not asserted;
+  audio is refused in a unit test. Rejected: a Messages-only subset.
+- client-messages: BUILD checkpoints after every slice, with a standards-review pass before slice
+  2's checkpoint. Rejected: one checkpoint.
+- client-messages: the Messages envelope is `spike-ai-pipeline:messages/v1:` + base64 of
+  {"thinking","signature"}, or {"data"} for redacted_thinking; tests pin the literal
+  (client-core's encrypted_content rule).
+- client-messages: Messages item ids are "<message id>/<output index>", as completions derives
+  them.
+- client-messages: the stream decoder allows items and parts open at the same time, each closing
+  at its own block's stop, as llama.cpp b11669 closes every block at the end.
+  model_context_window_exceeded maps to incomplete max_output_tokens; pause_turn is an error,
+  since the client has no server tools.
+- client-messages: /v1/messages/count_tokens is out of scope, with no backlog entry.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -459,7 +573,7 @@ Door          two-way (no release; gb10-2's mount can be moved back by the same 
 - coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
   change" to granite-embedding-english-r2 says it changed.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
-  v0.2.0:
+  v0.3.0:
 
   > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
   >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
@@ -468,7 +582,7 @@ Door          two-way (no release; gb10-2's mount can be moved back by the same 
   >   removed when it adopts them. Four layers import one way: the `client` transport, with
   >   Generate, GenerateStream, Embed, and Transcribe; `protocol`; the `format` contract; and a
   >   `format/<api>` adapter per wire format, named by endpoint and chosen by typed constructor:
-  >   `completions` now, `messages` (Anthropic Messages) and `responses` planned. GenerateStream
+  >   `completions` and `messages` (Anthropic Messages) now, `responses` planned. GenerateStream
   >   yields Open Responses' streaming events, which a `protocol.Accumulator` folds into the
   >   Response Generate returns. Retry is opt-in.
 - coordinator · roadmap, the `host-scripts` task: its summary and proof name d285b06
@@ -479,3 +593,6 @@ Door          two-way (no release; gb10-2's mount can be moved back by the same 
   a standard.
 - coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
   granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).
+- coordinator · context/ai-hosting.md, "Hosts and access" (optional): llama.cpp b11669's
+  `/v1/messages` rebuilds a request as Chat Completions, dropping output_config, named and none
+  tool choices, and a tool's strict; its stream error frame carries no `"type":"error"`.
