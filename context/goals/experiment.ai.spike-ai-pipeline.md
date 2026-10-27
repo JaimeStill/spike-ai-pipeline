@@ -125,7 +125,7 @@ Behaviors
         input_image description                     gemma-4-26B-A4B
         audio input in chat                         gemma-4-E4B
         transcription                               gemma-4-E4B
-        a 768-dimension embedding                   embeddinggemma-2
+        a 768-dimension embedding                   granite-embedding-english-r2
       It records what a named function and allowed_tools tool_choice return, and passes
       either way: llama.cpp b11669 treats both as auto.
 
@@ -245,7 +245,7 @@ Release       v0.1.0 (spike-ai-pipeline-client)
 
 ## Progress
 
-slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · editor —
+slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132de3, 0eaa84e, a85cd0b) · checkpoint closed: standards (d6dd49a, a86c831), restructure (5c8c320), Generate (9f06808) · standards (5a914f1, a65dcb4, fd657ca) · spec (16/16 met; 3 additions recorded as decisions) · surface + embedding swap — · editor —
 
 ## Decisions
 
@@ -438,6 +438,26 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
 - client-core: TranscriptionRequest types Language and Prompt (llama.cpp honors both; Prompt
   replaces its instruction); the file part goes as application/octet-stream, llama.cpp reading
   the format from the bytes.
+- client-core (v0.1.0 surface): Embed and Transcribe take *EmbeddingRequest and
+  *TranscriptionRequest, refusing nil, as Generate takes *protocol.Request. Rejected: values.
+- client-core (v0.1.0 surface): usage types stay one per endpoint, in its own names
+  (protocol.Usage, EmbeddingUsage, TranscriptionUsage). Rejected: protocol.Usage for
+  transcription.
+- client-core (v0.1.0 surface): TranscriptionRequest has Native url.Values, sent as extra form
+  fields, a clash with a typed field refused before sending. Rejected: no native tier.
+- client-core (v0.1.0 surface): completions' unit tests call EncodeRequest and DecodeResponse
+  directly; client_test drives a format through the transport. Rejected: entering through
+  client.Generate.
+- client-core (v0.1.0 surface): Native clashes are caught at encode, before anything is sent;
+  Validate's doc says it doesn't check them. Rejected: a protocol-level field list.
+- client-core: set A's embedding model is granite-embedding-english-r2
+  (`mrutkows/granite-embedding-english-r2-GGUF:BF16`), replacing EmbeddingGemma 2, which vLLM
+  can't serve on GB10 (coordinator ai-hosting.md, "Set A's embedding model"); the swap lands in
+  client-core, so v0.1.0's evidence is on the set A that stays. Supersedes the host lines naming
+  EmbeddingGemma 2. Rejected: a root task of its own after client-core.
+- client-core: granite's gb10-2 section is c 32768 with 4 slots (each slot its trained 8192),
+  b = ub = 8192, embeddings = true, no pooling key (its GGUF declares CLS). Rejected: c 8192
+  (2048 per slot).
 
 ## Pending edits
 
@@ -465,3 +485,9 @@ slices 9/9 committed (caf1fca, f6c9c5b, 0d493da, 1cf6404, 1ce6c93, cb927c7, c132
   against the router's `/v1/responses`; tags client v0.4.0); extend evidence 2 in its README and
   the roadmap to a third format, Open Responses, the model's own baseline; and reword the
   `client-core` summary: the stable model is Open Responses' item model, stateless subset.
+- coordinator · roadmap: `client-core`'s repos gain `spike-ai-pipeline` (set A's embedding model
+  swapped to granite-embedding-english-r2 in the root's preset and probe); the `host` task's
+  summary names embeddinggemma-2 Q8_0 among the staged GGUFs, now granite-embedding-english-r2
+  BF16; the spike summary's "is to change" sentence becomes done.
+- coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
+  granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).
