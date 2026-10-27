@@ -155,7 +155,10 @@ Release       spike-ai-pipeline-client v0.3.0
 - slice 1 (unary text): client e1f4e3d; check passes; integration passes on gb10-2 (chat,
   incomplete, unknown model, vision through both formats). Interim: thinking blocks dropped
   until slice 2; unsupported inputs, Native, and streaming refused as "not yet supported".
-  Checkpoint pending.
+  Checkpoint passed.
+- slice 2 (tools, reasoning, effort, structured output, native tier): client 13c9fb4; check and
+  integration pass (named/allowed choices, structured output, effort recorded on messages).
+  Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint pending.
 
 ## Decisions
 
