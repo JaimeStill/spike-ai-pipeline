@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** brief ready
 - **Task:** host-scripts
 - **Branch:** host-scripts
 
@@ -80,7 +80,7 @@ Door          two-way (no release; gb10-2's mount can be moved back by the same 
 
 ## Progress
 
-slices 0/4 committed · standards — · spec — · editor —
+slices 4/4 committed · standards ✓ (607fd05, 6bade43) · spec ✓ no gaps · editor ✓
 
 ## Decisions
 
@@ -423,6 +423,12 @@ slices 0/4 committed · standards — · spec — · editor —
   following spike-model-engines' fe8bbeb.
 - host-scripts: only the container set plus llama-release.sh is copied. Rejected: the native
   method's files; gb10-2 serves from the container, which has proven as performant as native.
+- host-scripts: a running container at the pin with no preset mount also counts as moved, since
+  `host/engines llama update` re-creates it with the mount too.
+- host-scripts: the findings' dead-mount entry keeps `engines/`, where that event happened, with
+  "(now `host/llama-preset/`)"; the findings' commands are rewritten to host/ per the note.
+- host-scripts: clone_router_state sources the copied llama.sh for LLAMA_PRESET_DIR and
+  llama_preset_mount, so host-update compares the same strings the update script does.
 
 ## Pending edits
 
