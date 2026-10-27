@@ -418,7 +418,8 @@ Release       v0.2.0 (spike-ai-pipeline-client)
 - client-core: Reasoning has no Status (the spec's reasoning item has none); Effort takes the
   spec's enum (none, low, medium, high, xhigh); the request carries Effort only, since Chat
   Completions has no form for the spec's reasoning summary. Reasoning with no assistant message
-  or call after it is dropped: llama.cpp refuses an assistant message of reasoning alone.
+  or call after it is dropped: llama.cpp refuses an assistant message of reasoning alone. Its
+  first clause is superseded by client-streaming.
 - client-core: the Chat Completions envelope is `spike-ai-pipeline:completions/v1:` + base64 of
   {"reasoning_content"}; a layout change takes a new prefix, and tests pin the literal.
 - client-core: Text carries the spec's PlainTextFormat and Verbosity beside JSONSchemaFormat
@@ -480,7 +481,8 @@ Release       v0.2.0 (spike-ai-pipeline-client)
   then Response(). Rejected: a Collect function that consumes the whole sequence.
 - client-streaming: a stream that breaks mid-response leaves the Accumulator's partial Response,
   status in_progress (the spec's, added to Status); an error frame is a typed stream error with
-  message, type, and code. Rejected: no Response after a broken stream.
+  message, type, and code. Rejected: no Response after a broken stream. Its error-frame clause is
+  superseded by the error event and response.failed (below).
 - client-streaming: the streamed Chat Completions request always sends
   stream_options.include_usage, so the accumulated Response carries usage; llama.cpp sends none
   without it. Rejected: leaving it to Native.
@@ -511,6 +513,58 @@ Release       v0.2.0 (spike-ai-pipeline-client)
   it changed (the architect's call at approval, as last session), with a standards-review pass
   before slice 2's. Rejected: one checkpoint after slice 2; running every slice to the session
   brief.
+- client-streaming: the client follows the spec wherever it can: the architect's standing rule
+  for it, set at slice 1's UTF-8 ruling.
+- client-streaming: the SSE decoder decodes each line as UTF-8 with replacement, as the WHATWG
+  standard does through the Encoding Standard's decoder: one U+FFFD per maximal subpart. It is
+  written by hand, since utf8.DecodeRune gives one U+FFFD per invalid byte and bytes.ToValidUTF8
+  one per run of them. Rejected: keeping invalid bytes as received.
+- client-streaming: the client has no framing interface. SSE is its only framing, internal to the
+  base module, and the Format's stream-decoder contract is framing-neutral. Rejected: a framing
+  or stream-reader layer as tau has (protocol/streaming, and the provider's SSE and eventstream
+  readers), until a format that isn't SSE arrives.
+- client-streaming: StreamDecoder.Decode takes the event's data alone, since every planned format
+  carries the event's type in the data (Open Responses: the event field MUST match the body's
+  type; Anthropic Messages' bodies carry type; Chat Completions names none). Format stays one
+  interface. Rejected: passing the SSE event name; splitting Format into unary and streaming
+  interfaces; one encoder with a stream bool.
+- client-streaming: the spec requires item ids, which Chat Completions doesn't give, so
+  DecodeResponse and the stream decoder derive each as "<reply id>/<output index>". A reply with
+  no id gives its items none, and a chunk with another reply's id is refused. A v0.1.0 behaviour
+  change: v0.1.0's item ids were empty. Rejected: empty ids; an id of the output index alone,
+  which repeats in every reply.
+- client-streaming: item status follows the spec: only the last output item takes the response's
+  status, and the items before it are completed, in DecodeResponse as in the stream. A v0.1.0
+  behaviour change: v0.1.0 gave every message and function_call item the response's status.
+- client-streaming: protocol.Reasoning has a Status, following the spec's normative "Required item
+  fields" rule (every item MUST include id, type, and status) over its ReasoningBody reference
+  schema, which omits it. DecodeResponse sets it, a v0.1.0 behaviour change. Supersedes
+  client-core's "Reasoning has no Status".
+- client-streaming: a server error frame ends the stream as the spec has it: the error event
+  (protocol.ErrorEvent, whose ErrorPayload holds type, code, message, and param), then the
+  terminal response.failed. Its Response is StatusFailed, with Response.Error (*ResponseError:
+  code and message), the output made before the frame, and the open items in_progress; no error
+  pair is yielded. A broken stream (a transport failure, an ended context, an undecodable chunk,
+  or no terminal event) ends with one error pair, and the Accumulator holds an in_progress
+  Response. Amends behaviours 6 and 7. Rejected: one *StreamError error pair, as slice 5 first
+  built it.
+- client-streaming: completions assembles tool-call fragments by their index in any order, which
+  is what Chat Completions' index is for, and Open Responses has no rule that one item finishes
+  before the next opens. The calls close at the finish, in index order, and the Accumulator
+  places each item at its output_index. Amends behaviour 3. Rejected: calls one after another,
+  each closing when the next begins (earlier dispatch, but stricter than the wire format).
+- client-streaming: a request that fails before it is sent (the token source, building the
+  request) is never retried. attempt splits into request, which calls the token source and builds
+  the http.Request, and do, which sends it; send returns request's error before classifying it. A
+  fix from the spec review.
+- client-streaming: retry counts as a connection failure before any response a *net.OpError
+  (refused dial, reset), io.EOF or io.ErrUnexpectedEOF before the reply's header, and a DNS
+  failure the resolver calls temporary; never a context error, a token source error,
+  ResponseHeaderTimeout, a refused TLS certificate, or an error of the caller's RoundTripper.
+  Known gap: net/http's unexported error for a server closing an idle connection isn't matched,
+  so it isn't retried.
+- client-streaming: the integration tier is v0.1.0's, integration/ (package integration_test,
+  -tags integration), where the brief's Tests line says "the same root package".
 
 ## Pending edits
 
@@ -545,16 +599,23 @@ Release       v0.2.0 (spike-ai-pipeline-client)
 - coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
   change" to granite-embedding-english-r2 says it changed.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
-  v0.1.0:
+  v0.2.0:
 
   > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
   >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
   >   libraries, on the standard library alone. Its protocol is Open Responses (spec 2026-04-24)
   >   in its stateless subset; client extensions, audio input first, fill the spec's gaps and are
   >   removed when it adopts them. Four layers import one way: the `client` transport, with
-  >   Generate, Embed, and Transcribe; `protocol`; the `format` contract; and a `format/<api>`
-  >   adapter per wire format, named by endpoint and chosen by typed constructor: `completions`
-  >   now, `messages` (Anthropic Messages) and `responses` planned. Streaming, with opt-in retry,
-  >   is planned next.
+  >   Generate, GenerateStream, Embed, and Transcribe; `protocol`; the `format` contract; and a
+  >   `format/<api>` adapter per wire format, named by endpoint and chosen by typed constructor:
+  >   `completions` now, `messages` (Anthropic Messages) and `responses` planned. GenerateStream
+  >   yields Open Responses' streaming events, which a `protocol.Accumulator` folds into the
+  >   Response Generate returns. Retry is opt-in.
+- spike-ai-pipeline · this record's Tasks: the roadmap's `host-scripts` task (after
+  `client-core`, waiting on spike-model-engines' `host-rename`) is missing; it joins Tasks at the
+  next plan or start, so the record and the roadmap agree.
+- architecture · a retro candidate: "follow the spec wherever possible", the architect's standing
+  rule for the client (client-streaming), may belong in STANDARDS.md or the architecture layer as
+  a standard.
 - coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
   granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).
