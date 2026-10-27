@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** brief ready
 - **Task:** client-streaming
 - **Branch:** client-streaming
 
