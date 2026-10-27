@@ -161,7 +161,12 @@ Release       spike-ai-pipeline-client v0.3.0
   Standards review: 45d0615, fb4b277 (test-only fixes). Checkpoint passed; withStatus and
   itemID stay duplicated per adapter until a third format needs them.
 - slice 3 (streaming): client 9850637; check and integration pass (stream text, function call,
-  reasoning round trip, cancel through both formats). Checkpoint pending.
+  reasoning round trip, cancel through both formats). Checkpoint passed.
+- slice 4 (full run): client 7431f93 (one "recorded:" line per unasserted outcome); one verbose
+  integration run passed in 90.6s, every Generate/GenerateStream scenario through both formats
+  (audio completions-only). On messages the router maps named and allowed_tools choices to
+  required, yet gpt-oss made no call and looped to the 1024 bound (~21s each). Checkpoint
+  pending.
 
 ## Decisions
 
