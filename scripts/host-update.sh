@@ -12,11 +12,19 @@
 #   3. Installs the router at the pin (engines/llama.env) with the copied engines scripts when it
 #      is absent, or moves it to the pin when it runs another image. A llama container that
 #      exists but isn't running fails the run, naming the command that starts it; host-update
-#      doesn't start it, since a session borrowing gb10-2 may have stopped it.
+#      doesn't start it, since a session borrowing gb10-2 may have stopped it. A running one
+#      whose preset mount is dead, unable to see /etc/llama-preset/models.ini although the clone
+#      has engines/llama-preset/models.ini, is restarted, which binds the clone's preset directory
+#      afresh: a checkout or push that recreates the directory leaves the old mount empty. Then it
+#      waits, bounded, for the router's health check.
 #   4. Has the router re-read the preset when its digest differs from the one recorded when the
-#      router last read it (.state/preset.sha256 in the clone, untracked).
+#      router last read it (.state/preset.sha256 in the clone, untracked). A router installed,
+#      moved, or restarted this run read the preset as it started, so its digest is recorded.
 #   5. Loads each model the preset names through the router's load API, and waits until all are
-#      loaded, or fails naming each that failed or didn't load in time.
+#      loaded, or fails naming each that failed or didn't load in time. A poll the router doesn't
+#      answer, refused, non-2xx, or not the JSON expected, is a router not ready yet: polling goes
+#      on until the deadline, and only a listing that lacks a model the preset names fails the run
+#      at once.
 #   6. Prints the llama.cpp build, gb10-2's stack, and the laptop's network path to it, with no
 #      address. Then it prints what changed, or that nothing did, and names a clone with no
 #      upstream whose commit differs from the laptop's branch.
@@ -101,27 +109,39 @@ else
 	echo "clone: $branch at $after, current with $upstream"
 fi
 
-# 3. The router, at the pin.
+# 3. The router, at the pin, reading the clone's preset.
+router_facts=$(on_host clone_router_state "$clone")
 declare -A router_state
 while read -r key value; do
 	router_state[$key]=$value
-done <<<"$(on_host clone_router_state "$clone")"
+done <<<"$router_facts"
 pin=${router_state[pin]}
 restarted=
-if [[ ${router_state[image]} == - ]]; then
+case $(router_action <<<"$router_facts") in
+install)
 	on_host clone_engines "$clone" install
 	changes+=("router installed at the pin")
 	restarted=yes
-elif [[ ${router_state[image]} != "$pin" ]]; then
+	;;
+update)
 	on_host clone_engines "$clone" update
 	changes+=("router moved to the pin")
 	restarted=yes
-elif [[ ${router_state[status]} != running ]]; then
+	;;
+stopped)
 	echo "host-update: llama on $host is ${router_state[status]}; docker start llama starts it, on $host" >&2
 	exit 1
-else
+	;;
+restart)
+	on_host host_router_restart
+	echo "router: restarted, since it couldn't see /etc/llama-preset/models.ini, which the clone has (a dead preset mount)"
+	changes+=("router restarted for its dead preset mount")
+	restarted=yes
+	;;
+*)
 	echo "router: at the pin, $pin"
-fi
+	;;
+esac
 wait_healthy 120
 
 # 4. The preset. A router started this run read the preset as it is now.
@@ -150,33 +170,38 @@ if ((${#ids[@]} == 0)); then
 fi
 declare -A requested=()
 deadline=$((SECONDS + timeout))
+unanswered=
 while :; do
-	declare -A state=()
-	while read -r id value; do
-		state[$id]=$value
-	done < <(curl -fsS --max-time 30 "$router/models" | model_states)
+	# A request that fails, refused or non-2xx, is a router not ready yet, as just after it starts.
+	outcome=ok
+	listing=$(curl -fsS --max-time 30 "$router/models" 2>/dev/null) || outcome=failed
+	if [[ $outcome == failed && -z $unanswered ]]; then
+		echo "models: the router didn't answer $router/models; polling until the deadline"
+		unanswered=yes
+	fi
 	waiting=() failed=()
-	for id in "${ids[@]}"; do
-		case ${state[$id]:-absent} in
+	while read -r id value; do
+		case $value in
 		loaded) ;;
 		failed) failed+=("$id") ;;
 		absent)
 			echo "host-update: the router doesn't list $id, which the preset names" >&2
 			exit 1
 			;;
-		loading) waiting+=("$id") ;;
+		loading | unanswered) waiting+=("$id") ;;
 		*)
 			waiting+=("$id")
-			if [[ -z ${requested[$id]:-} ]]; then
+			# A load request that fails is retried at the next poll.
+			if [[ -z ${requested[$id]:-} ]] &&
 				curl -fsS --max-time 30 -X POST "$router/models/load" \
 					-H 'Content-Type: application/json' \
-					-d "$(jq -cn --arg id "$id" '{model: $id}')" >/dev/null
+					-d "$(jq -cn --arg id "$id" '{model: $id}')" >/dev/null; then
 				echo "models: loading $id"
 				requested[$id]=yes
 			fi
 			;;
 		esac
-	done
+	done < <(poll_states "$outcome" "${ids[@]}" <<<"$listing")
 	if ((${#failed[@]})); then
 		printf 'host-update: failed to load on %s: %s\n' "$host" "${failed[@]}" >&2
 		exit 1

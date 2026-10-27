@@ -117,6 +117,32 @@ model_states() {
 	jq -r '.data[] | "\(.id) \(if .status.failed then "failed" else .status.value end)"'
 }
 
+# Each model id given, as "<id> <state>", for host-update's load loop: its state in the router's
+# GET /models JSON on stdin (model_states'), or absent when the listing lacks it. $1 is the poll's
+# outcome: ok, or failed when the request failed (refused, timed out, non-2xx); a failed poll, or
+# a listing that isn't the JSON expected, gives every id as unanswered, a router not ready yet,
+# never absent.
+poll_states() {
+	local outcome=$1 listing id value
+	shift
+	local -A state=()
+	if [[ $outcome == ok ]] && listing=$(model_states 2>/dev/null); then
+		while read -r id value; do
+			[[ -n $id ]] && state[$id]=$value
+		done <<<"$listing"
+	else
+		cat >/dev/null
+		outcome=failed
+	fi
+	for id; do
+		if [[ $outcome == ok ]]; then
+			echo "$id ${state[$id]:-absent}"
+		else
+			echo "$id unanswered"
+		fi
+	done
+}
+
 # The network path in a `tailscale ping` line, as "direct, <latency>" or "DERP(<region>),
 # <latency>", with no address: the line names the peer's tailnet address and, when direct, its
 # endpoint, and neither is printed or recorded. tailscale rounds the latency to the millisecond
@@ -134,6 +160,35 @@ redact() {
 	sed -E -e 's/([0-9]{1,3}\.){3}[0-9]{1,3}/<redacted>/g' \
 		-e 's/\[[0-9A-Fa-f:]+\]/<redacted>/g' \
 		-e 's/fd7a:[0-9A-Fa-f:]+/<redacted>/g'
+}
+
+# What host-update does with the router, from the state clone_router_state prints (on stdin):
+# install when no llama container exists; update when it runs an image other than the pin;
+# stopped when it exists but isn't running, which host-update leaves to whoever stopped it;
+# restart when it runs but can't see the preset the clone has (a dead preset mount: the
+# directory its bind mount named was replaced, as a checkout that recreates it does); else
+# current.
+router_action() {
+	local key value pin='' image=- status=- mount=-
+	while read -r key value; do
+		case $key in
+		pin) pin=$value ;;
+		image) image=$value ;;
+		status) status=$value ;;
+		mount) mount=$value ;;
+		esac
+	done
+	if [[ $image == - ]]; then
+		echo install
+	elif [[ $image != "$pin" ]]; then
+		echo update
+	elif [[ $status != running ]]; then
+		echo stopped
+	elif [[ $mount == dead ]]; then
+		echo restart
+	else
+		echo current
+	fi
 }
 
 # host-update's last line, from what the run found: $1 is the clone's lag, empty when the clone
@@ -200,19 +255,36 @@ clone_pull() {
 	echo "$branch $before $(git rev-parse --short HEAD) $upstream"
 }
 
-# The router's state, from the clone at $1, as three lines: "pin <image>" (engines/llama.env),
-# "image <image the llama container runs, or ->", and "status <the container's status, or ->".
+# The router's state, from the clone at $1, as four lines: "pin <image>" (engines/llama.env),
+# "image <image the llama container runs, or ->", "status <the container's status, or ->", and
+# "mount <live, dead, or ->": live when the running container sees the preset at
+# /etc/llama-preset/models.ini, dead when it doesn't although the clone has
+# engines/llama-preset/models.ini, and - when the container isn't running or the clone has no
+# preset.
 clone_router_state() {
 	# shellcheck source=engines/llama.env
 	source "$1/engines/llama.env"
 	echo "pin $LLAMA_IMAGE"
-	local image=- status=-
+	local image=- status=- mount=-
 	if [[ -n $(docker container ls --all --quiet --filter 'name=^llama$') ]]; then
 		image=$(docker container inspect --format '{{.Config.Image}}' llama)
 		status=$(docker container inspect --format '{{.State.Status}}' llama)
 	fi
+	if [[ $status == running && -f $1/engines/llama-preset/models.ini ]]; then
+		if docker exec llama test -f /etc/llama-preset/models.ini </dev/null; then
+			mount=live
+		else
+			mount=dead
+		fi
+	fi
 	echo "image $image"
 	echo "status $status"
+	echo "mount $mount"
+}
+
+# Restarts the running llama container, which binds its mounts afresh from their host paths.
+host_router_restart() {
+	docker restart llama >/dev/null
 }
 
 # Runs the copied engines command `engines llama <verb>` from the clone at $1, with no stdin.

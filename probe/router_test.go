@@ -35,11 +35,12 @@ const (
 	chatModel      = "ggml-org/gpt-oss-120b-GGUF:MXFP4"
 	visionModel    = "ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0"
 	audioModel     = "ggml-org/gemma-4-E4B-it-GGUF:Q8_0"
-	embeddingModel = "ggml-org/embeddinggemma-2-GGUF:Q8_0"
+	embeddingModel = "mrutkows/granite-embedding-english-r2-GGUF:BF16"
 )
 
-// embeddingDims is EmbeddingGemma 2's width, from its card
-// (https://huggingface.co/google/embeddinggemma-2); the preset records it only in a comment.
+// embeddingDims is granite-embedding-english-r2's width, from its card
+// (https://huggingface.co/ibm-granite/granite-embedding-english-r2); the preset records it only in
+// a comment.
 const embeddingDims = 768
 
 // maxClip is the longest clip the probe sends Gemma 4 E4B, which loops on clips longer than

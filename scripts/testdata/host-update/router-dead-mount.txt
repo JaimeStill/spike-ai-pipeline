@@ -1,0 +1,4 @@
+pin ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
+image ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
+status running
+mount dead

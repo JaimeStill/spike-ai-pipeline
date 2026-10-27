@@ -36,7 +36,8 @@ root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact c
 architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
 changes nothing and says so. A stopped llama container fails the run, which names the command
-that starts it. `HOST_UPDATE_HOST` names another host.
+that starts it. A running one that can't see the clone's preset, because a delivery recreated
+`engines/llama-preset/` under its bind mount, is restarted. `HOST_UPDATE_HOST` names another host.
 
 host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
 no upstream, so a session delivers it from the laptop by push before running host-update:
@@ -52,8 +53,8 @@ tracks `origin/main`, and host-update pulls it from then on:
 
 `mise run integration` probes the router from the laptop (`probe/`). It checks every set A
 capability, and checks the build, sampling, and slots against the pin and the preset.
-[The host finding](docs/findings/host.md) records its first run, including whether the router
-answers `/v1/responses` and whether transcription returns timestamps.
+[The host finding](docs/findings/host.md) records its runs, including whether the router answers
+`/v1/responses` and whether transcription returns timestamps.
 
 ## The question
 

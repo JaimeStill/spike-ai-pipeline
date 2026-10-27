@@ -7,15 +7,241 @@
 ## Tasks
 
 1. [x] host
-2. [ ] client-core
+2. [x] client-core
 3. [ ] client-streaming
 4. [ ] client-messages
-5. [ ] tools
-6. [ ] documents
-7. [ ] office-cli
-8. [ ] office
-9. [ ] audio
-10. [ ] streams
+5. [ ] client-responses
+6. [ ] tools
+7. [ ] documents
+8. [ ] office-cli
+9. [ ] office
+10. [ ] audio
+11. [ ] streams
+
+## Task brief · client-core
+
+```
+Problem       The client is an empty module, and processing, the root, and evidence 1 and 3
+              all need a released model client before they can start. This task gives the
+              client a stable request and response model built on Open Responses' item model
+              (spec 2026-04-24, the stateless subset), Chat Completions as the first wire
+              format folded into and out of it, embeddings and transcription beside it, CI,
+              and v0.1.0, so the layers above can build on it by tag.
+
+Behaviors
+  1.  Building a client from a Config (base URL, query, token source, the caller's
+      http.Client) refuses a missing http.Client, a missing or relative base URL, a base
+      URL that carries a query or fragment, and a non-http(s) scheme. It makes no request.
+      Later changes to the caller's query values don't reach requests.
+  2.  Every request goes to the base URL plus its route, with exactly one slash between
+      them, and carries the Config's query. The token source is called once per request:
+      a non-empty token is sent as a bearer token, an empty one sends no Authorization
+      header, and a source error fails the request before anything is sent.
+  3.  A non-2xx reply comes back as a typed API error with the status, the endpoint's
+      error message, and its type and code when it has them, matchable with errors.As.
+      A transport failure or cancelled context comes back wrapped and matchable with
+      errors.Is. The library sets no timeout, retry, or limit of its own.
+  4.  The model follows Open Responses' item model, stateless subset, using the spec's
+      names.
+        Request:  model, instructions, input (a list of items), tools, tool_choice,
+                  text.format, reasoning.effort, max_output_tokens, and a raw-JSON
+                  extension field
+        Response: output (a list of items), status, incomplete_details, and usage
+                  (input_tokens, output_tokens, total_tokens,
+                  output_tokens_details.reasoning_tokens)
+      Items:
+        message              role user, system, developer, or assistant. User content
+                             is input_text, input_image, and the audio extension in
+                             behavior 6; assistant content is output_text and refusal.
+        function_call        call_id, name, arguments (a JSON string)
+        function_call_output call_id, and output as a string or input_text parts
+        reasoning            content (reasoning_text parts), summary (summary_text
+                             parts), and encrypted_content, opaque and format-owned
+      An item's id and status are carried when the format supplies them. Input
+      reasoning items stay inside the spec: content is never sent on input. A format
+      that must resend reasoning writes what it needs into encrypted_content, as a
+      versioned envelope of its own, when it unfolds a reply, and reads it back when it
+      folds; an envelope written by another format is dropped, never sent.
+  5.  The chat format is a value of the Format interface, chosen by typed constructor at
+      the composition root; there is no registry. A request with no model, no input, or
+      an item the format can't express is refused before anything is sent.
+  6.  Content parts:
+        input_text   sent as text; a message that is a single input_text goes as a
+                     plain string
+        input_image  image_url as a data URL or remote URL, and detail; sent as image_url
+        audio        the client extension spike-ai-pipeline:input_audio, holding the clip's
+                     bytes and format (wav, mp3). Chat Completions sends it as input_audio.
+  7.  Client extensions of the spec. Each one follows the spec's extension rule: its type
+      is prefixed with the implementor slug, spike-ai-pipeline. All of them are listed in
+      one documented place, each with the spec version it extends and the standard
+      feature that would replace it. In this task the list has one entry: audio input,
+      extending 2026-04-24, to be replaced when the spec adds an audio input part. The
+      caller-facing Go type and constructor of an extension never carry the slug, so
+      moving to a standard type later changes only the wire discriminator and the
+      format mappings, not callers' code. The list lives in the protocol package's doc.go.
+  8.  The Chat Completions format folds input into messages:
+        instructions                  a leading system message
+        message                       a message of its role
+        a run of reasoning, assistant one assistant message: content from output_text,
+          message and function_call   reasoning_content from the reasoning items'
+          items                       Chat Completions envelopes, tool_calls from the
+                                      calls, each call's id taken from its call_id
+        function_call_output          a role tool message, tool_call_id from its call_id
+      Unfolding the reply gives output in a fixed order: a reasoning item from
+      reasoning_content (as content, and in the format's envelope), then a message item with output_text, then one function_call
+      item per tool call.
+      finish_reason maps to status:
+        stop, tool_calls  completed
+        length            incomplete, reason max_output_tokens
+        content_filter    incomplete, reason content_filter
+      reasoning.effort goes out as reasoning_effort.
+  9.  Tools are function tools: name, description, parameters (a JSON Schema), and
+      strict. tool_choice is auto, none, required, a named function {type function,
+      name}, or allowed_tools {tools, mode}, each sent in its Chat Completions form.
+  10. text.format json_schema (name, schema, strict) is sent as response_format
+      json_schema. The output_text is the JSON the model produced.
+  11. A request's raw-JSON extension field is merged into the top level of the wire body
+      (native tier, documented as such). It is separate from the client extensions in
+      behavior 7. A key that clashes with a field the typed model sets is refused before
+      anything is sent.
+  12. Embeddings sit outside the Format interface, on the OpenAI-compatible shape. One or
+      more inputs come back as one []float32 per input, in input order, plus usage. The
+      wire encoding is base64 little-endian float32, and an embedding whose byte length
+      isn't a multiple of 4 is an error.
+  13. Transcription sits outside the Format interface. It uploads a clip (any io.Reader,
+      a file name, and a model) as multipart without holding the whole clip in memory,
+      and returns the text and usage. A context cancelled during the upload stops it.
+  14. The base module imports only the standard library, and the check fails on any
+      other import.
+  15. CI runs the check on every pull request into main and every push to it. A pushed
+      v* tag creates the GitHub release from that version's CHANGELOG section. Currency
+      reports a GitHub Action pinned below its latest release.
+  16. The integration tier passes against set A on gb10-2:
+        chat                                        gpt-oss-120b
+        a function_call (tool_choice required)      gpt-oss-120b
+        a reasoning and function_call round trip,   gpt-oss-120b
+          ending completed
+        text.format json_schema                     gpt-oss-120b
+        input_image description                     gemma-4-26B-A4B
+        audio input in chat                         gemma-4-E4B
+        transcription                               gemma-4-E4B
+        a 768-dimension embedding                   granite-embedding-english-r2
+      It records what a named function and allowed_tools tool_choice return, and passes
+      either way: llama.cpp b11669 treats both as auto.
+
+Go Elemental shape  (the standards the implementer can't load, made concrete)
+  Tiers       The client presents model inference as a service in two tiers (service-tiers).
+              Standard tier: Open Responses' stateless subset, the external standard the
+              library takes as its baseline (baseline-standards); nothing of ours hardens into
+              it beyond the listed client extensions. Native tier: the request's raw-JSON field,
+              named Native, documented as native tier. Each wire format is an adapter beneath
+              one interface, Format, defined where it is consumed, in the root package.
+  Packages    Four layers, imports one way: protocol ← format ← format/<api>; client
+              imports protocol and format; no format imports client.
+                client (module root)  transport: Config, Client, Respond, Embed,
+                                      Transcribe, TokenSource, APIError
+                protocol              Open Responses: Request, Response, items, content
+                                      parts, Usage, Status, Validate, the client
+                                      extensions and their list
+                format                the Format contract converting protocol ⇄ wire,
+                                      and what formats share
+                format/completions    Chat Completions (/chat/completions, not the
+                                      legacy /completions); later format/messages,
+                                      format/responses
+              The splits are consumption boundaries, not topics: formats depend on the
+              protocol alone, callers build requests and items without the transport, and
+              format/ grows to three implementations (topology-and-naming). All are packages
+              of the base module, none a sub-module (no third-party weight).
+              `internal/clienttest` holds the httptest helper shared by test packages.
+              Conversion vocabulary: encode (protocol → wire), decode (wire → protocol);
+              each format's files are encode.go, decode.go, wire.go (unexported wire
+              types).
+  Selection   A format is chosen by its typed constructor at the caller's composition root;
+              no registry, no registration on import (dependencies, "selected by
+              construction").
+  Policy      The library ships none: no default model, token budget, timeout, retry, or
+              size limit; the caller's http.Client and context carry them (baseline-standards).
+  Validation  Config validates once, in New, before any effect; a request validates before
+              the token source is called or anything is sent (validation-first). New returns
+              an error; it never panics (a library, not a composition root).
+  Types       A type is introduced only when it adds something: *http.Client, url.Values,
+              jsontext.Value used as-is, no pass-through wrappers. Items and content parts are
+              closed sum types (an interface with an unexported method), Go names from the
+              spec's (Message, FunctionCall, FunctionCallOutput, Reasoning; InputText,
+              InputImage, InputAudio, OutputText, Refusal, ReasoningText, SummaryText). A time
+              the library returns is in time.UTC (utc-times).
+  Surface     (sketch; names may change in BUILD with the reason recorded)
+                client.New(Config) (*Client, error)
+                Config{BaseURL string; Query url.Values; Token TokenSource;
+                       HTTP *http.Client; Format format.Format}  // Format required
+                type TokenSource func(context.Context) (string, error)
+                (*Client).Generate(ctx, *protocol.Request) (*protocol.Response, error)
+                (*Client).Embed(ctx, EmbeddingRequest) (*Embeddings, error)
+                (*Client).Transcribe(ctx, TranscriptionRequest) (*Transcription, error)
+                format.Format interface { Route; EncodeRequest; DecodeResponse; DecodeError }
+                completions.New() *completions.Format
+                *client.APIError   // errors.As
+  Docs        One doc.go per API package holding only the package comment, which inventories
+              every exported identifier with a one-clause role and lists the client
+              extensions; every production symbol carries a doc comment (tests-and-docs).
+  Tests       Unit tier: black-box (`client_test`, `protocol_test`, `format_test`,
+              `completions_test`), hermetic, against
+              an httptest server on a loopback port, asserting the wire request and decoded
+              items; export_test.go only for a hook the API can't reach. The extension list is
+              held by doc.go and review, not by a test that reads source (such a test is
+              structure-sensitive). Integration tier: `-tags integration`, in a root-level
+              `integration` package that drives the exported API black-box.
+  Checkpoint  BUILD stops once, after slice 2 and a standards-review pass, with a short
+              checkpoint brief of the exported surface for the architect's source read; a
+              redirect goes to the implementer before slice 3.
+  Release     CHANGELOG in Keep-a-Changelog form with a standing [Unreleased] and link
+              references; release preparation lands by PR; the tag is pushed only after main's
+              CI passes; the release job is serialized per tag (release-and-ci). The ruleset on
+              main and Dependabot security updates (no dependabot.yml) are the architect's
+              GitHub admin steps.
+
+Test seams    The client's exported API: Config, the client constructor, a request of items
+              through a Format value, embeddings, and transcription. Unit tests drive it
+              against an httptest server, asserting the request on the wire and the decoded
+              items. The integration tier drives the same API against SPIKE_ROUTER_URL.
+
+Slices
+  1. CI and the gate: CI pair, CHANGELOG, depguard stdlib-only, currency's action-pin scan.
+     Demo: check passes; currency current with workflow pins scanned. (14, 15)
+  2. Text chat end to end: Config, client, API error, item model with message items,
+     Format interface, Chat Completions fold/unfold for messages and instructions, status
+     and usage, raw-JSON extension merging. Demo: integration chat on gpt-oss-120b.
+     (1–5, 8, 11, 16)
+  3. Image and audio input, audio as the first client extension with the list and its
+     test. Demo: integration on gemma-4-26B-A4B and gemma-4-E4B. (6, 7, 16)
+  4. Tools: function tools, every tool_choice form, function_call and function_call_output
+     items and their folding. Demo: integration function_call on gpt-oss-120b, named and
+     allowed_tools recorded. (8, 9, 16)
+  5. Reasoning: items unfolded from reasoning_content and folded back; reasoning.effort.
+     Demo: integration round trip on gpt-oss-120b ending completed. (4, 8, 16)
+  6. Structured output: text.format json_schema. Demo: strict schema on gpt-oss-120b
+     decoded into a struct. (10, 16)
+  7. Embeddings. Demo: 768-dimension embeddings on granite-embedding-english-r2, in order. (12, 16)
+  8. Transcription. Demo: the phrase clip on gemma-4-E4B, "The access code is 7429."
+     (13, 16)
+  9. Release v0.1.0: README current, CHANGELOG dated, tag pushed after main's CI passes.
+     Demo: the GitHub release, and `go list -m
+     github.com/JaimeStill/spike-ai-pipeline-client@v0.1.0` resolves. (15)
+
+Out of scope  Streaming, SSE, semantic events, accumulator, retry (client-streaming);
+              Anthropic Messages (client-messages); Open Responses as a wire format
+              (client-responses, v0.4.0); server-side state (store, previous_response_id,
+              background, item_reference, compaction); input_file, input_video, image
+              content in function_call_output; annotations and logprobs; text-to-speech;
+              transcription timestamps; the ruleset on main (architect's GitHub admin step);
+              a CI integration job.
+
+Door          one-way for the v0.1.0 tag (checksum database pins it; never re-cut).
+              Everything else two-way: confined to spike-ai-pipeline-client, nothing
+              depends on it until the tag.
+
+Release       v0.1.0 (spike-ai-pipeline-client)
+```
 
 ## Decisions
 
@@ -110,12 +336,139 @@
   clone's untracked `.state/preset.sha256`.
 - host: the probe's tool call uses Chat Completions with tool_choice required.
 - host: findings live under `docs/findings/`.
-- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`); the setup
-  rejection of Responses as "router support unverified" is open at the client's plan round.
+- host: /v1/responses answers on gpt-oss-120b at b11669 (`docs/findings/host.md`), which reopened
+  the setup rejection of Responses as "router support unverified". client-core settled it:
+  Anthropic Messages stays the second format, and Open Responses becomes the third,
+  client-responses.
 - host: transcription returns no timestamps at b11669: only response_format json, and
   timestamp_granularities is ignored; audio seams align on the overlapping words alone.
 - host: gb10-2's spike-model-engines clone is removed; spike-ai-pipeline's clone is gb10-2's
   only engine source, and a borrow clones what it needs.
+
+- client-core: the second wire format stays Anthropic Messages. Rejected: OpenAI Responses as the
+  second format; the router turns it into chat completions, so it proves nothing on set A that
+  Chat Completions doesn't.
+- client-core: reasoning is an Open Responses reasoning item (reasoning_text content,
+  summary_text summary, opaque format-owned encrypted_content), ordered in output beside message
+  and function_call items. Rejected: one reasoning string field on the message.
+- client-core: embeddings and transcription sit outside the Format interface, on the one
+  OpenAI-compatible shape; Format covers chat only. Rejected: Format methods every format must
+  implement.
+- client-core: tool_choice takes every Open Responses form (auto, none, required, named function,
+  allowed_tools); integration records the named forms and passes either way, since llama.cpp
+  b11669 treats both as auto. Rejected: leaving the named forms out.
+- client-core: wire types use encoding/json/v2, whose inline option merges the raw-JSON extension
+  field. Rejected: encoding/json v1 with a hand-written merge.
+- client-core: a strict depguard rule holds the base module to the standard library, so the
+  check and CI prove evidence 3. Rejected: discipline alone.
+- client-core: the stable model is Open Responses' item model, stateless subset, pinned to spec
+  2026-04-24, using its names; each format folds items into its wire shape and back. Rejected: a
+  model of the client's own; server-side state (store, previous_response_id, background).
+- client-core: Open Responses as a wire format is its own task, client-responses, after
+  client-messages (client v0.4.0, proven against the router's /v1/responses). Rejected: folding
+  it into client-core or client-messages.
+- client-core: the client extends the spec only where it lacks a feature: slug-prefixed types
+  (spike-ai-pipeline:), listed in one place with the spec version and the standard feature that
+  would replace each; caller Go types carry no slug, so adopting the standard changes only the
+  wire mapping and removes the extension. First: spike-ai-pipeline:input_audio. Rejected:
+  unprefixed custom types; slugs exposed to callers.
+- client-core: reasoning goes back on input through encrypted_content: each format writes a
+  versioned envelope of its own there when it unfolds a reply (Chat Completions: the
+  reasoning_content text; later Anthropic: thinking text and signature), reads it back when it
+  folds, and drops another format's envelope. A format never sends an input reasoning item's
+  content: it ignores it, as the spec's input reasoning item has none. Rejected: content on
+  input reasoning items as a listed deviation from the spec.
+- client-core: max_output_tokens is a typed request field, in the spec's stateless subset.
+- client-core: the client follows service-tiers: Open Responses' stateless subset is the
+  standard tier, the request's Native raw-JSON field the native tier, and each wire format an
+  adapter package beneath Format, named for its target API, not a sub-module. Rejected: splitting
+  by topic; sub-modules without third-party weight. The package layout first planned here, one
+  root package `client` holding the model, Config, Client, Format, errors, embeddings, and
+  transcription, with a `chatcompletions` package, is superseded by the four layers
+  (checkpoint, below).
+- client-core: Format is a required Config field, chosen once by typed constructor at the
+  caller's composition root. Rejected: a Format argument on every Generate call.
+- client-core: the integration tier is a root-level `integration` package, `-tags
+  integration`, driving the exported API black-box. Rejected: tagged files beside each package.
+- client-core: the extension list lives in one doc.go, held by review: the root's at first,
+  `protocol/doc.go` since the four layers. Rejected: a test that reads source
+  (structure-sensitive).
+- client-core: BUILD checkpoints once, after slice 2, for the architect's read of the Go source.
+  Rejected: running every slice to the session brief.
+- client-core (checkpoint): items and content parts stay value types; a *Message is refused at
+  run time, documented and tested. Rejected: pointer receivers.
+- client-core (checkpoint): Format.DecodeError returns message, type, and code as three strings;
+  the Client owns Status and Body. Rejected: a result struct or an *APIError.
+- client-core (checkpoint): four layers, imports one way: client (transport), protocol (Open
+  Responses), format (the contract and shared parts), format/<api> (each implementation). The
+  splits are consumption boundaries. Supersedes the single root package. Rejected: one root
+  package mixing the spec, the transport, and the contract.
+- client-core (checkpoint): the Open Responses package is `protocol`, as tau's is, leaving
+  `responses` to the Open Responses wire format. Rejected: responses; openresponses.
+- client-core (checkpoint): format packages are named for their endpoints: completions,
+  messages, responses. OpenAI's API is covered by completions and responses, with OpenAI-only
+  items reached natively; no `openai` package. Rejected: chatcompletions (long); chat
+  (fits Messages equally).
+- client-core (checkpoint): conversion is encode (protocol → wire) and decode (wire →
+  protocol), each format in encode.go, decode.go, and wire.go. Rejected: fold and unfold.
+- client-core (checkpoint): the Client's protocol method is Generate, a capability verb beside
+  Embed and Transcribe, covering every protocol request (text, vision, audio input, tools,
+  reasoning, structured output); its streamed counterpart in client-streaming is
+  GenerateStream. Vision has no method of its own: an image is an InputImage part. Rejected:
+  Respond (the model responds, not the client); Send (names transport, not capability); Chat
+  (undersells vision and structured extraction).
+- client-core (checkpoint): the protocol's unit stays Item, the spec's term; Input and Output
+  name its direction, and one value moves from Output to the next Input. Item's doc comment says
+  so. Rejected: a rename (Turn, Event, Entry, Element, Unit).
+- client-core: max_output_tokens goes out as max_completion_tokens (llama.cpp b11669 aliases
+  it; OpenAI deprecated max_tokens).
+- client-core: Reasoning has no Status (the spec's reasoning item has none); Effort takes the
+  spec's enum (none, low, medium, high, xhigh); the request carries Effort only, since Chat
+  Completions has no form for the spec's reasoning summary. Reasoning with no assistant message
+  or call after it is dropped: llama.cpp refuses an assistant message of reasoning alone.
+- client-core: the Chat Completions envelope is `spike-ai-pipeline:completions/v1:` + base64 of
+  {"reasoning_content"}; a layout change takes a new prefix, and tests pin the literal.
+- client-core: Text carries the spec's PlainTextFormat and Verbosity beside JSONSchemaFormat
+  (both in the spec's TextParam, both expressible in Chat Completions); json_object, absent from
+  the spec's request formats, is reached through Native.
+- client-core: EmbeddingRequest has Native, with the same validation and clash check as the
+  protocol's; empty input strings are sent, as llama.cpp embeds them.
+- client-core: the OpenAI-style error body decodes in format.DecodeOpenAIError, shared by Chat
+  Completions and Embed/Transcribe; one Native validation and clash encoding live in
+  internal/native, which protocol, the formats, and client share.
+- client-core: TranscriptionRequest types Language and Prompt (llama.cpp honors both; Prompt
+  replaces its instruction); the file part goes as application/octet-stream, llama.cpp reading
+  the format from the bytes.
+- client-core (v0.1.0 surface): Embed and Transcribe take *EmbeddingRequest and
+  *TranscriptionRequest, refusing nil, as Generate takes *protocol.Request. Rejected: values.
+- client-core (v0.1.0 surface): usage types stay one per endpoint, in its own names
+  (protocol.Usage, EmbeddingUsage, TranscriptionUsage). Rejected: protocol.Usage for
+  transcription.
+- client-core (v0.1.0 surface): TranscriptionRequest has Native url.Values, sent as extra form
+  fields, a clash with a typed field refused before sending. Rejected: no native tier.
+- client-core (v0.1.0 surface): completions' unit tests call EncodeRequest and DecodeResponse
+  directly; client_test drives a format through the transport. Rejected: entering through
+  client.Generate.
+- client-core (v0.1.0 surface): Native clashes are caught at encode, before anything is sent;
+  Validate's doc says it doesn't check them. Rejected: a protocol-level field list.
+- client-core: set A's embedding model is granite-embedding-english-r2
+  (`mrutkows/granite-embedding-english-r2-GGUF:BF16`), replacing EmbeddingGemma 2, which vLLM
+  can't serve on GB10 (coordinator ai-hosting.md, "Set A's embedding model"); the swap lands in
+  client-core, so v0.1.0's evidence is on the set A that stays. Supersedes EmbeddingGemma 2 as
+  the host task staged and loaded it. Rejected: a root task of its own after client-core.
+- client-core: granite's gb10-2 section is c 32768 with 4 slots (each slot its trained 8192),
+  b = ub = 8192, embeddings = true, no pooling key (its GGUF declares CLS). Rejected: c 8192
+  (2048 per slot).
+- client-core: host-update restarts a running llama container whose preset mount is dead (the
+  container sees no /etc/llama-preset/models.ini because a delivery recreated
+  engines/llama-preset/), then reloads; it still never starts a stopped container. The copied
+  engines scripts stay untouched. Rejected: recording the gap for a later host task; mounting
+  the clone's engines/ (an edit to a copied script).
+- client-core: host-update's load loop treats a /models poll that fails (refused, non-2xx, not
+  the JSON expected) as not ready yet and keeps polling to its deadline, and retries a failed
+  load request; only a listing that lacks a preset model, a failed load, or the deadline fails
+  the run. Without it the first run after a restart exited 1 on a refused poll. Rejected:
+  leaving the restart path to fail its first run.
 
 ## Pending edits
 
@@ -124,8 +477,10 @@
   server-cuda13-b11669, kept current by the root's `mise run host-update` at each session's
   start, and that a borrowing session restores the pipeline engine by leaving the llama container
   running, since host-update fails on a stopped one rather than starting it.
-- coordinator · roadmap: the `host` task's summary says the router loads models on demand; it
-  runs --no-models-autoload, and host-update loads set A through the load API.
+- coordinator · roadmap, the `host` task's summary: the router runs --no-models-autoload, and
+  host-update loads set A through the load API, where the summary says it loads models on demand;
+  and the staged GGUFs name granite-embedding-english-r2 BF16 where they name embeddinggemma-2
+  Q8_0.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline` bullet (capstone): pipeline
   storage for AI-assisted processing and semantic search. Source blobs stay in blob storage; the
   database holds what the stages derive from them, each stage's output a versioned artifact
@@ -137,3 +492,27 @@
   after a recall evaluation), a chunker change re-chunks, and only an extractor change reruns
   inference. Translation between spaces is limited to truncation and quantization within one
   model; a learned mapping only bridges a migration. Settled at the capstone's plan round.
+- coordinator · roadmap: add task `client-responses` to experiment.ai.spike-ai-pipeline after
+  `client-messages` ("The Open Responses format": the Open Responses wire format, near identity
+  over the client's Open Responses-based model, with its semantic streaming events, proven
+  against the router's `/v1/responses`; tags client v0.4.0), and extend evidence 2 in its README
+  and the roadmap to a third format, Open Responses, the model's own baseline.
+- coordinator · roadmap, the `client-core` task: its summary says the stable model is Open
+  Responses' item model, stateless subset, and its repos gain `spike-ai-pipeline`, where set A's
+  embedding model was swapped to granite-embedding-english-r2 in the preset and probe.
+- coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
+  change" to granite-embedding-english-r2 says it changed.
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
+  v0.1.0:
+
+  > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
+  >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
+  >   libraries, on the standard library alone. Its protocol is Open Responses (spec 2026-04-24)
+  >   in its stateless subset; client extensions, audio input first, fill the spec's gaps and are
+  >   removed when it adopts them. Four layers import one way: the `client` transport, with
+  >   Generate, Embed, and Transcribe; `protocol`; the `format` contract; and a `format/<api>`
+  >   adapter per wire format, named by endpoint and chosen by typed constructor: `completions`
+  >   now, `messages` (Anthropic Messages) and `responses` planned. Streaming, with opt-in retry,
+  >   is planned next.
+- coordinator · context/ai-hosting.md, "Set A's embedding model": gb10-2 serves
+  granite-embedding-english-r2 BF16 from llama.cpp (spike-ai-pipeline, client-core).
