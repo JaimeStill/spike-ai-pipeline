@@ -29,15 +29,18 @@ UI on experiment.html's stack.
 ## gb10-2
 
 gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,
-`~/repos/spike-ai-pipeline`, by the engines scripts in `engines/` (`engines/README.md`). Each
-session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale SSH
-(`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs a
-root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
+`~/repos/spike-ai-pipeline`, by spike-model-engines' scripts copied into `host/` (`host/README.md`).
+Each session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale
+SSH (`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs
+a root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
 architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
-changes nothing and says so. A stopped llama container fails the run, which names the command
-that starts it. A running one that can't see the clone's preset, because a delivery recreated
-`engines/llama-preset/` under its bind mount, is restarted. `HOST_UPDATE_HOST` names another host.
+changes nothing and says so. A stopped llama container fails the run, which names the command that
+starts it. A running one whose preset mount is sourced anywhere but `host/llama-preset/`, such as
+`engines/llama-preset/` from before the scripts moved to `host/`, is re-created on the same image
+with the mount moved, by `host/engines llama update`. A running one that can't see the clone's
+preset, because a delivery recreated `host/llama-preset/` under its bind mount, is restarted.
+`HOST_UPDATE_HOST` names another host.
 
 host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
 no upstream, so a session delivers it from the laptop by push before running host-update:
