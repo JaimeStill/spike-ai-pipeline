@@ -11,7 +11,7 @@
 3. [x] host-scripts
 4. [x] client-streaming
 5. [x] client-messages
-6. [ ] client-responses
+6. [x] client-responses
 7. [ ] tools
 8. [ ] documents
 9. [ ] office-cli
@@ -19,135 +19,174 @@
 11. [ ] audio
 12. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · client-messages
+## Task brief · experiment.ai.spike-ai-pipeline · client-responses
 
 ```
-Problem       Evidence 2 needs a second wire format under the same request and response
-              model, with no change to callers. The client speaks only Chat Completions.
-              llama.cpp b11669's router serves Anthropic Messages at /v1/messages: it rebuilds
-              each request as Chat Completions, keeps a fixed list of keys, and drops the rest.
-              It streams Anthropic's typed events, with thinking blocks whose signature is
-              empty. This task adds the Messages format as an owned adapter on the standard
-              library, proves it against set A on gb10-2 with the same test code as Chat
-              Completions, and tags client v0.3.0.
+Problem       Evidence 2 needs a third wire format under the same request and response model:
+              Open Responses, the model's own baseline, where encoding is near identity. The
+              client speaks Chat Completions and Anthropic Messages. llama.cpp b11669's router
+              serves /v1/responses by rebuilding each request as Chat Completions. It honors
+              instructions, max_output_tokens, reasoning effort, and the string tool choices.
+              It drops text, reasoning summary, store, and include. It refuses
+              previous_response_id, any user part other than text and image, and a spec-form
+              reasoning item, which carries no content. Its reply is always "completed", and
+              its reasoning items carry encrypted_content "". It streams OpenAI's event names
+              without sequence numbers or output indexes. This task adds the Responses format
+              as an owned adapter on the standard library, with an option that resends
+              reasoning text for engines like llama.cpp. It proves the format against set A on
+              gb10-2 with the same test code as the other two formats, and tags client v0.4.0.
 
 Behaviors
-  1.  A messages format, built by its constructor and set as Config.Format, posts to
-      "messages" below the base URL and sends the header anthropic-version: 2026-10-21. The
-      package documentation pins that version. The token goes as Authorization: Bearer, as for
-      every format. The base module still imports only the standard library, and the strict
-      import rule passes.
-  2.  The request carries the model and max_tokens from MaxOutputTokens. A request whose
-      MaxOutputTokens is zero is refused at encode, before the token source is called or
-      anything is sent. Instructions become the top-level system field. A system or developer
-      message stays in its place as a system-role message of text blocks.
-  3.  A user message's parts become text and image blocks. An image's data URL becomes a
-      base64 source with its media type, and any other URL a url source. An image's detail is
-      dropped, and InputAudio is refused at encode. A function_call_output becomes a
-      tool_result block in a user message: its output string, or its parts as text blocks.
-      Adjacent tool results and user content join one user turn, results first.
-  4.  An assistant run (its reasoning, its message, and the function_calls after it) becomes
-      one assistant message: thinking blocks, then text blocks, then tool_use blocks. A
-      tool_use block's id is the call_id, and its input is the arguments parsed as JSON, with
-      empty arguments sent as {}. A refusal part sent back goes as a text block. Reasoning goes
-      out through its encrypted_content alone, under the client-core rule for reasoning: this
-      format's envelope becomes a thinking block (thinking text and signature) or a
-      redacted_thinking block (its data). A reasoning item with no envelope, another format's,
-      or a malformed one is dropped and never an error.
-  5.  Tools go out as name, description, input_schema, and strict. Tool choice maps auto to
-      auto, required to any, none to none, and a named function to {"type":"tool","name"}. An
-      allowed_tools choice sends only the allowed tools, with its mode mapped the same way.
-      Reasoning effort none sends thinking {"type":"disabled"}. Effort low to xhigh sends
-      thinking {"type":"adaptive"} plus output_config.effort of the same name. A JSON-schema
-      text format sends output_config.format {type json_schema, schema}, dropping the format's
-      name and description. Plain text sends nothing, and verbosity is dropped. The package
-      documentation lists every hint it drops.
-  6.  A reply decodes into protocol output in block order:
-      - A thinking block becomes a Reasoning item: its content the thinking text, and its
-        encrypted_content the envelope `spike-ai-pipeline:messages/v1:` + base64 of
-        {"thinking","signature"}. Tests pin that literal.
-      - A redacted_thinking block becomes a Reasoning item with no content, its envelope
-        holding the block's data.
-      - Each run of consecutive text blocks becomes one assistant message, one output_text
-        part per block.
-      - Each tool_use block becomes a function_call: its id the call_id, its input as JSON
-        text the arguments.
-      Each item's id is "<message id>/<output index>". Only the last item takes the response's
-      status, and the items before it are completed. stop_reason maps to the status:
-        end_turn, tool_use, stop_sequence     completed
-        max_tokens, model_context_window_exceeded   incomplete, max_output_tokens
-        refusal                               incomplete, content_filter
-        pause_turn, or any other              an error
-      Usage: InputTokens is input_tokens plus cache_read_input_tokens and
-      cache_creation_input_tokens; OutputTokens is output_tokens; TotalTokens is their sum.
-  7.  The native tier merges into the top level of the body. A member that clashes with one
-      the typed fields set is refused at encode, as is stream, which is always typed (false
-      unstreamed, true streamed). The router keeps only the members it reads, such as
-      temperature, top_p, top_k, and chat_template_kwargs. The package documentation says so.
-  8.  A non-2xx reply is an *APIError whose message and type are decoded from either body
-      shape: Anthropic's {"type":"error","error":{...}} or llama.cpp's
-      {"error":{"code","message","type"}}.
-  9.  A streamed request becomes the spec's semantic events, opened by response.created
-      (from message_start) and closed by one terminal event (at message_stop, by the table in
-      behaviour 6):
-      - A thinking block becomes a reasoning item with its reasoning_text part. Its thinking
-        deltas become reasoning deltas. Its signature delta is kept, and the item's
-        output_item.done carries the envelope.
-      - A text block becomes a part of the open assistant message, or opens one.
-      - A tool_use block becomes a function_call item. Its input_json deltas become argument
-        deltas.
-      Items and parts may be open at the same time and each closes at its own block's stop,
-      since the router closes every block only at the end. message_delta's stop_reason and
-      usage join the terminal Response. Ping events and comments change nothing, and an event
-      type the decoder doesn't know is ignored. The folded Response equals DecodeResponse's
-      for the same reply.
-  10. In a stream, an error frame in either shape, recognized from its data alone, ends the
-      stream with ErrorEvent and then response.failed, holding the output made before it:
-      Anthropic's {"type":"error",...}, or a body with a message whose type isn't a Messages
-      event, as llama.cpp's is. A stream that ends before message_stop ends with an error
-      matching io.ErrUnexpectedEOF. The Format and StreamDecoder contracts don't change.
-  11. Every Generate and GenerateStream scenario runs on gb10-2 through both formats from one
-      piece of test code, the format the only difference, and every scenario sets
-      MaxOutputTokens. Covered: chat, vision, tools, the reasoning round trip on gpt-oss-120b,
-      structured output, streamed text, a streamed function_call, and a cancel mid-stream.
-      Recorded but not asserted, passing either way, because the router drops their keys:
-      structured output's JSON validity, the named and none tool choices, and reasoning
-      effort's effect. Audio input on Messages is proven refused by a unit test.
-  12. The module README, the context capability map, the format package documentation, and
-      the CHANGELOG describe the Messages format; the CHANGELOG has a v0.3.0 entry.
+  1.  The protocol's reasoning parameter gains Summary (auto, concise, or detailed), which
+      Validate checks. Chat Completions and Messages drop it, and their package documentation
+      lists it among the hints they drop. Validate refuses a MaxOutputTokens of 1 to 15, the
+      spec's minimum, for every format; zero still leaves the bound to the endpoint. The
+      CHANGELOG marks this as a v0.4.0 behavior change.
+  2.  A responses format, built by its constructor and set as Config.Format, posts to
+      "responses" below the base URL. Its options' zero value is the spec's form. Its one
+      option, resending reasoning text, is described in behavior 6. The package documentation
+      pins spec 2026-04-24. The base module still imports only the standard library, and the
+      strict import rule passes.
+  3.  The request is the spec's create-response body, field for field under the spec's names:
+      model, instructions, input as an array of items, tools, tool_choice, reasoning (effort
+      and summary), text (format and verbosity), and max_output_tokens when non-zero. Every
+      request also carries stream (false unstreamed, true streamed), store false, and include
+      ["reasoning.encrypted_content"]. previous_response_id is never sent.
+  4.  Input items go out as the spec's item params:
+      - A message carries its type, role, and content parts: input_text; input_image with
+        image_url and detail; output_text; refusal.
+      - InputAudio goes as the client extension
+        {"type":"spike-ai-pipeline:input_audio","data":<base64>,"format":<wav|mp3>}.
+        A unit test pins that literal.
+      - A function_call carries call_id, name, and arguments.
+      - A function_call_output carries call_id and either its output string or input_text
+        parts.
+      - An item's id is sent when it has one.
+      - Tools go as {"type":"function"} with name, description, parameters when set, and
+        strict always, so false stays false where the router would default it to true.
+      - Tool choice goes in the spec's forms: the auto, none, and required modes; a named
+        function; allowed_tools with its mode.
+  5.  Reasoning goes back through encrypted_content alone, in the spec's form: type, summary
+      (its summary_text parts), and the server's encrypted_content, never content. The
+      format's envelope is `spike-ai-pipeline:responses/v1:` + base64 of
+      {"encrypted_content","content"}: the server's encrypted_content and the texts of the
+      item's reasoning_text parts. Tests pin that literal. A reasoning item is dropped at
+      encode, never an error, when it has no envelope, another format's envelope, a malformed
+      envelope, or an envelope whose server encrypted_content is empty. The router's reasoning
+      therefore never goes back in the spec's form.
+  6.  With the resend-text option, a reasoning item also sends its envelope's texts as content
+      ([{"type":"reasoning_text","text"}]). It is sent whenever the envelope holds text or
+      server encrypted_content. A run of reasoning that no assistant message or function_call
+      follows is dropped, as completions and messages drop it, since llama.cpp refuses an
+      assistant turn of reasoning alone. The protocol and package documentation list this as
+      the one exception to client-core's rule that a format never sends a reasoning item's
+      content.
+  7.  A reply decodes into protocol output in the server's order:
+      - Message items become output_text and refusal parts; annotations and logprobs are
+        dropped.
+      - function_call items keep call_id, name, and arguments.
+      - Reasoning items keep their reasoning_text content and summary_text summary, and their
+        encrypted_content becomes the envelope.
+      - Item ids and statuses are the server's; nothing is derived.
+      - An output item type outside the subset is an error naming it.
+      The response's status and incomplete_details (max_output_tokens or content_filter) are
+      taken as given, and so is error for a failed response. The router reports "completed"
+      even at the token bound, and the package documentation says so. Usage maps input_tokens,
+      output_tokens, total_tokens, and output_tokens_details.reasoning_tokens.
+  8.  The native tier merges into the top level of the body. A member that clashes with one
+      the typed fields set is refused at encode. So are stream, store, and include, which are
+      always typed, and previous_response_id and background, since the client is stateless.
+      The router reads only some members, such as temperature, top_p, and response_format.
+      The package documentation lists them, along with what the router drops: text, reasoning
+      summary, image detail, the named and allowed_tools choices (treated as auto), store, and
+      include.
+  9.  A non-2xx reply is an *APIError whose message, type, and code come from
+      format.DecodeOpenAIError, a numeric code included.
+  10. A streamed request becomes the spec's semantic events, emitted under the spec's names
+      only:
+      - The decoder numbers every event it emits in order.
+      - Each item is placed at the output_index of its output_item.added. An event that gives
+        no output_index or content_index is placed by its item_id.
+      - It fills in what the stream leaves out: a reasoning item's content_part.added and
+        .done, response.reasoning.done, function_call_arguments.done, and an output_text.done
+        or content_part.done not sent. It never repeats an event the server sent.
+      - response.reasoning_text.delta and .done are read as the spec's response.reasoning
+        events, and the package documentation lists these aliases.
+      - Items and parts may be open at the same time, each closing at its own done.
+      - An item that arrives without a status is completed at its output_item.done.
+      - response.in_progress, response.queued, summary and annotation events, comments, and
+        unknown event types change nothing. An out-of-place event is refused, such as a delta
+        for an item never added.
+      - The terminal event is response.completed, .incomplete, or .failed, and the folded
+        Response equals DecodeResponse's for the terminal's response.
+  11. In a stream, an error frame ends the stream with ErrorEvent and then response.failed,
+      holding the output made before it. The frame is recognized from its data alone: the
+      spec's {"type":"error",...}, or a body whose error object has no event type, as
+      llama.cpp's {"error":{"code","message","type"}} is. A stream that ends before its
+      terminal event ends with an error matching io.ErrUnexpectedEOF. The Format and
+      StreamDecoder contracts don't change.
+  12. Every Generate and GenerateStream scenario runs on gb10-2 through all three formats from
+      one piece of test code, and the format is the only difference. Responses runs with the
+      resend-text option. Covered: chat, vision, tools, the reasoning round trip on
+      gpt-oss-120b (asserted on every format), structured output, streamed text, a streamed
+      function_call, streamed reasoning, a cancel mid-stream, and an unknown model's
+      *APIError. Recorded but not asserted on responses, passing either way: structured
+      output's JSON validity, the status at the token bound, and audio input on
+      gemma-4-E4B (the router answers 400). Recorded on every format, as before: the named,
+      allowed_tools, and none choices, and reasoning effort's effect. A unit test proves that
+      the spec form, without the option, drops the router's reasoning at encode.
+  13. The module README, the context capability map, the protocol and format package
+      documentation, and the CHANGELOG describe the Responses format, the summary parameter,
+      and the reasoning-content exception. The CHANGELOG has a v0.4.0 entry, its behavior
+      change listed.
 
 Test seams    the Format methods called directly in unit tests (EncodeRequest, DecodeResponse,
-              EncodeStreamRequest, NewStreamDecoder, DecodeError) over recorded router and
-              Anthropic bodies and event sequences; the integration tier driving
-              client.Generate and GenerateStream black-box against gb10-2, once per format
-Slices        1. Unary text: the constructor, route, version header, max_tokens refusal,
-                 Instructions and in-place system messages, text and image parts, audio
-                 refused, decoding text replies (stop-reason table, usage, item ids), and both
-                 error bodies. The integration tier runs the chat and vision scenarios through
-                 both formats on gb10-2. Check passes. Checkpoint.
-              2. Tools and reasoning: tools, the tool-choice mapping, allowed_tools narrowing,
-                 tool_use and tool_result, the envelope round trip (thinking and
-                 redacted_thinking), effort, structured output, and the Native clash rules.
-                 The tools, reasoning round-trip, and structured scenarios run through both
-                 formats on gb10-2 (the structured, named-choice, and effort results recorded).
-                 Check passes. Checkpoint, after a standards-review pass.
-              3. Streaming: the stream encoder and the stateful decoder (open parts at the same
-                 time, signature folded into the envelope, ping and unknown events, both
-                 error-frame shapes, an early end). The streamed text, function_call,
-                 reasoning, and cancel scenarios run through both formats on gb10-2. Check
-                 passes. Checkpoint.
-              4. Every scenario through both formats in one run of the integration tier, with
-                 the recorded results written into the run's log. Check passes. Checkpoint.
-              5. Release preparation: the CHANGELOG's v0.3.0 entry, the module README, the
-                 context capability map, and the package docs (dropped hints, version pin,
-                 envelope). Check passes. Checkpoint.
-Out of scope  /v1/messages/count_tokens and any token-counting operation; Anthropic's server
-              tools, citations, documents, and prompt caching; budget_tokens as a typed field
-              (reachable through Native); auth by x-api-key; streamed vision and audio; the
-              Open Responses format (client-responses)
-Door          one-way for the release: tag v0.3.0 is pushed. The code is two-way: the change
-              adds a format and changes no existing contract.
-Release       spike-ai-pipeline-client v0.3.0
+              EncodeStreamRequest, NewStreamDecoder, DecodeError), over recorded router bodies,
+              spec-conformant bodies, and event sequences; protocol.Request.Validate; the
+              integration tier driving client.Generate and GenerateStream black-box against
+              gb10-2, once per format
+Slices        1. Protocol: the reasoning summary parameter and its validation; the 1-to-15
+                 MaxOutputTokens refusal; completions and messages dropping summary. The
+                 existing scenarios pass through both formats on gb10-2. Check passes.
+                 Checkpoint: the session gives the architect the source files the slice
+                 changed, lowest dependency first, each with what to look for.
+              2. Unary text: the constructor and its option, the route, the request body
+                 (instructions, messages, text and image parts, the audio extension's wire
+                 form, max_output_tokens, store, include, stream false), and decoding text
+                 replies (ids, statuses, incomplete_details, usage) and error bodies. The chat,
+                 vision, unknown-model, and token-bound scenarios run through all three formats
+                 on gb10-2, with the bound's status and audio recorded on responses. Check
+                 passes. Checkpoint as in slice 1, after a standards-review pass.
+              3. Tools and reasoning: tools with strict, every tool-choice form,
+                 function_call and function_call_output, the envelope in the spec form and
+                 with the option, effort and summary, structured output, and the Native clash
+                 and stateless refusals. The tools, reasoning round-trip, and structured
+                 scenarios run through all three formats on gb10-2 (structured, named-choice,
+                 and effort results recorded). Check passes. Checkpoint as in slice 1.
+              4. Streaming: the stream encoder and the normalizing decoder (numbering,
+                 placement by item_id, filled-in events, the reasoning_text aliases, open
+                 items at the same time, both error-frame shapes, an early end). The streamed
+                 text, function_call, reasoning, and cancel scenarios run through all three
+                 formats on gb10-2. Check passes. Checkpoint as in slice 1.
+              5. Every scenario through all three formats in one run of the integration tier,
+                 with the recorded results written into the run's log. Check passes.
+                 Checkpoint as in slice 1, only if the slice changed source.
+              6. Release preparation: the CHANGELOG's v0.4.0 entry, the module README, the
+                 context capability map, and the protocol and format package docs (the
+                 dropped hints, what the router drops, the aliases, the envelope, the option
+                 and its exception, the extension's wire form). Check passes. Checkpoint as in
+                 slice 1 (package doc comments are source).
+Out of scope  server-side state (previous_response_id, background, conversations, retrieving or
+              deleting responses) and /v1/responses/input_tokens; hosted and non-function
+              tools; input_file and item references; reasoning summary and annotation stream
+              events; logprobs; the spec's sampling and limit fields as typed fields (reachable
+              through Native); streamed vision and audio; the root README's and the roadmap's
+              evidence 2 edit, which stays a pending edit
+Door          one-way for the release: tag v0.4.0 is pushed, and the
+              spike-ai-pipeline:input_audio and spike-ai-pipeline:responses/v1: wire forms
+              become public. The code is two-way otherwise: it adds a format and a protocol
+              field, and Validate's new refusal is the one behavior change.
+Release       spike-ai-pipeline-client v0.4.0
 ```
 
 ## Decisions
@@ -560,6 +599,73 @@ Release       spike-ai-pipeline-client v0.3.0
   <scenario>: <outcome>` line: effort and the named, allowed_tools, and none choices on both
   formats, and structured output on messages.
 
+- client-responses: the Open Responses format is owned, in the base module as format/responses, on
+  encoding/json/v2. Rejected: openai-go/v3 v3.89.0 (Azure and AWS SDKs, coder/websocket,
+  gjson/sjson).
+- client-responses: every Responses request is explicitly stateless: store false and include
+  ["reasoning.encrypted_content"] are typed members, a Native store or include refused as a clash;
+  previous_response_id never sent. Rejected: leaving both to server defaults and Native.
+- client-responses: protocol.ReasoningParam gains Summary (auto, concise, detailed), checked by
+  Validate; completions and messages drop it and list it. Rejected: leaving it out.
+- client-responses: the stream decoder reads response.reasoning_text.delta/.done (OpenAI's names,
+  sent by llama.cpp b11669) as the spec's response.reasoning events and emits only the spec's names;
+  the package doc lists the aliases. Rejected: ignoring them and taking reasoning whole from
+  output_item.done.
+- client-responses: Validate refuses MaxOutputTokens 1–15 (the spec's minimum) for every format, a
+  v0.4.0 behavior change. Rejected: refusing only in the Responses encoder.
+- client-responses: a unit test pins the spike-ai-pipeline:input_audio wire form, and integration
+  records the router's answer on gemma-4-E4B, passing either way. Rejected: unit test alone.
+- client-responses: BUILD checkpoints only after slices that change source, each giving the changed
+  files lowest dependency first with what to look for in each; a standards-review pass before slice
+  2's. Rejected: a checkpoint after every slice regardless; one checkpoint.
+- client-responses: reasoning goes back in the spec form by default (summary and the server's
+  encrypted_content, never content), dropped at encode without server encrypted_content; a
+  constructor option also resends the text as content for engines like llama.cpp. Envelope
+  `spike-ai-pipeline:responses/v1:` holds the server's encrypted_content and the text; tests pin the
+  literal. Integration runs Responses with the option on gb10-2 and asserts the round trip. Amends
+  client-core's "a format never sends an input reasoning item's content" with this listed exception.
+  Rejected: spec form only (no reasoning on llama.cpp); always resending content.
+- client-responses (checkpoint): the Responses option is ResendReasoningText, a verb naming the
+  act and what goes back. Rejected: ReasoningAsContent; IncludeReasoning, which reads as the
+  spec's include member.
+- client-responses (checkpoint): refuseStateful stays: previous_response_id and background are
+  refused in Native, since stateful use is a new capability (typed fields, retrieve, poll,
+  cancel, and delete operations), never a request field; the package doc says why.
+- client-responses (checkpoint): a streamed item the router gives no status (its reasoning, in
+  output_item.done and the terminal) is completed at its done, and keeps that status in the
+  folded Response, which otherwise equals DecodeResponse of the terminal response; the router's
+  unary reply gives the same item completed. Rejected: an empty status, which fails the shared
+  streamed reasoning scenario.
+- client-responses: the constructor is New(Options), an options struct as client.Config is.
+  Rejected: functional options.
+- client-responses: protocol exports MinMaxOutputTokens (16), and completions' package doc lists
+  the hints it drops, as messages' does.
+- client-responses: internal/native gains Has, the Native member lookup completions and responses
+  share.
+- client-responses: DecodeResponse refuses a unary reply whose status is in_progress, queued, or
+  missing, since a stateless client can't fetch the rest (seen by the architect at slice 2's
+  checkpoint). Amends behavior 7's "status taken as given".
+- client-responses: a function_call with empty arguments goes out as "{}".
+- client-responses: the envelope's content is an array of strings; both members are always
+  present, and an envelope missing either is malformed, so dropped.
+- client-responses: with ResendReasoningText, a reasoning item whose envelope holds server
+  encrypted_content but no text goes out without content.
+- client-responses: an allowed_tools choice sends every tool and lets the choice narrow them,
+  where messages sends only the allowed tools.
+- client-responses: two router quirks are documented in the package doc, not worked around: a
+  reasoning item after an assistant turn replaces that turn's reasoning, and of consecutive
+  reasoning items only the last reaches the model.
+- client-responses: the stream decoder refuses a done event whose text or arguments differ from
+  the joined deltas, a part opened out of order within its item, and an output_item.added that
+  already carries content. It reads ErrorPayload.Param, and the response.failed after an error
+  frame has zero usage.
+- client-responses: the envelope prefixes stay off protocol's extension list: encrypted_content is
+  opaque to the spec, so an envelope is no wire type.
+- client-responses: the CHANGELOG marks the 1–15 refusal **Breaking:**, the only marker the
+  CHANGELOG uses.
+- client-responses: integration's per-format pending skips were scaffolding, removed once every
+  format passed; slice 5 was a run only, with no commit.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -585,15 +691,17 @@ Release       spike-ai-pipeline-client v0.3.0
 - coordinator · roadmap: add task `client-responses` to experiment.ai.spike-ai-pipeline after
   `client-messages` ("The Open Responses format": the Open Responses wire format, near identity
   over the client's Open Responses-based model, with its semantic streaming events, proven
-  against the router's `/v1/responses`; tags client v0.4.0), and extend evidence 2 in its README
-  and the roadmap to a third format, Open Responses, the model's own baseline.
+  against the router's `/v1/responses`; tags client v0.4.0; evidence 2). In the spike's summary,
+  the client's wire formats read "(Chat Completions, Anthropic Messages, and Open Responses)"
+  where they read "(Chat Completions, then Anthropic Messages)". The root's evidence 2 already
+  names all three (`context/README.md`).
 - coordinator · roadmap, the `client-core` task: its summary says the stable model is Open
   Responses' item model, stateless subset, and its repos gain `spike-ai-pipeline`, where set A's
   embedding model was swapped to granite-embedding-english-r2 in the preset and probe.
 - coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
   change" to granite-embedding-english-r2 says it changed.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
-  v0.3.0:
+  v0.4.0:
 
   > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
   >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
@@ -602,9 +710,9 @@ Release       spike-ai-pipeline-client v0.3.0
   >   removed when it adopts them. Four layers import one way: the `client` transport, with
   >   Generate, GenerateStream, Embed, and Transcribe; `protocol`; the `format` contract; and a
   >   `format/<api>` adapter per wire format, named by endpoint and chosen by typed constructor:
-  >   `completions` and `messages` (Anthropic Messages) now, `responses` planned. GenerateStream
-  >   yields Open Responses' streaming events, which a `protocol.Accumulator` folds into the
-  >   Response Generate returns. Retry is opt-in.
+  >   `completions` (Chat Completions), `messages` (Anthropic Messages), and `responses` (Open
+  >   Responses). GenerateStream yields Open Responses' streaming events, which a
+  >   `protocol.Accumulator` folds into the Response Generate returns. Retry is opt-in.
 - coordinator · roadmap, the `host-scripts` task: its summary and proof name d285b06
   (llama-gb10-native's merge) where they name host-rename's merge commit, and its summary
   says the container scripts plus llama-release.sh are copied.
@@ -617,4 +725,10 @@ Release       spike-ai-pipeline-client v0.3.0
   `/v1/messages` rebuilds a request as Chat Completions. It drops output_config, a tool's strict,
   and the none tool choice. It maps named and allowed_tools choices to required, yet gpt-oss-120b
   made no call under either and repeated its answer to the 1024-token bound. Its stream error
-  frame carries no `"type":"error"`.
+  frame carries no `"type":"error"`. Its `/v1/responses` also rebuilds a request as Chat
+  Completions. It drops text, reasoning's summary, store, include, and an image's detail, and
+  treats named and allowed_tools choices as auto. It refuses previous_response_id, a content part
+  other than text, image, or file, and a reasoning item without content. Every reply reports
+  completed, even at the token bound. It streams reasoning under OpenAI's
+  `response.reasoning_text` names, with no sequence numbers or indexes, and its stream error
+  frame is `{"error":{...}}` with no type.

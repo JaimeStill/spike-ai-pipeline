@@ -17,8 +17,8 @@ stage by stage in real time?
 
 1. Client: chat with tools and a reasoning round trip, streamed and unstreamed; vision, audio
    input, embeddings, and transcription; each proven against set A on gb10-2.
-2. A second wire format, Anthropic Messages, fits under the same request and response model with
-   no change to callers.
+2. Two more wire formats, Anthropic Messages and Open Responses (the model's own baseline), fit
+   under the same request and response model as Chat Completions, with no change to callers.
 3. The client's base module is standard library only, and the check passes.
 4. A PDF's pages go through vision as a whole blob and as a page stream, with the renderer
    bake-off's ranking, time and memory per page, license, and footprint.
