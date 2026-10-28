@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
-- **Task:** client-responses
-- **Branch:** client-responses
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -11,7 +11,7 @@
 3. [x] host-scripts
 4. [x] client-streaming
 5. [x] client-messages
-6. [ ] client-responses
+6. [x] client-responses
 7. [ ] tools
 8. [ ] documents
 9. [ ] office-cli
@@ -188,10 +188,6 @@ Door          one-way for the release: tag v0.4.0 is pushed, and the
               field, and Validate's new refusal is the one behavior change.
 Release       spike-ai-pipeline-client v0.4.0
 ```
-
-## Progress
-
-slices 6/6 committed (slice 5 run only, no commit; slice 6 85d0394) · standards cc73e1f · spec no gaps · editor done
 
 ## Decisions
 
