@@ -338,3 +338,50 @@ tools_test.go:155: recorded: messages TestNamedToolChoices/none: none: status co
 The run is the client's integration tier run verbose, from the laptop in
 spike-ai-pipeline-client at `f7c7f01`:
 `GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 mise exec -- go test -race -tags integration -count=1 -v ./...`.
+
+## 2026-10-28: the router's `/v1/responses`
+
+Task `client-responses`. The client's Open Responses format (spike-ai-pipeline-client
+`format/responses`, with `ResendReasoningText`) ran every Generate and GenerateStream scenario of
+the client's integration tier against gb10-2's router, beside Chat Completions and Messages, and
+the run passed in 106.3 s. The router, at the same build, `version: 0.7.0-dev (build 11669, commit
+620d2225c)`, answers `/v1/responses` as follows:
+
+- **The request:** the router rebuilds the body as a Chat Completions request. It reads
+  instructions, `max_output_tokens`, reasoning's effort, the tools, and the input items. It drops
+  `text`, so structured output came back as prose; it also drops reasoning's summary, an image's
+  detail, `store`, and `include`, and treats a named or `allowed_tools` tool choice as auto. Under
+  both, gpt-oss-120b answered "4" without a call and completed, unlike through `/v1/messages`.
+- **Refusals:** it refuses `previous_response_id`, a content part other than `input_text`,
+  `input_image`, or `input_file` (the client's audio extension among them), and a reasoning item
+  without content, which is the spec's input form.
+- **Reasoning:** a reply's reasoning items carry an empty `encrypted_content`. The router reads a
+  reasoning item's content back, so the reasoning round trip works only with the text resent as
+  content. A reasoning item that follows an assistant turn replaces that turn's reasoning, and of
+  consecutive reasoning items only the last reaches the model.
+- **Status:** every reply reports `completed`, even one cut off at `max_output_tokens`.
+- **The stream:** reasoning streams under OpenAI's names, `response.reasoning_text.delta` and
+  `.done`. No event carries a `sequence_number`, `output_index`, or `content_index`; reasoning has
+  no part events or done event, a function call no arguments done event, and the streamed
+  reasoning item no status. Every item stays open until the end of the reply. A stream error
+  frame, read from the source at 620d2225c (`tools/server/server-context.cpp:5037-5046`) and not
+  seen in a run, is an unnamed event with data `{"error":{"code","message","type"}}`, with no
+  `"type":"error"`.
+
+The run's recorded lines for Open Responses:
+
+```
+chat_test.go:53: recorded: responses TestChatIncompleteAtMaxOutputTokens: status "completed", incomplete_details <nil>, output_tokens 16 at the bound 16
+media_test.go:78: recorded: responses TestAudioInResponses: refused: 400 Bad Request: 'type' must be one of 'input_text', 'input_image', or 'input_file' (invalid_request_error, 400)
+reasoning_test.go:87: recorded: responses TestReasoningEffort: effort none: status completed, 78 bytes of reasoning, 42 output tokens
+reasoning_test.go:87: recorded: responses TestReasoningEffort: effort low: status completed, 71 bytes of reasoning, 40 output tokens
+reasoning_test.go:87: recorded: responses TestReasoningEffort: effort high: status completed, 363 bytes of reasoning, 131 output tokens
+structured_test.go:48: recorded: responses TestStructuredOutput: output_text decodes as the schema's object: did not hold; output_text "The capital of France is **Paris**.", error jsontext: invalid character 'T' at start of value
+tools_test.go:155: recorded: responses TestNamedToolChoices/named_function_get_weather: named function get_weather: status completed, output [output_text "4"]
+tools_test.go:155: recorded: responses TestNamedToolChoices/allowed_tools_get_weather,_required: allowed_tools get_weather, required: status completed, output [output_text "4"]
+tools_test.go:155: recorded: responses TestNamedToolChoices/none: none: status completed, output [output_text "4"]
+```
+
+The run is the client's integration tier run verbose, from the laptop in
+spike-ai-pipeline-client at `6032cf7`:
+`GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 mise exec -- go test -race -tags integration -count=1 -v ./integration/`.

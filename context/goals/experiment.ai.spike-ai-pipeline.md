@@ -191,7 +191,7 @@ Release       spike-ai-pipeline-client v0.4.0
 
 ## Progress
 
-slices 0/6 committed · standards — · spec — · editor —
+slices 6/6 committed (slice 5 run only, no commit; slice 6 85d0394) · standards cc73e1f · spec no gaps · editor done
 
 ## Decisions
 
@@ -629,6 +629,46 @@ slices 0/6 committed · standards — · spec — · editor —
   literal. Integration runs Responses with the option on gb10-2 and asserts the round trip. Amends
   client-core's "a format never sends an input reasoning item's content" with this listed exception.
   Rejected: spec form only (no reasoning on llama.cpp); always resending content.
+- client-responses (checkpoint): the Responses option is ResendReasoningText, a verb naming the
+  act and what goes back. Rejected: ReasoningAsContent; IncludeReasoning, which reads as the
+  spec's include member.
+- client-responses (checkpoint): refuseStateful stays: previous_response_id and background are
+  refused in Native, since stateful use is a new capability (typed fields, retrieve, poll,
+  cancel, and delete operations), never a request field; the package doc says why.
+- client-responses (checkpoint): a streamed item the router gives no status (its reasoning, in
+  output_item.done and the terminal) is completed at its done, and keeps that status in the
+  folded Response, which otherwise equals DecodeResponse of the terminal response; the router's
+  unary reply gives the same item completed. Rejected: an empty status, which fails the shared
+  streamed reasoning scenario.
+- client-responses: the constructor is New(Options), an options struct as client.Config is.
+  Rejected: functional options.
+- client-responses: protocol exports MinMaxOutputTokens (16), and completions' package doc lists
+  the hints it drops, as messages' does.
+- client-responses: internal/native gains Has, the Native member lookup completions and responses
+  share.
+- client-responses: DecodeResponse refuses a unary reply whose status is in_progress, queued, or
+  missing, since a stateless client can't fetch the rest (seen by the architect at slice 2's
+  checkpoint). Amends behavior 7's "status taken as given".
+- client-responses: a function_call with empty arguments goes out as "{}".
+- client-responses: the envelope's content is an array of strings; both members are always
+  present, and an envelope missing either is malformed, so dropped.
+- client-responses: with ResendReasoningText, a reasoning item whose envelope holds server
+  encrypted_content but no text goes out without content.
+- client-responses: an allowed_tools choice sends every tool and lets the choice narrow them,
+  where messages sends only the allowed tools.
+- client-responses: two router quirks are documented in the package doc, not worked around: a
+  reasoning item after an assistant turn replaces that turn's reasoning, and of consecutive
+  reasoning items only the last reaches the model.
+- client-responses: the stream decoder refuses a done event whose text or arguments differ from
+  the joined deltas, a part opened out of order within its item, and an output_item.added that
+  already carries content. It reads ErrorPayload.Param, and the response.failed after an error
+  frame has zero usage.
+- client-responses: the envelope prefixes stay off protocol's extension list: encrypted_content is
+  opaque to the spec, so an envelope is no wire type.
+- client-responses: the CHANGELOG marks the 1–15 refusal **Breaking:**, the only marker the
+  CHANGELOG uses.
+- client-responses: integration's per-format pending skips were scaffolding, removed once every
+  format passed; slice 5 was a run only, with no commit.
 
 ## Pending edits
 
@@ -655,15 +695,17 @@ slices 0/6 committed · standards — · spec — · editor —
 - coordinator · roadmap: add task `client-responses` to experiment.ai.spike-ai-pipeline after
   `client-messages` ("The Open Responses format": the Open Responses wire format, near identity
   over the client's Open Responses-based model, with its semantic streaming events, proven
-  against the router's `/v1/responses`; tags client v0.4.0), and extend evidence 2 in its README
-  and the roadmap to a third format, Open Responses, the model's own baseline.
+  against the router's `/v1/responses`; tags client v0.4.0; evidence 2). In the spike's summary,
+  the client's wire formats read "(Chat Completions, Anthropic Messages, and Open Responses)"
+  where they read "(Chat Completions, then Anthropic Messages)". The root's evidence 2 already
+  names all three (`context/README.md`).
 - coordinator · roadmap, the `client-core` task: its summary says the stable model is Open
   Responses' item model, stateless subset, and its repos gain `spike-ai-pipeline`, where set A's
   embedding model was swapped to granite-embedding-english-r2 in the preset and probe.
 - coordinator · roadmap, the spike's summary: the sentence saying set A's embedding model "is to
   change" to granite-embedding-english-r2 says it changed.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-client` bullet, rewritten to
-  v0.3.0:
+  v0.4.0:
 
   > - **`spike-ai-pipeline-client`** gives Go primitives over the engines' native APIs, built as
   >   owned, optimized infrastructure from the best of spike-harness-driver's `model` and tau's
@@ -672,9 +714,9 @@ slices 0/6 committed · standards — · spec — · editor —
   >   removed when it adopts them. Four layers import one way: the `client` transport, with
   >   Generate, GenerateStream, Embed, and Transcribe; `protocol`; the `format` contract; and a
   >   `format/<api>` adapter per wire format, named by endpoint and chosen by typed constructor:
-  >   `completions` and `messages` (Anthropic Messages) now, `responses` planned. GenerateStream
-  >   yields Open Responses' streaming events, which a `protocol.Accumulator` folds into the
-  >   Response Generate returns. Retry is opt-in.
+  >   `completions` (Chat Completions), `messages` (Anthropic Messages), and `responses` (Open
+  >   Responses). GenerateStream yields Open Responses' streaming events, which a
+  >   `protocol.Accumulator` folds into the Response Generate returns. Retry is opt-in.
 - coordinator · roadmap, the `host-scripts` task: its summary and proof name d285b06
   (llama-gb10-native's merge) where they name host-rename's merge commit, and its summary
   says the container scripts plus llama-release.sh are copied.
@@ -687,4 +729,10 @@ slices 0/6 committed · standards — · spec — · editor —
   `/v1/messages` rebuilds a request as Chat Completions. It drops output_config, a tool's strict,
   and the none tool choice. It maps named and allowed_tools choices to required, yet gpt-oss-120b
   made no call under either and repeated its answer to the 1024-token bound. Its stream error
-  frame carries no `"type":"error"`.
+  frame carries no `"type":"error"`. Its `/v1/responses` also rebuilds a request as Chat
+  Completions. It drops text, reasoning's summary, store, include, and an image's detail, and
+  treats named and allowed_tools choices as auto. It refuses previous_response_id, a content part
+  other than text, image, or file, and a reasoning item without content. Every reply reports
+  completed, even at the token bound. It streams reasoning under OpenAI's
+  `response.reasoning_text` names, with no sequence numbers or indexes, and its stream error
+  frame is `{"error":{...}}` with no type.
