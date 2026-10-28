@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** tools
+- **Branch:** tools
 
 ## Tasks
 
@@ -19,175 +19,154 @@
 11. [ ] audio
 12. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · client-responses
+## Task brief · experiment.ai.spike-ai-pipeline · tools
 
 ```
-Problem       Evidence 2 needs a third wire format under the same request and response model:
-              Open Responses, the model's own baseline, where encoding is near identity. The
-              client speaks Chat Completions and Anthropic Messages. llama.cpp b11669's router
-              serves /v1/responses by rebuilding each request as Chat Completions. It honors
-              instructions, max_output_tokens, reasoning effort, and the string tool choices.
-              It drops text, reasoning summary, store, and include. It refuses
-              previous_response_id, any user part other than text and image, and a spec-form
-              reasoning item, which carries no content. Its reply is always "completed", and
-              its reasoning items carry encrypted_content "". It streams OpenAI's event names
-              without sequence numbers or output indexes. This task adds the Responses format
-              as an owned adapter on the standard library, with an option that resends
-              reasoning text for engines like llama.cpp. It proves the format against set A on
-              gb10-2 with the same test code as the other two formats, and tags client v0.4.0.
+Problem       Processing runs mature system tools through adapters it owns
+              (system-tools.md), but it has no tool contract, no runner, no CI, and
+              no release. Every later processing task (documents, office, audio,
+              streams) runs a tool through this contract. Evidence 14 asks that one
+              tool run through each runner, exec and container, under the same
+              contract. This task adds the contract and both runners on the standard
+              library. Each runner finds its tool and checks its version when it is
+              built, so a missing or outdated tool fails at startup. The container
+              runner drives the docker CLI through the exec runner, with one pinned
+              image per run, locked down. Cancelling a run's context stops a tool
+              through either runner. The task proves evidence 14 with ffprobe, on the
+              host (n9.0.2) and in linuxserver/ffmpeg:9.0.2-cli-ls87 by digest, adds
+              the CI pair, and tags processing v0.1.0.
 
 Behaviors
-  1.  The protocol's reasoning parameter gains Summary (auto, concise, or detailed), which
-      Validate checks. Chat Completions and Messages drop it, and their package documentation
-      lists it among the hints they drop. Validate refuses a MaxOutputTokens of 1 to 15, the
-      spec's minimum, for every format; zero still leaves the bound to the endpoint. The
-      CHANGELOG marks this as a v0.4.0 behavior change.
-  2.  A responses format, built by its constructor and set as Config.Format, posts to
-      "responses" below the base URL. Its options' zero value is the spec's form. Its one
-      option, resending reasoning text, is described in behavior 6. The package documentation
-      pins spec 2026-04-24. The base module still imports only the standard library, and the
-      strict import rule passes.
-  3.  The request is the spec's create-response body, field for field under the spec's names:
-      model, instructions, input as an array of items, tools, tool_choice, reasoning (effort
-      and summary), text (format and verbosity), and max_output_tokens when non-zero. Every
-      request also carries stream (false unstreamed, true streamed), store false, and include
-      ["reasoning.encrypted_content"]. previous_response_id is never sent.
-  4.  Input items go out as the spec's item params:
-      - A message carries its type, role, and content parts: input_text; input_image with
-        image_url and detail; output_text; refusal.
-      - InputAudio goes as the client extension
-        {"type":"spike-ai-pipeline:input_audio","data":<base64>,"format":<wav|mp3>}.
-        A unit test pins that literal.
-      - A function_call carries call_id, name, and arguments.
-      - A function_call_output carries call_id and either its output string or input_text
-        parts.
-      - An item's id is sent when it has one.
-      - Tools go as {"type":"function"} with name, description, parameters when set, and
-        strict always, so false stays false where the router would default it to true.
-      - Tool choice goes in the spec's forms: the auto, none, and required modes; a named
-        function; allowed_tools with its mode.
-  5.  Reasoning goes back through encrypted_content alone, in the spec's form: type, summary
-      (its summary_text parts), and the server's encrypted_content, never content. The
-      format's envelope is `spike-ai-pipeline:responses/v1:` + base64 of
-      {"encrypted_content","content"}: the server's encrypted_content and the texts of the
-      item's reasoning_text parts. Tests pin that literal. A reasoning item is dropped at
-      encode, never an error, when it has no envelope, another format's envelope, a malformed
-      envelope, or an envelope whose server encrypted_content is empty. The router's reasoning
-      therefore never goes back in the spec's form.
-  6.  With the resend-text option, a reasoning item also sends its envelope's texts as content
-      ([{"type":"reasoning_text","text"}]). It is sent whenever the envelope holds text or
-      server encrypted_content. A run of reasoning that no assistant message or function_call
-      follows is dropped, as completions and messages drop it, since llama.cpp refuses an
-      assistant turn of reasoning alone. The protocol and package documentation list this as
-      the one exception to client-core's rule that a format never sends a reasoning item's
-      content.
-  7.  A reply decodes into protocol output in the server's order:
-      - Message items become output_text and refusal parts; annotations and logprobs are
-        dropped.
-      - function_call items keep call_id, name, and arguments.
-      - Reasoning items keep their reasoning_text content and summary_text summary, and their
-        encrypted_content becomes the envelope.
-      - Item ids and statuses are the server's; nothing is derived.
-      - An output item type outside the subset is an error naming it.
-      The response's status and incomplete_details (max_output_tokens or content_filter) are
-      taken as given, and so is error for a failed response. The router reports "completed"
-      even at the token bound, and the package documentation says so. Usage maps input_tokens,
-      output_tokens, total_tokens, and output_tokens_details.reasoning_tokens.
-  8.  The native tier merges into the top level of the body. A member that clashes with one
-      the typed fields set is refused at encode. So are stream, store, and include, which are
-      always typed, and previous_response_id and background, since the client is stateless.
-      The router reads only some members, such as temperature, top_p, and response_format.
-      The package documentation lists them, along with what the router drops: text, reasoning
-      summary, image detail, the named and allowed_tools choices (treated as auto), store, and
-      include.
-  9.  A non-2xx reply is an *APIError whose message, type, and code come from
-      format.DecodeOpenAIError, a numeric code included.
-  10. A streamed request becomes the spec's semantic events, emitted under the spec's names
-      only:
-      - The decoder numbers every event it emits in order.
-      - Each item is placed at the output_index of its output_item.added. An event that gives
-        no output_index or content_index is placed by its item_id.
-      - It fills in what the stream leaves out: a reasoning item's content_part.added and
-        .done, response.reasoning.done, function_call_arguments.done, and an output_text.done
-        or content_part.done not sent. It never repeats an event the server sent.
-      - response.reasoning_text.delta and .done are read as the spec's response.reasoning
-        events, and the package documentation lists these aliases.
-      - Items and parts may be open at the same time, each closing at its own done.
-      - An item that arrives without a status is completed at its output_item.done.
-      - response.in_progress, response.queued, summary and annotation events, comments, and
-        unknown event types change nothing. An out-of-place event is refused, such as a delta
-        for an item never added.
-      - The terminal event is response.completed, .incomplete, or .failed, and the folded
-        Response equals DecodeResponse's for the terminal's response.
-  11. In a stream, an error frame ends the stream with ErrorEvent and then response.failed,
-      holding the output made before it. The frame is recognized from its data alone: the
-      spec's {"type":"error",...}, or a body whose error object has no event type, as
-      llama.cpp's {"error":{"code","message","type"}} is. A stream that ends before its
-      terminal event ends with an error matching io.ErrUnexpectedEOF. The Format and
-      StreamDecoder contracts don't change.
-  12. Every Generate and GenerateStream scenario runs on gb10-2 through all three formats from
-      one piece of test code, and the format is the only difference. Responses runs with the
-      resend-text option. Covered: chat, vision, tools, the reasoning round trip on
-      gpt-oss-120b (asserted on every format), structured output, streamed text, a streamed
-      function_call, streamed reasoning, a cancel mid-stream, and an unknown model's
-      *APIError. Recorded but not asserted on responses, passing either way: structured
-      output's JSON validity, the status at the token bound, and audio input on
-      gemma-4-E4B (the router answers 400). Recorded on every format, as before: the named,
-      allowed_tools, and none choices, and reasoning effort's effect. A unit test proves that
-      the spec form, without the option, drops the router's reasoning at encode.
-  13. The module README, the context capability map, the protocol and format package
-      documentation, and the CHANGELOG describe the Responses format, the summary parameter,
-      and the reasoning-content exception. The CHANGELOG has a v0.4.0 entry, its behavior
-      change listed.
+  1.  The tool contract is a Tool bound to one program. A runner's constructor
+      builds it, and it reports the program's name and the version found at
+      construction. Run takes the caller's context and one invocation: arguments,
+      a working directory the caller owns, and optional stdin, stdout, and
+      stderr streams. An adapter written against Tool runs the same code through
+      either runner. The contract and both runners are one package in the base
+      module, which builds on Linux only.
+  2.  The exec runner looks up a program name on PATH and takes a path with a
+      separator as given. A program it can't find is a construction error naming
+      the program. Every constructor takes a context, and the version check and
+      any pull run under it.
+  3.  A tool declares its version arguments, a pattern that captures the version
+      in their output, and a minimum version. A version is dotted numbers,
+      compared component by component as numbers, a missing component counting as
+      zero. The constructor refuses a tool whose version is older than the
+      minimum, one whose output doesn't match the pattern, and one whose version
+      command fails. Each error names the program, the version found, and the
+      minimum.
+  4.  A script runs through its interpreter. The interpreter is found and checked
+      as a binary, the script must exist at construction, and Run executes the
+      interpreter with the script and the invocation's arguments.
+  5.  Cancelling an exec run sends SIGTERM to the tool's process group, then
+      SIGKILL after the grace period, 10 s when unset. A script's child processes
+      end with it. Run returns an error matching the context's
+      (errors.Is context.Canceled or context.DeadlineExceeded), never an exit
+      error.
+  6.  A tool that exits nonzero gives an error carrying the program's name and its
+      exit code. When the caller passed no stderr writer, the error also carries
+      the last 4 KiB of stderr. When the caller passed one, all of stderr goes to
+      it and the error has no tail.
+  7.  The container runner runs the docker CLI as an exec tool, found and checked
+      as behaviors 2 and 3 describe. Its minimum is 20.10, the first with --pull,
+      and it reads the server's version, so a daemon it can't reach is a
+      construction error. Docker is the only runtime.
+  8.  An image reference must carry a digest (repo:tag@sha256: and 64 hex digits);
+      a reference without one is refused at construction. When the image isn't
+      present locally, construction pulls it by that reference, and every run
+      passes --pull never.
+  9.  At construction, the container runner runs the tool's version command
+      inside the image, through the program set as the entrypoint, and checks it
+      against the minimum as behavior 3 does. A wrong entrypoint fails at startup.
+  10. Each container run passes --rm, --init, --network none, --user as the
+      caller's uid:gid, --cap-drop ALL, --pull never, a name of its own (a fixed
+      prefix and a random suffix), and --entrypoint set to the tool's program. It
+      mounts the invocation's working directory at the same absolute path and
+      makes it the container's working directory, so the same arguments name the
+      same files through either runner. It passes -i only when the invocation
+      has stdin. An image's settings can relax the network and add capabilities,
+      and nothing else. Files the tool writes into the working directory belong
+      to the caller.
+  11. Cancelling a container run runs docker stop with the grace period on the
+      run's container name, under a context of its own (SIGTERM, then SIGKILL),
+      and then waits for the CLI to exit. Run returns an error matching the
+      context's. The CLI's own signal forwarding is never relied on. No container
+      named for the run remains afterward.
+  12. Evidence 14: the integration tier runs ffprobe through both runners from one
+      piece of test code, the runner the only difference: the host's ffprobe, and
+      ffprobe in linuxserver/ffmpeg:9.0.2-cli-ls87 pinned by digest. Both pass the
+      version check. On a short fixed audio file in the test data, the JSON
+      results are equal: the format's name and duration, and each stream's codec
+      and sample rate. ffprobe reading a stdin the test holds open is cancelled
+      mid-run through both runners. The cancel returns the context's error, and
+      no container of that run remains.
+  13. The CI pair: the check runs on every pull request into main and every push
+      to main; a pushed v* tag publishes its CHANGELOG section as the GitHub
+      release; a strict depguard rule holds every Go file to the standard
+      library, this module, and spike-ai-pipeline-client, module entries anchored
+      to its path. Integration stays local. Currency also reports every action
+      pin behind its action's latest release, and every repo:tag@sha256: image
+      pin in the Go source whose tag is behind the image's newest build tag on
+      Docker Hub (a rebuild of the same version, such as ls88 after ls87,
+      counts as trailing).
+  14. The module README, the context capability map, the package documentation,
+      and the CHANGELOG describe the contract, both runners, their defaults, the
+      version rule, cancellation, and the error's contents. The CHANGELOG has a
+      v0.1.0 entry.
 
-Test seams    the Format methods called directly in unit tests (EncodeRequest, DecodeResponse,
-              EncodeStreamRequest, NewStreamDecoder, DecodeError), over recorded router bodies,
-              spec-conformant bodies, and event sequences; protocol.Request.Validate; the
-              integration tier driving client.Generate and GenerateStream black-box against
-              gb10-2, once per format
-Slices        1. Protocol: the reasoning summary parameter and its validation; the 1-to-15
-                 MaxOutputTokens refusal; completions and messages dropping summary. The
-                 existing scenarios pass through both formats on gb10-2. Check passes.
-                 Checkpoint: the session gives the architect the source files the slice
-                 changed, lowest dependency first, each with what to look for.
-              2. Unary text: the constructor and its option, the route, the request body
-                 (instructions, messages, text and image parts, the audio extension's wire
-                 form, max_output_tokens, store, include, stream false), and decoding text
-                 replies (ids, statuses, incomplete_details, usage) and error bodies. The chat,
-                 vision, unknown-model, and token-bound scenarios run through all three formats
-                 on gb10-2, with the bound's status and audio recorded on responses. Check
-                 passes. Checkpoint as in slice 1, after a standards-review pass.
-              3. Tools and reasoning: tools with strict, every tool-choice form,
-                 function_call and function_call_output, the envelope in the spec form and
-                 with the option, effort and summary, structured output, and the Native clash
-                 and stateless refusals. The tools, reasoning round-trip, and structured
-                 scenarios run through all three formats on gb10-2 (structured, named-choice,
-                 and effort results recorded). Check passes. Checkpoint as in slice 1.
-              4. Streaming: the stream encoder and the normalizing decoder (numbering,
-                 placement by item_id, filled-in events, the reasoning_text aliases, open
-                 items at the same time, both error-frame shapes, an early end). The streamed
-                 text, function_call, reasoning, and cancel scenarios run through all three
-                 formats on gb10-2. Check passes. Checkpoint as in slice 1.
-              5. Every scenario through all three formats in one run of the integration tier,
-                 with the recorded results written into the run's log. Check passes.
-                 Checkpoint as in slice 1, only if the slice changed source.
-              6. Release preparation: the CHANGELOG's v0.4.0 entry, the module README, the
-                 context capability map, and the protocol and format package docs (the
-                 dropped hints, what the router drops, the aliases, the envelope, the option
-                 and its exception, the extension's wire form). Check passes. Checkpoint as in
-                 slice 1 (package doc comments are source).
-Out of scope  server-side state (previous_response_id, background, conversations, retrieving or
-              deleting responses) and /v1/responses/input_tokens; hosted and non-function
-              tools; input_file and item references; reasoning summary and annotation stream
-              events; logprobs; the spec's sampling and limit fields as typed fields (reachable
-              through Native); streamed vision and audio; the root README's and the roadmap's
-              evidence 2 edit, which stays a pending edit
-Door          one-way for the release: tag v0.4.0 is pushed, and the
-              spike-ai-pipeline:input_audio and spike-ai-pipeline:responses/v1: wire forms
-              become public. The code is two-way otherwise: it adds a format and a protocol
-              field, and Validate's new refusal is the one behavior change.
-Release       spike-ai-pipeline-client v0.4.0
+Test seams    the tool package's exported API: the runners' constructors and Tool.Run.
+              The unit tier drives it with stand-in programs built from the test
+              binary (prints a version, exits with a given code, writes stderr,
+              sleeps with or without a SIGTERM handler, starts a child), a sh
+              script, and a stand-in docker CLI that records its arguments and
+              answers version, image inspect, pull, run, and stop. The integration
+              tier (-tags integration) runs real ffprobe and real docker on the laptop.
+
+Slices        1. The contract, the version rule, and the exec runner for binaries:
+                 discovery, the version check, Run with its streams and working
+                 directory, the exit error with its stderr tail. Unit tests over the
+                 stand-in tool; ffprobe's version check on the host in the
+                 integration tier. Checkpoint: source files the slice changed,
+                 lowest dependency first, each with what to look for.
+              2. Scripts and cancellation: interpreter scripts, the process group,
+                 SIGTERM then SIGKILL after the grace period, the context's error.
+                 Unit tests over the stand-in tool and a sh script whose child ends
+                 with it. Checkpoint as slice 1, after a standards-review pass.
+              3. The container runner: docker found and checked, the digest pin,
+                 the pull at construction, the version check inside the image, each
+                 run's arguments, the image's relaxations, cancellation by docker
+                 stop. Unit tests over the stand-in docker CLI; ffprobe's version
+                 check in the pinned image on the laptop. Checkpoint as slice 1.
+              4. The CI pair: CI, release on tags, the CHANGELOG with [Unreleased],
+                 the strict depguard rule, currency's action-pin and image-pin
+                 scans. Checkpoint only if the slice changed Go source.
+              5. Evidence 14: ffprobe through both runners, equal JSON fields, the
+                 stdin cancel through both. Checkpoint only if source changed.
+              6. Release preparation: CHANGELOG v0.1.0, module README, capability
+                 map, package documentation. Checkpoint as slice 1.
+              Every slice: check passes.
+
+Out of scope  the MCP and sidecar-service runners; podman and other runtimes;
+              non-Linux builds; registry authentication and building images; any
+              exported tool adapter (ffprobe is evidence test code; the audio task
+              owns its adapter); a CI integration job; processing's dependency on
+              spike-ai-pipeline-client; the root's consumer check taking v0.1.0.
+              Known limit: if processing itself is SIGKILLed, a running container
+              runs until its tool exits, and --rm removes it afterward.
+
+Door          one-way for the release (tag v0.1.0 pushed; the contract becomes a
+              public module). Two-way otherwise: a new package in an unreleased module.
+
+Release       spike-ai-pipeline-processing v0.1.0
+
+Checkpoints   after each slice that changes source: the slice's changed source files,
+              lowest dependency first, each with what to look for; a standards-review
+              pass before slice 2's checkpoint.
 ```
+
+## Progress
+
+slices 0/6 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -666,6 +645,55 @@ Release       spike-ai-pipeline-client v0.4.0
 - client-responses: integration's per-format pending skips were scaffolding, removed once every
   format passed; slice 5 was a run only, with no commit.
 
+- tools: the contract's unit is a Tool bound to one program at construction, built by a
+  runner's constructor; Run takes arguments, a working directory, and streams. Rejected: a Runner
+  shared by many programs, taking the program on every call.
+- tools: one `tool` package holds the contract and both runners. Rejected: a sub-package per
+  runner (no dependency weight; go-elemental splits by growth or weight, never topic alone).
+- tools: the tool contract stays in spike-ai-pipeline-processing. Rejected: a repository of its
+  own (the architect, at the brief's approval).
+- tools: the container runner runs the docker CLI through the exec runner. Rejected:
+  moby/moby/client v0.6.2 (pre-1.0, 15 direct requirements including OpenTelemetry); podman's
+  bindings (about 182 requirements).
+- tools: a container mounts the invocation's working directory at the same absolute path and
+  works in it. Rejected: a fixed /work with arguments rewritten.
+- tools: cancelling an exec run sends SIGTERM to the process group, then SIGKILL after a grace
+  period (Cmd.Cancel, WaitDelay, Setpgid); the package builds on Linux only. Rejected: SIGKILL to
+  the process alone (CommandContext's default).
+- tools: a version check is a minimum, dotted numbers captured by the tool's pattern and compared
+  as numbers in-house. Rejected: an exact version; golang.org/x/mod/semver (needs a v prefix and
+  strict semver, which 7.1.2-34 and n9.0.2 don't follow).
+- tools: an image reference must carry a digest, its tag kept for readers. Rejected: tags alone.
+- tools: a missing image is pulled at construction, and every run passes --pull never. Rejected:
+  refusing and naming the pull command.
+- tools: each container run is locked down (--rm, --network none, --user as the caller's uid:gid,
+  --cap-drop ALL); an image's settings can relax the network and add capabilities. Rejected: the
+  runtime's defaults.
+- tools: evidence 14's tool is ffprobe, on the host (n9.0.2) and in
+  linuxserver/ffmpeg:9.0.2-cli-ls87 by digest; a sh script covers interpreters in unit tests.
+  Rejected: ImageMagick (dpokidov/imagemagick, single-maintainer, last updated 2026-01-30); a
+  Python script.
+- tools: a strict depguard rule holds processing to the standard library, itself, and
+  spike-ai-pipeline-client, written as the client's. Rejected: discipline alone.
+- tools: docker is the only container runtime. Rejected: any docker-compatible CLI (rootless
+  podman breaks file ownership without --userns keep-id).
+- tools: every container runs with --init. Rejected: the tool as PID 1, which ignores SIGTERM
+  without a handler, so every cancel would end in SIGKILL.
+- tools: currency reports image pins now, any newer build tag of the image counting as trailing
+  (ls88 after ls87). Rejected: only a newer tool version; leaving the scan to the office task.
+- tools: a failed run's error carries the program's name, its exit code, and the last 4 KiB of
+  stderr when the caller passed no stderr writer; a cancelled run returns an error matching the
+  context's. Rejected: the name and exit code alone.
+- tools: container construction also runs the tool's version check inside the image. Rejected:
+  trusting the digest alone.
+- tools: the grace period is 10 s when unset (docker stop's default). Rejected: a value every
+  constructor requires.
+- tools: a container run is cancelled by docker stop --time <grace> on its own name under a fresh
+  context, then the runner waits for the CLI; the CLI's signal forwarding is never relied on,
+  since it doesn't forward SIGKILL.
+- tools: a known limit, out of scope: if processing's own process is SIGKILLed, a running
+  container runs on until its tool exits, and --rm removes it afterward.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -732,3 +760,6 @@ Release       spike-ai-pipeline-client v0.4.0
   completed, even at the token bound. It streams reasoning under OpenAI's
   `response.reasoning_text` names, with no sequence numbers or indexes, and its stream error
   frame is `{"error":{...}}` with no type.
+- coordinator · roadmap, the `tools` task: add `proof = "One tool, ffprobe, runs through both
+  runners, exec on the host and container in a digest-pinned image, under the same tool contract
+  with equal results, and processing v0.1.0 is released."`
