@@ -907,6 +907,12 @@ slices 4/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   Scanned page 7's faded NOFORN still never reads, and some seal text is still invented or
   repeated; that is a finding for the findings page.
 - documents: whitespace-only output counts as incomplete.
+- documents (slice 4 checkpoint): export_test.go keeps Ghostscript's render and renderArgs for
+  the bake-off, a measurement probe of the released code path, with a comment saying why; slice 5
+  removes only Spool. Rejected: the bake-off rebuilding gs's arguments itself.
+- documents (architect, standing): any change to gb10-2's model configuration (the preset: context,
+  slots, image tokens, sampling) is raised as an escalation, never made in BUILD. Neither a page
+  request nor Document's final step should hit a context limit; one that does is escalated.
 
 ## Pending edits
 
