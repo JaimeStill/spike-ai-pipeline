@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** handoff
+- **State:** building
 - **Task:** documents
 - **Branch:** documents
 
@@ -221,25 +221,6 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 ## Progress
 
 slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
-
-## Handoff
-
-Paused by the architect after slice 3's checkpoint (D–G answered, in Decisions). The D/E fixes
-and the scanned rerun finished: 39ffec5 (D), c481a23 (E, source page 19 as scanned page 7),
-check passing. Results and logs are in the session scratchpad only; rerun to reproduce.
-
-- Findings to report: gs is still first (4 wins). Page 7's faded foot marking reads SECRET in
-  every completed run but never NOFORN (the model writes MEMORANDUM or NATIONAL SECURITY), and it
-  invents seal text. 5 of 15 page-7 runs and 2 page-5 runs hit the 8192-token output cap with
-  reasoning and came back empty (pdftocairo all three), scored as total errors, which now drives
-  the ranking's CER differences.
-- Escalation waiting on the architect: how the bake-off treats runaway reasoning: raise
-  MaxOutputTokens, turn reasoning down (effort low or none), or score incomplete runs apart
-  from the error rate; and whether the ranking stands (gs) after that.
-- Next move: run `mise run host-update`, put that escalation to the architect, apply the answer
-  (rerun the scanned set if it changes the requests), then slice 4 (the gs adapter released
-  into document).
-- No WIP: every change is committed on `documents` in processing; nothing is pushed.
 
 ## Decisions
 
@@ -914,6 +895,12 @@ check passing. Results and logs are in the session scratchpad only; rerun to rep
   synthetic fault scores 0 at 150 dpi. Rejected: the 150-dpi matrix alone.
 - documents: the bake-off runs once per renderer and set (15 runs, each capped at 10 minutes);
   one renderer's three sets overran 10 minutes in one run.
+- documents (after slice 3): the scanned rerun found page 7's faded foot reads SECRET but never
+  NOFORN, and 7 runs hit the 8192-token cap reasoning and came back empty. Transcription runs with
+  reasoning off (Effort none; Gemma's template switch through Native if the router ignores it);
+  error rate is scored over completed runs, and incomplete runs are a criterion of their own,
+  ranked right after error rate; the whole bake-off reruns, and the winner is what it ranks
+  first, with a stop for the architect only if it isn't gs. Rejected: a larger MaxOutputTokens.
 
 ## Pending edits
 
