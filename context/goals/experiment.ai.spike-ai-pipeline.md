@@ -864,6 +864,14 @@ slices 2/7 committed (processing f582769, 81f86d4) · standards pass 1 (45ad2f1,
 - documents: a known limit, out of scope: Document's final step over plain-text transcripts may
   exceed the final model's context on long documents (about 30 to 45 pages at 32768), tuned if
   it bites.
+- documents (slice 2 checkpoint): spool's tests reach it through export_test.go for now; slice 5
+  moves them onto Pages and Document and deletes export_test.go. Rejected: spooling only through
+  an entry point in slice 2.
+- documents (slice 2 checkpoint): Render refuses only a DPI of zero or less and a page below 1,
+  running no tool; Pages and Document refuse a page past the last against their own count, and a
+  direct Render past the last returns the renderer tool's own error. Amends behavior 3. Rejected:
+  CheckRender counting on every Render (one extra process per page, inside the bake-off's time).
+- documents: the one-method interface is document.Generator.
 
 ## Pending edits
 
