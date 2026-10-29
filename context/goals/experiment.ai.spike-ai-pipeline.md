@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -901,6 +901,12 @@ slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), s
   error rate is scored over completed runs, and incomplete runs are a criterion of their own,
   ranked right after error rate; the whole bake-off reruns, and the winner is what it ranks
   first, with a stop for the architect only if it isn't gs. Rejected: a larger MaxOutputTokens.
+- documents: reasoning goes off through the typed Effort none (reasoning_effort "none"), which
+  llama.cpp b11669 honors for Gemma 4 (56 tokens and 4 s against 8192 and 152 s on scanned page 7);
+  no Native template switch is needed. Every run completed; gs ranks first on error rate and time.
+  Scanned page 7's faded NOFORN still never reads, and some seal text is still invented or
+  repeated; that is a finding for the findings page.
+- documents: whitespace-only output counts as incomplete.
 
 ## Pending edits
 
