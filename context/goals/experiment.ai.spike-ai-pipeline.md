@@ -224,15 +224,22 @@ slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), s
 
 ## Handoff
 
-Paused by the architect after slice 3's checkpoint (D–G answered, in Decisions).
+Paused by the architect after slice 3's checkpoint (D–G answered, in Decisions). The D/E fixes
+and the scanned rerun finished: 39ffec5 (D), c481a23 (E, source page 19 as scanned page 7),
+check passing. Results and logs are in the session scratchpad only; rerun to reproduce.
 
-- Next move: confirm the scanned-set rerun finished after c481a23 (five renderers' scanned runs
-  against gb10-2, then the ranking run). If it didn't, rerun `mise run bakeoff`'s scanned runs and
-  the ranking. Report to the architect whether source page 19's faded markings read consistently
-  and whether gs is still first, then start slice 4 (the gs adapter released into document).
-- Run `mise run host-update` first on resume.
+- Findings to report: gs is still first (4 wins). Page 7's faded foot marking reads SECRET in
+  every completed run but never NOFORN (the model writes MEMORANDUM or NATIONAL SECURITY), and it
+  invents seal text. 5 of 15 page-7 runs and 2 page-5 runs hit the 8192-token output cap with
+  reasoning and came back empty (pdftocairo all three), scored as total errors, which now drives
+  the ranking's CER differences.
+- Escalation waiting on the architect: how the bake-off treats runaway reasoning: raise
+  MaxOutputTokens, turn reasoning down (effort low or none), or score incomplete runs apart
+  from the error rate; and whether the ranking stands (gs) after that.
+- Next move: run `mise run host-update`, put that escalation to the architect, apply the answer
+  (rerun the scanned set if it changes the requests), then slice 4 (the gs adapter released
+  into document).
 - No WIP: every change is committed on `documents` in processing; nothing is pushed.
-- No escalation waiting.
 
 ## Decisions
 
