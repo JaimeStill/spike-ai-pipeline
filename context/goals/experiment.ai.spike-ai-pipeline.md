@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 1/7 committed (processing f582769) · standards — · spec — · editor —
+slices 2/7 committed (processing f582769, 81f86d4) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
