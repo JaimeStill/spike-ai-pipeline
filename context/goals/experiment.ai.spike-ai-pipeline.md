@@ -930,6 +930,11 @@ slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents: Result.Text includes every page, a page without a response as its heading alone;
   the integration digest's schema stays test code, not released API; the final step's output
   cap is 4096 tokens (a request parameter).
+- documents (architect, after J): Request gains PageRetries (zero: none): a page whose response is
+  incomplete is re-sent up to that many times before it counts as failed, since scanned page 7
+  loops on the seal's text to the 8192-token cap on some runs (1 of 4) with reasoning off.
+  Integration sets 1 and caps a page at 2048 output tokens. Rejected: a repetition penalty
+  (changes the greedy output every score rests on); leaving it to callers.
 
 ## Pending edits
 
