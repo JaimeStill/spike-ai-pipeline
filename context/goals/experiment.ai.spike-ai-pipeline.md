@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** handoff
 - **Task:** documents
 - **Branch:** documents
 
@@ -220,7 +220,19 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+
+## Handoff
+
+Paused by the architect after slice 3's checkpoint (D–G answered, in Decisions).
+
+- Next move: confirm the scanned-set rerun finished after c481a23 (five renderers' scanned runs
+  against gb10-2, then the ranking run). If it didn't, rerun `mise run bakeoff`'s scanned runs and
+  the ranking. Report to the architect whether source page 19's faded markings read consistently
+  and whether gs is still first, then start slice 4 (the gs adapter released into document).
+- Run `mise run host-update` first on resume.
+- No WIP: every change is committed on `documents` in processing; nothing is pushed.
+- No escalation waiting.
 
 ## Decisions
 
