@@ -872,6 +872,13 @@ slices 2/7 committed (processing f582769, 81f86d4) · standards pass 1 (45ad2f1,
   direct Render past the last returns the renderer tool's own error. Amends behavior 3. Rejected:
   CheckRender counting on every Render (one extra process per page, inside the bake-off's time).
 - documents: the one-method interface is document.Generator.
+- documents (fixtures, after slice 2): a scanned fixture set of ~6 pages from herald's
+  _project/marked-documents/marked-documents.pdf (Lexmark CX725 scans, image only, already public
+  in herald's repository) is copied into processing's testdata, pages picked for legible text,
+  ground truth transcribed by the agent with redacted text excluded and confirmed by the
+  architect at slice 3's checkpoint; it joins the ranking and evidence 11's matrix, reported
+  apart from the synthetic set, whose faults are made harsher across a range of severity.
+  Amends round 1 Q3. Rejected: reading the scans from herald by path; the generated set alone.
 
 ## Pending edits
 
