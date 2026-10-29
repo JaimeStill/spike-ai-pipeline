@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -938,6 +938,11 @@ slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents: PageRetries re-sends a nil response too, builds a fresh request copy per attempt
   from the same PNG, and never retries Document's final request; Page.Attempts is 0 for a page
   that failed before sending. Three integration runs needed no retry.
+- documents: evidence 11's matrix is its own task, `mise run bakeoff-corrections` (28 runs, each
+  capped at 10 minutes, then the matrix); it puts TranscribeInstructions in the request's
+  Instructions, as Vision does, so its none cell compares only with its own cells, not with the
+  renderer bake-off's numbers. The reasoning-on scanned JSON holds 8 empty-at-cap transcriptions,
+  where an earlier line here says 7; the findings page cites the JSON.
 
 ## Pending edits
 
