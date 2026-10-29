@@ -218,6 +218,10 @@ Checkpoints   after each slice that changes source: the slice's changed source f
               table for the architect to confirm the winner before slice 4.
 ```
 
+## Progress
+
+slices 1/7 committed (processing f582769) · standards — · spec — · editor —
+
 ## Decisions
 
 - setup: four repositories: spike-ai-pipeline (root: record, host scripts, consumer check, later
