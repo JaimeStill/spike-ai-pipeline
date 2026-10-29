@@ -921,6 +921,12 @@ slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   kept; Pages leaves the status to the caller.
 - documents: a final-step part is "Page N of M:", a newline, then the page's output text; a PDF
   with no pages is a Document error.
+- documents (architect, after slice 5): Document digitizes, then digests. The page transcriptions
+  are the digitized content, and Result gains the document's text, pages joined in order with
+  their numbers; the final step derives a lightweight digest for search (summary, title, kind,
+  dates, markings, keywords) as structured output under a JSON schema, and never replaces the
+  transcriptions. Amends behavior 8. Rejected: a final step re-writing the whole document as one
+  clean text (paraphrase and invention, output growing with the document).
 
 ## Pending edits
 
