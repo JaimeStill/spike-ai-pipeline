@@ -879,6 +879,22 @@ slices 3/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202) ·
   architect at slice 3's checkpoint; it joins the ranking and evidence 11's matrix, reported
   apart from the synthetic set, whose faults are made harsher across a range of severity.
   Amends round 1 Q3. Rejected: reading the scans from herald by path; the generated set alone.
+- documents (slice 3 checkpoint): tool.Usage drops PeakRSS and keeps UserCPU and SystemCPU: Go
+  starts a program with a vfork-style clone, so Linux records the parent's RSS in the child's
+  maxrss at exec. The bake-off measures peak memory through a re-exec launcher in test code.
+  Amends behavior 1. Rejected: PeakRSS documented as at least the caller's RSS; a launcher in
+  tool for every run.
+- documents (slice 3 checkpoint): scanned page 5's truth adds the seal's "DEPARTMENT OF DEFENSE"
+  and the handwritten "M.M.", leaving "UNITED STATES OF AMERICA" out; the other scanned truths
+  stand. Source page 19 (faded SECRET//NOFORN markings at the foot, which herald found read
+  inconsistently) joins the scanned set (architect).
+- documents (slice 3 checkpoint): gs is the released renderer, by the agreed order: tied on
+  accuracy, fastest (0.12 s/page), least memory (27 MiB), one tool; AGPL, run as a separate
+  program. Rejected: vips (0.13 s/page, 90 MiB, GPL through pdfload's poppler).
+- documents (slice 3 checkpoint): evidence 11's matrix also runs at 72 dpi, since every
+  synthetic fault scores 0 at 150 dpi. Rejected: the 150-dpi matrix alone.
+- documents: the bake-off runs once per renderer and set (15 runs, each capped at 10 minutes);
+  one renderer's three sets overran 10 minutes in one run.
 
 ## Pending edits
 
