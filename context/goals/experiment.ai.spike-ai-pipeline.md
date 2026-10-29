@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** documents
+- **Branch:** documents
 
 ## Tasks
 
@@ -19,149 +19,203 @@
 11. [ ] audio
 12. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · tools
+## Task brief · experiment.ai.spike-ai-pipeline · documents
 
 ```
-Problem       Processing runs mature system tools through adapters it owns
-              (system-tools.md), but it has no tool contract, no runner, no CI, and
-              no release. Every later processing task (documents, office, audio,
-              streams) runs a tool through this contract. Evidence 14 asks that one
-              tool run through each runner, exec and container, under the same
-              contract. This task adds the contract and both runners on the standard
-              library. Each runner finds its tool and checks its version when it is
-              built, so a missing or outdated tool fails at startup. The container
-              runner drives the docker CLI through the exec runner, with one pinned
-              image per run, locked down. Cancelling a run's context stops a tool
-              through either runner. The task proves evidence 14 with ffprobe, on the
-              host (n9.0.2) and in linuxserver/ffmpeg:9.0.2-cli-ls87 by digest, adds
-              the CI pair, and tags processing v0.1.0.
+Problem       Processing has its tool contract (v0.1.0) but no document stage. Evidence 4
+              asks that a PDF's pages go through vision as a whole blob and as a page
+              stream, with the renderer bake-off's ranking, time and memory per page,
+              license, and footprint; evidence 11 asks for vision extraction accuracy with
+              and without each ImageMagick correction. Five renderers are installed on the
+              laptop over two rasterizers: poppler (pdftoppm, pdftocairo, and vips through
+              its poppler module) and Ghostscript (gs, and magick over gs). Docker Hub has
+              no maintained, versioned image for poppler, gs, or vips, so every tool runs
+              on the host. This task adds a per-run usage report to the tool contract; a
+              document package with the page-renderer interface, the scan corrections, and
+              pages through vision over spike-ai-pipeline-client v0.4.0; generated fixtures
+              with exact ground truth; and a bake-off tier that ranks the five renderers.
+              Only the winner is released. Gemma 4 26B-A4B on gb10-2 takes a letter page
+              at ~477 image tokens from 110 dpi up, and the server's request-body limit,
+              100 MiB, sits far above a page image (0.3 to 14 MB). The task tags processing
+              v0.2.0.
 
 Behaviors
-  1.  The tool contract is a Tool bound to one program. A runner's constructor
-      builds it, and it reports the program's name and the version found at
-      construction. Run takes the caller's context and one invocation: arguments,
-      a working directory the caller owns, and optional stdin, stdout, and
-      stderr streams. An adapter written against Tool runs the same code through
-      either runner. The contract and both runners are one package in the base
-      module, which builds on Linux only.
-  2.  The exec runner looks up a program name on PATH and takes a path with a
-      separator as given. A program it can't find is a construction error naming
-      the program. Every constructor takes a context, and the version check and
-      any pull run under it.
-  3.  A tool declares its version arguments, a pattern that captures the version
-      in their output, and a minimum version. A version is dotted numbers,
-      compared component by component as numbers, a missing component counting as
-      zero. The constructor refuses a tool whose version is older than the
-      minimum, one whose output doesn't match the pattern, and one whose version
-      command fails. Each error names the program, the version found, and the
-      minimum.
-  4.  A script runs through its interpreter. The interpreter is found and checked
-      as a binary, the script must exist at construction, and Run executes the
-      interpreter with the script and the invocation's arguments.
-  5.  Cancelling an exec run sends SIGTERM to the tool's process group, then
-      SIGKILL after the grace period, 10 s when unset. A script's child processes
-      end with it. Run returns an error matching the context's
-      (errors.Is context.Canceled or context.DeadlineExceeded), never an exit
-      error.
-  6.  A tool that exits nonzero gives an error carrying the program's name and its
-      exit code. When the caller passed no stderr writer, the error also carries
-      the last 4 KiB of stderr. When the caller passed one, all of stderr goes to
-      it and the error has no tail.
-  7.  The container runner runs the docker CLI as an exec tool, found and checked
-      as behaviors 2 and 3 describe. Its minimum is 20.10, the first with --pull,
-      and it reads the server's version, so a daemon it can't reach is a
-      construction error. Docker is the only runtime.
-  8.  An image reference must carry a digest (repo:tag@sha256: and 64 hex digits);
-      a reference without one is refused at construction. When the image isn't
-      present locally, construction pulls it by that reference, and every run
-      passes --pull never.
-  9.  At construction, the container runner runs the tool's version command
-      inside the image, through the program set as the entrypoint, and checks it
-      against the minimum as behavior 3 does. A wrong entrypoint fails at startup.
-  10. Each container run passes --rm, --init, --network none, --user as the
-      caller's uid:gid, --cap-drop ALL, --pull never, a name of its own (a fixed
-      prefix and a random suffix), and --entrypoint set to the tool's program. It
-      mounts the invocation's working directory at the same absolute path and
-      makes it the container's working directory, so the same arguments name the
-      same files through either runner. It passes -i only when the invocation
-      has stdin. An image's settings can relax the network and add capabilities,
-      and nothing else. Files the tool writes into the working directory belong
-      to the caller.
-  11. Cancelling a container run runs docker stop with the grace period on the
-      run's container name, under a context of its own (SIGTERM, then SIGKILL),
-      and then waits for the CLI to exit. Run returns an error matching the
-      context's. The CLI's own signal forwarding is never relied on. No container
-      named for the run remains afterward.
-  12. Evidence 14: the integration tier runs ffprobe through both runners from one
-      piece of test code, the runner the only difference: the host's ffprobe, and
-      ffprobe in linuxserver/ffmpeg:9.0.2-cli-ls87 pinned by digest. Both pass the
-      version check. On a short fixed audio file in the test data, the JSON
-      results are equal: the format's name and duration, and each stream's codec
-      and sample rate. ffprobe reading a stdin the test holds open is cancelled
-      mid-run through both runners. The cancel returns the context's error, and
-      no container of that run remains.
-  13. The CI pair: the check runs on every pull request into main and every push
-      to main; a pushed v* tag publishes its CHANGELOG section as the GitHub
-      release; a strict depguard rule holds every Go file to the standard
-      library, this module, and spike-ai-pipeline-client, module entries anchored
-      to its path. Integration stays local. Currency also reports every action
-      pin behind its action's latest release, and every repo:tag@sha256: image
-      pin in the Go source whose tag is behind the image's newest build tag on
-      Docker Hub (a rebuild of the same version, such as ls88 after ls87,
-      counts as trailing).
-  14. The module README, the context capability map, the package documentation,
-      and the CHANGELOG describe the contract, both runners, their defaults, the
-      version rule, cancellation, and the error's contents. The CHANGELOG has a
-      v0.1.0 entry.
+  1.  An Invocation can ask for the run's resource usage: an optional Usage pointer
+      that Run fills once the program has been reaped, whether it exited zero, exited
+      nonzero, or was cancelled. Through the exec runner it holds peak resident memory
+      in bytes and user and system CPU time, taken from the process's own rusage, which
+      on Linux includes children it reaped (magick's gs among them). The container
+      runner leaves it zero, and its documentation says the docker CLI's usage isn't
+      the container's. A nil pointer asks for nothing. Run's signature is unchanged,
+      and the addition is additive.
+  2.  One package, document, builds on Linux only, on the standard library, this
+      module, and spike-ai-pipeline-client. It holds the page-renderer interface, the
+      released renderer, the corrections stage, and the vision entry points.
+      Processing requires the client at v0.4.0 by tag, with no replace directive.
+  3.  The page-renderer interface works per page. Count takes the caller's context and
+      a PDF path and returns the page count. Render takes the context, the PDF path, a
+      1-based page number, and a DPI, and writes that page as PNG to a writer, one
+      process per page. A renderer counts pages with a tool from its own package, so
+      the poppler renderers use pdfinfo. A page out of range, or a DPI of zero or less,
+      is refused before any tool runs.
+  4.  The released renderer is the bake-off's winner, built over Tools that the caller
+      constructs through either runner, each with a minimum version. Its tests, unit
+      and integration, are the bake-off adapter's, kept in the released package.
+  5.  The corrections stage is per request: a set of typed options, Deskew, Despeckle,
+      ContrastStretch, Unsharp, and Grayscale. Each maps to one ImageMagick operator
+      (-deskew 40%, -despeckle, -contrast-stretch 0.5%x0.5%, -unsharp 0x1, -colorspace
+      Gray), applied in that fixed order. One magick run per page reads PNG on stdin
+      and writes PNG on stdout. An empty set runs nothing. The stage is built from a
+      magick Tool with minimum version 7.1, and it works on any page image, not only a
+      rendered one.
+  6.  Vision is one value, built at the composition root from three things: a
+      one-method Generate interface (Generate(ctx, *protocol.Request)
+      (*protocol.Response, error)) that *client.Client satisfies, a Renderer, and an
+      optional corrections stage. A request carries:
+      - the working directory, which the caller owns
+      - the per-page request template (model, instructions, and other request fields)
+      - the DPI, zero meaning 150
+      - the corrections
+      - the concurrency, zero meaning 1
+      A request that names corrections when the value has no corrections stage is
+      refused. The package exports the bake-off's transcription instructions (every
+      word on the page in reading order, as plain text, nothing else) as a constant;
+      the instructions themselves stay a per-request value. The PDF arrives as an
+      io.Reader, is spooled into the request's directory, and is removed when the call
+      ends.
+  7.  Pages(ctx, pdf, req) returns iter.Seq2[Page, error] and is lazy: nothing runs
+      until it is ranged. It counts the pages, then renders, corrects, and sends each
+      page as one user message: the template's input with an InputImage PNG data URL,
+      detail unset. At most the request's concurrency of pages are in flight, rendering
+      included. Pages are yielded in page order, with finished later pages held until
+      the earlier ones arrive. A Page carries its number, the page count, and its
+      response. A page that fails, whether in rendering, correcting, or sending,
+      yields its number with the error, and the stream carries on. A failed spool or
+      count yields one error and ends. Breaking out cancels the work in flight and
+      returns once it has ended. An ended ctx stops the stream with ctx's error.
+  8.  Document(ctx, pdf, req) runs the page stream's calls and then one final Generate.
+      The request's final-step template (a protocol.Request: model, instructions, text
+      format, output limit) is required, and a missing one is refused before anything
+      runs. Document appends one user message to it, with one text part per page,
+      each beginning "Page N of M:" and followed by that page's output text. It returns
+      a result holding every page's number, response, and error, and the final
+      response. There is no page cap. A failed page fails Document before the final
+      step, with an error naming each failed page and the result's page entries
+      filled in. A final response whose status isn't completed is an error, with the
+      final response kept in the result.
+  9.  The package sets no size limit. A page image over the server's request-body
+      limit is sent anyway, and the server's 413 comes back as that page's
+      *client.APIError.
+  10. The fixtures are generated from committed typst sources, letter size, and
+      byte-reproducible:
+      - about six clean pages: prose, two columns, a table, 8 pt print, a form, and a
+        figure with a caption
+      - about four degraded copies (skew, fade, speckle, blur), made from clean
+        renders by ImageMagick and wrapped back into PDF
+      Each page's ground truth is its plain text in reading order, taken from the
+      source. The test data's README gives the regenerating commands and each file's
+      SHA-256. typst never runs in the check.
+  11. The bake-off tier: mise run bakeoff runs the -tags bakeoff tests against the
+      router SPIKE_ROUTER_URL names, each run capped at 10 minutes.
+      - Adapters: five renderers, as test code behind the page-renderer interface,
+        each on the host's exec runner at 150 dpi: pdftoppm, pdftocairo, gs, vips, and
+        magick over gs.
+      - Runs: every fixture page from each renderer goes to Gemma 4 26B-A4B with the
+        exported transcription instructions, greedy (temperature 0 through Native), 4
+        requests in flight, 3 runs per cell.
+      - Scores: character error rate (edit distance over the ground truth's length,
+        whitespace collapsed) is the primary score, with word error rate beside it and
+        the run-to-run spread of each. The edit distance is written in test code.
+      - Measures: time and peak memory per page (through the tool's usage report), page
+        PNG bytes, install footprint, license, the tools each renderer needs, and
+        whether it streams one page per process from stdin to stdout.
+      - Ranking: by error rate, then time, memory, streaming, license, image size, and
+        number of tools. A difference inside the run-to-run spread is a tie, and the
+        next criterion decides.
+      - Output: the run logs the ranking table as recorded lines.
+  12. Evidence 11, also in the bake-off tier: on the degraded pages, through Pages with
+      the released renderer, seven cells: each correction alone, all five together,
+      and none. Each cell gets 3 greedy runs, scored by character and word error rate
+      with their spread.
+  13. The integration tier (-tags integration) checks the released renderer's and
+      magick's versions on the laptop. It runs Pages and Document on the clean
+      fixtures against gb10-2 and records each one's time and error rate. Document's
+      final step uses a summary template on gpt-oss-120b.
+  14. A findings page in processing holds:
+      - the ranking table and evidence 11's matrix
+      - time and memory per page, license, and footprint
+      - the measured image tokens per page
+      - the run's llama.cpp build, gb10-2's stack, and the network path
+      The root's evidence list links it.
+  15. Processing's README, its capability map, the package documentation (doc.go
+      inventories, tool's Usage included), and the CHANGELOG describe the usage report,
+      the page-renderer interface, the released renderer, the corrections, Pages,
+      Document, the 413, and the known limit. The CHANGELOG has a v0.2.0 entry.
 
-Test seams    the tool package's exported API: the runners' constructors and Tool.Run.
-              The unit tier drives it with stand-in programs built from the test
-              binary (prints a version, exits with a given code, writes stderr,
-              sleeps with or without a SIGTERM handler, starts a child), a sh
-              script, and a stand-in docker CLI that records its arguments and
-              answers version, image inspect, pull, run, and stop. The integration
-              tier (-tags integration) runs real ffprobe and real docker on the laptop.
+Test seams    document's exported API: the page-renderer interface, the released
+              renderer's constructor, the corrections stage, and Vision's Pages and
+              Document; and tool's Invocation.Usage. The unit tier uses:
+              - a stand-in Generate that records requests and returns canned
+                responses, errors, and a 413 *client.APIError
+              - a stand-in Renderer
+              - stand-in tools built from the test binary, as the tool package's are
+              The integration tier (-tags integration) runs the real renderer and magick
+              on the laptop and gb10-2's router. The bake-off tier (-tags bakeoff) runs
+              the five adapters and the scoring against gb10-2.
 
-Slices        1. The contract, the version rule, and the exec runner for binaries:
-                 discovery, the version check, Run with its streams and working
-                 directory, the exit error with its stderr tail. Unit tests over the
-                 stand-in tool; ffprobe's version check on the host in the
-                 integration tier. Checkpoint: source files the slice changed,
-                 lowest dependency first, each with what to look for.
-              2. Scripts and cancellation: interpreter scripts, the process group,
-                 SIGTERM then SIGKILL after the grace period, the context's error.
-                 Unit tests over the stand-in tool and a sh script whose child ends
-                 with it. Checkpoint as slice 1, after a standards-review pass.
-              3. The container runner: docker found and checked, the digest pin,
-                 the pull at construction, the version check inside the image, each
-                 run's arguments, the image's relaxations, cancellation by docker
-                 stop. Unit tests over the stand-in docker CLI; ffprobe's version
-                 check in the pinned image on the laptop. Checkpoint as slice 1.
-              4. The CI pair: CI, release on tags, the CHANGELOG with [Unreleased],
-                 the strict depguard rule, currency's action-pin and image-pin
-                 scans. Checkpoint only if the slice changed Go source.
-              5. Evidence 14: ffprobe through both runners, equal JSON fields, the
-                 stdin cancel through both. Checkpoint only if source changed.
-              6. Release preparation: CHANGELOG v0.1.0, module README, capability
-                 map, package documentation. Checkpoint as slice 1.
+Slices        1. The usage report: Invocation.Usage filled by the exec runner (peak
+                 memory, user and system CPU) whether the run succeeds, fails, or is
+                 cancelled; the container runner leaves it zero. Unit tests over a
+                 stand-in tool that allocates a known amount. Checkpoint: source files
+                 the slice changed, lowest dependency first, each with what to look for.
+              2. The document package's foundation: the client v0.4.0 requirement, the
+                 Generate interface, the page-renderer interface, spooling into the
+                 caller's directory, the corrections stage, and the generated fixtures
+                 with ground truth. Unit tests over stand-ins; the corrections on the
+                 host's magick in the integration tier. Checkpoint as slice 1, after a
+                 standards-review pass.
+              3. The bake-off: the five renderer adapters as bake-off test code, the
+                 error-rate scorer, greedy runs at 150 dpi, the measures, and the
+                 ranking, under mise run bakeoff. Checkpoint as slice 1, plus the
+                 ranking table for the architect to confirm the winner before it is
+                 wired in.
+              4. The released renderer: the confirmed winner's adapter moved into
+                 document, with its unit and integration tests; the bake-off keeps using
+                 it. Checkpoint as slice 1.
+              5. Pages and Document: page order, concurrency, per-page errors, the
+                 final-step template, per-page text parts, the result, the 413 and
+                 failed-page contracts. Unit tests over stand-in Generate and Renderer;
+                 both entry points on the clean fixtures against gb10-2 in the
+                 integration tier. Checkpoint as slice 1.
+              6. Evidence 11's seven-cell matrix in the bake-off tier, evidence 4's
+                 integration records, and the findings page. Checkpoint only if the
+                 slice changed source.
+              7. Release preparation: CHANGELOG v0.2.0, module README, capability map,
+                 package documentation. Checkpoint as slice 1.
               Every slice: check passes.
 
-Out of scope  the MCP and sidecar-service runners; podman and other runtimes;
-              non-Linux builds; registry authentication and building images; any
-              exported tool adapter (ffprobe is evidence test code; the audio task
-              owns its adapter); a CI integration job; processing's dependency on
-              spike-ai-pipeline-client; the root's consumer check taking v0.1.0.
-              Known limit: if processing itself is SIGKILLed, a running container
-              runs until its tool exits, and --rm removes it afterward.
+Out of scope  container images for these tools (none maintained and versioned exists for
+              poppler, gs, or vips; building images); the four losing renderers as
+              released code; a request-size option; a page cap; Markdown or structured
+              per-page output; DPI as a pixel budget; changing gb10-2's
+              --image-max-tokens; the container runner's usage report; office documents;
+              a CI job for the integration or bake-off tiers; the root's consumer check
+              taking v0.2.0.
+              Known limits: Document's final step over plain-text transcripts may exceed
+              the final model's context on long documents (about 30 to 45 pages at
+              32768), to be tuned if it bites; the 413 over the server's 100 MiB limit is
+              confirmed from llama.cpp b11669's source, not a live upload.
 
-Door          one-way for the release (tag v0.1.0 pushed; the contract becomes a
-              public module). Two-way otherwise: a new package in an unreleased module.
+Door          one-way for the release (tag v0.2.0 pushed; the document package and the
+              client requirement become public). Two-way otherwise: a new package and an
+              additive field in an unreleased minor.
 
-Release       spike-ai-pipeline-processing v0.1.0
+Release       spike-ai-pipeline-processing v0.2.0
 
 Checkpoints   after each slice that changes source: the slice's changed source files,
               lowest dependency first, each with what to look for; a standards-review
-              pass before slice 2's checkpoint.
+              pass before slice 2's checkpoint; and after slice 3, the bake-off's ranking
+              table for the architect to confirm the winner before slice 4.
 ```
 
 ## Decisions
@@ -733,6 +787,79 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   mise.toml doesn't declare.
 - tools: a known limit, out of scope: if processing's own process is SIGKILLed, a running
   container runs on until its tool exits, and --rm removes it afterward.
+
+- documents: whole blob is the page stream's per-page vision calls followed by one final
+  inference over the joined page results, returning one response, with no page cap (round 3,
+  amending round 1). Rejected: every page image in one vision request; the whole blob and page
+  stream as the PDF's input side (bytes versus an io.Reader).
+- documents: processing requires spike-ai-pipeline-client v0.4.0 by tag and calls vision
+  through a one-method Generate interface that *client.Client satisfies. Rejected: stopping at
+  page images and leaving vision to the root.
+- documents: fixtures are generated from committed typst sources, about six clean letter pages
+  and about four ImageMagick-degraded copies, ground truth from the source. Rejected:
+  public-domain government documents scored against pdftotext's text layer.
+- documents: extraction accuracy is character error rate on whitespace-collapsed text, written
+  in test code, with word error rate beside it. Rejected: word error rate alone; field-level
+  scores.
+- documents: scored vision runs are greedy (temperature 0 through Native), 3 runs per cell,
+  spread recorded; a difference inside the spread is a tie. Rejected: the card's temperature 1
+  with more repeats.
+- documents: only the bake-off's winner is released; the four other renderers stay as -tags
+  bakeoff test code so the bake-off reruns. Rejected: all five adapters exported.
+- documents: tool's Invocation gains an optional Usage pointer that the exec runner fills (peak
+  RSS, user and system CPU) from the process's rusage; the container runner reports none.
+  Rejected: measuring memory outside the contract; a Tool.RunUsage method.
+- documents: every tool runs on the host through the exec runner. Rejected:
+  penpotapp/imagemagick:7.1.2-32 for corrections (no gs, so no PDF); minidocks images (latest
+  tag only); building images.
+- documents: the corrections are the scan set, typed per-request options in a fixed order:
+  -deskew 40%, -despeckle, -contrast-stretch 0.5%x0.5%, -unsharp 0x1, -colorspace Gray;
+  evidence 11 scores each alone, all five, and none. Rejected: herald's brightness-contrast and
+  saturation set.
+- documents: the bake-off is its own tier, mise run bakeoff (-tags bakeoff), each run capped at
+  10 minutes; integration stays a smoke test. Rejected: the bake-off inside mise run
+  integration.
+- documents: the release is processing v0.2.0, additive only.
+- documents: BUILD checkpoints after each slice that changes source, with a standards-review
+  pass before slice 2's, and the ranking table for the architect's confirmation before the
+  winner is wired in. Rejected: source checkpoints alone.
+- documents: one package, document, holds the page-renderer interface, the released renderer,
+  the corrections, and vision. Rejected: a pdf package beside an imaging package (a split by
+  topic alone).
+- documents: the page-renderer interface is per page, Count and Render(ctx, pdf path, page,
+  dpi, w), one process per page. Rejected: a per-document renderer yielding pages from one
+  process.
+- documents: vision is a Vision value built from a Generate, a Renderer, and an optional
+  corrections stage, with Document and Pages methods. Rejected: package functions taking all
+  three on every call.
+- documents: a failed page in Pages yields its error and the stream carries on; a failed spool
+  or count ends it. Rejected: ending the stream at the first failed page.
+- documents: Pages yields in page order, holding later pages finished early. Rejected:
+  completion order.
+- documents: Pages' concurrency is per request, zero meaning 1; the bake-off and integration
+  set 4. Rejected: a default of 4 (set A's slots, which the package can't know).
+- documents: no page cap in the whole blob; the server's request-body limit is what matters
+  (the architect, round 2 Q8). Rejected: a built-in 16-page cap; a caller's MaxPages.
+- documents: the default DPI is 150, per request; Gemma 4 26B-A4B's ~477 image tokens per
+  letter page saturate from ~110 dpi, so 150 costs no context. Rejected: 110 dpi; a pixel
+  budget.
+- documents: the bake-off's transcription prompt asks for plain text in reading order,
+  exported as a constant; the instructions stay a per-request value. Rejected: Markdown.
+- documents: Document's final step is a caller's protocol.Request template (model,
+  instructions, text format, output limit), required. Rejected: a prompt string sent to the
+  vision model.
+- documents: the final request carries one user message with one text part per page, each
+  beginning "Page N of M:". Rejected: one joined text with delimiter lines.
+- documents: Document returns every page's result (number, response, error) beside the final
+  response. Rejected: the final response alone.
+- documents: a page over the server's 100 MiB request-body limit (cpp-httplib 0.61.0 in
+  llama.cpp b11669) is sent anyway, and its 413 is that page's *client.APIError; the package
+  sets no size limit. Rejected: refusing before sending against a caller's MaxRequestBytes.
+- documents: a failed page fails Document before the final step, the result's pages still
+  filled in. Rejected: a final step over the pages that succeeded.
+- documents: a known limit, out of scope: Document's final step over plain-text transcripts may
+  exceed the final model's context on long documents (about 30 to 45 pages at 32768), tuned if
+  it bites.
 
 ## Pending edits
 
