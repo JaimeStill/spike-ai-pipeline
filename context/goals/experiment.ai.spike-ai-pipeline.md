@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -935,6 +935,9 @@ slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   loops on the seal's text to the 8192-token cap on some runs (1 of 4) with reasoning off.
   Integration sets 1 and caps a page at 2048 output tokens. Rejected: a repetition penalty
   (changes the greedy output every score rests on); leaving it to callers.
+- documents: PageRetries re-sends a nil response too, builds a fresh request copy per attempt
+  from the same PNG, and never retries Document's final request; Page.Attempts is 0 for a page
+  that failed before sending. Three integration runs needed no retry.
 
 ## Pending edits
 
