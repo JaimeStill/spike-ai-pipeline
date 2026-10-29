@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -927,6 +927,9 @@ slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   dates, markings, keywords) as structured output under a JSON schema, and never replaces the
   transcriptions. Amends behavior 8. Rejected: a final step re-writing the whole document as one
   clean text (paraphrase and invention, output growing with the document).
+- documents: Result.Text includes every page, a page without a response as its heading alone;
+  the integration digest's schema stays test code, not released API; the final step's output
+  cap is 4096 tokens (a request parameter).
 
 ## Pending edits
 
