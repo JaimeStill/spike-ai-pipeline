@@ -166,7 +166,9 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 0/6 committed · standards — · spec — · editor —
+slices 6/6 committed · checkpoints 1–3, 5, 6 accepted (slice 4 none) · standards done
+(mid-task a8607c9, 042190a; full 7b8321f, b0bd7c5, 84a0900) · spec done (one gap, closed by
+43a7478, re-reviewed) · editor done · validation —
 
 ## Decisions
 
@@ -657,9 +659,9 @@ slices 0/6 committed · standards — · spec — · editor —
   bindings (about 182 requirements).
 - tools: a container mounts the invocation's working directory at the same absolute path and
   works in it. Rejected: a fixed /work with arguments rewritten.
-- tools: cancelling an exec run sends SIGTERM to the process group, then SIGKILL after a grace
-  period (Cmd.Cancel, WaitDelay, Setpgid); the package builds on Linux only. Rejected: SIGKILL to
-  the process alone (CommandContext's default).
+- tools: cancelling an exec run sends SIGTERM to the process group, then SIGKILL once the KillAfter
+  period passes (Cmd.Cancel, WaitDelay, Setpgid); the package builds on Linux only. Rejected:
+  SIGKILL to the process alone (CommandContext's default).
 - tools: a version check is a minimum, dotted numbers captured by the tool's pattern and compared
   as numbers in-house. Rejected: an exact version; golang.org/x/mod/semver (needs a v prefix and
   strict semver, which 7.1.2-34 and n9.0.2 don't follow).
@@ -679,18 +681,62 @@ slices 0/6 committed · standards — · spec — · editor —
   podman breaks file ownership without --userns keep-id).
 - tools: every container runs with --init. Rejected: the tool as PID 1, which ignores SIGTERM
   without a handler, so every cancel would end in SIGKILL.
-- tools: currency reports image pins now, any newer build tag of the image counting as trailing
-  (ls88 after ls87). Rejected: only a newer tool version; leaving the scan to the office task.
+- tools: currency reports image pins now, a newer tag of the pinned tag's shape counting as
+  trailing, a rebuild of the same version (ls88 after ls87) included. Rejected: only a newer tool
+  version; leaving the scan to the office task.
 - tools: a failed run's error carries the program's name, its exit code, and the last 4 KiB of
   stderr when the caller passed no stderr writer; a cancelled run returns an error matching the
   context's. Rejected: the name and exit code alone.
 - tools: container construction also runs the tool's version check inside the image. Rejected:
   trusting the digest alone.
-- tools: the grace period is 10 s when unset (docker stop's default). Rejected: a value every
+- tools: the KillAfter period is 10 s when unset (docker stop's default). Rejected: a value every
   constructor requires.
-- tools: a container run is cancelled by docker stop --time <grace> on its own name under a fresh
-  context, then the runner waits for the CLI; the CLI's signal forwarding is never relied on,
-  since it doesn't forward SIGKILL.
+- tools: the SIGTERM-to-SIGKILL period is `Spec.KillAfter`, "the KillAfter period", named after
+  go-core's `reactor.CancelAfter`. Rejected: Grace, which go-web-sdk's `NewTransfer` and the
+  timeouts principle use for a transfer deadline's allowance (architect, slice 2 checkpoint).
+- tools: a cancelled run's process group gets SIGKILL while its leader is still unreaped, so the
+  group's ID can't have been reused. Rejected: killing the group after the reap, a near-zero
+  reuse window (architect, slice 2 checkpoint).
+- tools: a cancelled container run goes around the exec runner's cancellation of the docker CLI:
+  the runner runs docker stop --time=<the KillAfter period, rounded up to whole seconds> on the
+  run's name under a fresh bounded context, retried each second while the container may not exist
+  yet, then ends the CLI, waits for it, and always runs docker rm --force. The CLI's signal
+  forwarding is never relied on, since it doesn't forward SIGKILL.
+- tools: a container run whose context ends as the CLI exits nonzero on its own returns an error
+  matching the context's, as an exec run does; a run that succeeded returns nil though its context
+  ended afterward.
+- tools: a cancelled run never waits on the caller's stdin: execRun owns an os.Pipe for a stdin
+  that isn't an *os.File and stops waiting for its copy on cancel; after Run returns, the copy can
+  make one more Read of the caller's reader. Rejected: requiring an *os.File stdin in the docs
+  (architect, slice 3 checkpoint).
+- tools: once the program has exited normally, Run waits for the stdin copy at most the run's
+  KillAfter period: the spec's through the exec runner, and the docker CLI's 2 s through the
+  container runner.
+- tools: Tool is a struct holding an unexported run function that each runner supplies. Rejected:
+  a Tool interface.
+- tools: a Spec's VersionPattern matches the version command's stdout and stderr together, and
+  its first capture group is the version.
+- tools: ParseVersion accepts dotted decimal numbers only; a prefix (n9.0.2) or suffix (-34) is
+  an error, so the pattern captures only the numbers.
+- tools: Tool.Name is the program's base name; NewScript's Tool takes the script's base name, and
+  its version is the interpreter's.
+- tools: an empty Invocation.Dir is the process's working directory; the container runner makes
+  the directory absolute for its mount and refuses one holding a colon, which would split
+  docker's --volume.
+- tools: the container runner passes every valued docker flag as --flag=value, so no caller
+  value reads as a flag.
+- tools: a container run's name is tool- and 26 random base32 digits, lowercased (130 bits).
+- tools: the docker CLI's spec is fixed in the package: the server's version
+  (`docker version --format={{.Server.Version}}`), minimum 20.10, the first with run's --pull.
+  The caller chooses only the CLI's name or path.
+- tools: exit codes 125 (docker's own failure) and 126 and 127 (an entrypoint docker can't run)
+  are docker's, and come back as an *ExitError named for the spec's program.
+- tools: currency's image-pin scan reads repo:tag@sha256: literals in the Go source, joining
+  literals split by +, and compares each pin's tag with the image's Docker Hub tags of the same
+  shape (each dotted number read as N), newest by sort -V, among the 100 most recently updated.
+  A reference naming another registry is skipped.
+- tools: currency uses only mise's declared tools, gh, and base utilities. Rejected: perl, which
+  mise.toml doesn't declare.
 - tools: a known limit, out of scope: if processing's own process is SIGKILLed, a running
   container runs on until its tool exits, and --rm removes it afterward.
 
@@ -763,3 +809,20 @@ slices 0/6 committed · standards — · spec — · editor —
 - coordinator · roadmap, the `tools` task: add `proof = "One tool, ffprobe, runs through both
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
+  v0.1.0:
+
+  > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
+  >   model capabilities. It runs mature system tools through adapters it owns
+  >   (`system-tools.md`), with herald's `internal/format` as its prior art. Its `tool` package,
+  >   on the standard library alone, is the contract: a Tool bound to one program, found and
+  >   version-checked at construction, runs an invocation under the caller's context through the
+  >   exec runner (binaries, and scripts through their interpreter) or the container runner (the
+  >   docker CLI, an image pinned by digest, each run locked down). The PDF renderer is chosen by
+  >   bake-off (pdftoppm, pdftocairo, gs, vips, and ImageMagick over gs); ImageMagick is the image
+  >   tool and its correction stage; ffmpeg and ffprobe take audio and video, live sources
+  >   included.
+- coordinator · context/system-tools.md, "First case" (optional): add after its first sentence
+  "spike-ai-pipeline-processing's `tool` package is the contract: a binary, a script through its
+  interpreter, and a digest-pinned image through the docker CLI each run as one Tool, which its
+  constructor finds and version-checks (evidence 14, processing v0.1.0)."
