@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 4/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 5/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -913,6 +913,14 @@ slices 4/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents (architect, standing): any change to gb10-2's model configuration (the preset: context,
   slots, image tokens, sampling) is raised as an escalation, never made in BUILD. Neither a page
   request nor Document's final step should hit a context limit; one that does is escalated.
+- documents: Pages and Document share one Request whose Final field Pages ignores. Rejected: a
+  Document request embedding the page request.
+- documents: a refused request is the stream's single error the first time Pages is ranged; both
+  templates are validated as the requests they build, once, before any page runs.
+- documents: a page whose response isn't completed fails Document as a failed page, its response
+  kept; Pages leaves the status to the caller.
+- documents: a final-step part is "Page N of M:", a newline, then the page's output text; a PDF
+  with no pages is a Document error.
 
 ## Pending edits
 
