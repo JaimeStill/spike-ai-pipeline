@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
-- **Task:** tools
-- **Branch:** tools
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -12,7 +12,7 @@
 4. [x] client-streaming
 5. [x] client-messages
 6. [x] client-responses
-7. [ ] tools
+7. [x] tools
 8. [ ] documents
 9. [ ] office-cli
 10. [ ] office
@@ -163,12 +163,6 @@ Checkpoints   after each slice that changes source: the slice's changed source f
               lowest dependency first, each with what to look for; a standards-review
               pass before slice 2's checkpoint.
 ```
-
-## Progress
-
-slices 6/6 committed · checkpoints 1–3, 5, 6 accepted (slice 4 none) · standards done
-(mid-task a8607c9, 042190a; full 7b8321f, b0bd7c5, 84a0900) · spec done (one gap, closed by
-43a7478, re-reviewed) · editor done · validation —
 
 ## Decisions
 
