@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -980,6 +980,15 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   Assess is one magick run on Corrector; grayscale is the fraction of pixels with HCL chroma over
   0.2 below 0.001. txtwrite keeps the page's layout, so a two-column page's text layer reads
   across the columns (CER 0.67, every word present): a finding for the inference layer.
+- documents (L, N runs): every staged run puts the instructions beside the image, which L
+  measured better (scanned CER 0.086 against 0.117, deterministic); the first-pass schema puts the
+  transcription first and the corrections as an enum of the catalog's names; a first pass cut off
+  or unparsable leaves the page incomplete, with no second pass. Results: text layers made no model
+  calls on the clean set but read two-column and form pages out of order; the model missed
+  moderate skew, fade, and blur and judged every scanned page poor for its redactions; second
+  passes rarely helped (scanned: 1 helped, 2 hurt, 4 same); all-five beat none on the scanned set
+  (0.068 against 0.086); a 300-dpi full-width band costs as many image tokens as a page and still
+  didn't read page 7's NOFORN ("SPERET NORDEN").
 
 ## Pending edits
 
