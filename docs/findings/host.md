@@ -385,3 +385,53 @@ tools_test.go:155: recorded: responses TestNamedToolChoices/none: none: status c
 The run is the client's integration tier run verbose, from the laptop in
 spike-ai-pipeline-client at `6032cf7`:
 `GOWORK=off SPIKE_ROUTER_URL=http://gb10-2:8080 mise exec -- go test -race -tags integration -count=1 -v ./integration/`.
+
+## 2026-10-30: set A's vision model is Google's QAT Q4_0
+
+Task `vision-qat`. Set A's vision model changed from ggml-org's post-training Q4_0 of Gemma 4
+26B-A4B (`ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0`, with a Q8_0 mmproj) to Google's
+quantization-aware-trained Q4_0 (`google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0`), since a
+post-training Q4_0 fails the workspace's quantization floor and a QAT Q4_0 passes
+(`standards-lab/context/ai-hosting.md`). The sections above record runs on the post-training build
+and stay as measured. The preset's section keeps every setting: c 32768 over 4 slots,
+mtmd-batch-max-tokens 512, and the card's sampling.
+
+- **The spec:** the repository's files don't follow ggml-org's naming. In llama.cpp b11669's
+  `common/download.cpp`, the tag `Q4_0` matches the one model file, `gemma-4-26B_q4_0-it.gguf`, by
+  the pattern `Q4_0[.-]` (case-insensitive), and the router loads the one file whose name holds
+  `mmproj`, `gemma-4-26B-it-mmproj.gguf`, beside it.
+- **Staging:** both files, 14,439,363,584 and 1,194,828,160 bytes, downloaded into `/srv/models` by
+  hf 2.3.0 in 668 s, with no partial download left. The post-training build's files stay in the
+  store, read by nothing, so the router still lists its cache entry, `unloaded`.
+- **The load:** host-update printed `preset: changed since the router last read it; reloaded` and
+  loaded the new section, all four of set A loaded (exit 0). `/props` reports `model_path`
+  `.../models--google--gemma-4-26B-A4B-it-qat-q4_0-gguf/snapshots/d1c082be.../gemma-4-26B_q4_0-it.gguf`,
+  vision true, 4 slots of n_ctx 32768, and the preset's sampling. Its llama-server holds 16960 MiB
+  of GPU memory (`nvidia-smi`), against the post-training build's 16972 MiB. Its load logged the
+  same warnings as the post-training build's: image_max_tokens capped from 1120 to 512 by n_ubatch
+  512, and two control-looking tokens retyped. No context or size refusal.
+- **The tiers:** `mise run integration` passed here, in spike-ai-pipeline-client, and in
+  spike-ai-pipeline-processing. The image tokens Gemma 4 26B-A4B counts for clean.pdf's page 1
+  (processing's `TestVisionImageTokensHost`) are unchanged from the post-training build: 223 at
+  72 dpi, 416 at 100, 477 at 150, and 477 at 200.
+
+The commands, from the laptop at this repository's root unless they say gb10-2. On gb10-2, in the
+clone:
+
+```sh
+export MISE_ENV=host HF_HUB_CACHE=/srv/models HF_XET_HIGH_PERFORMANCE=1
+mise exec -- hf download google/gemma-4-26B-A4B-it-qat-q4_0-gguf --include gemma-4-26B_q4_0-it.gguf --include gemma-4-26B-it-mmproj.gguf
+```
+
+Delivering the branch to the clone, which was on `main`, then host-update, the checks, and the
+probe:
+
+```sh
+git push ssh://gb10-2/~/repos/spike-ai-pipeline vision-qat:refs/heads/vision-qat
+ssh gb10-2 git -C repos/spike-ai-pipeline switch vision-qat
+mise run host-update
+R=http://gb10-2:8080; M=google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0
+curl -s "$R/models?autoload=false" | jq -c '.data[] | {id, s: .status.value}'
+curl -s "$R/props?model=$M&autoload=false" | jq -c '{model_path, modalities, total_slots, n_ctx: .default_generation_settings.n_ctx}'
+mise run integration
+```
