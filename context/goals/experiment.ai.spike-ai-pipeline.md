@@ -1021,6 +1021,12 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   is the same. Supersedes the host decision that deferred the swap to spike-model-benchmarks.
   gpt-oss-120b MXFP4 (native), gemma-4-E4B Q8_0 (dense under 8B, ASR), and granite BF16
   (embedding) already meet the floor. The bake-offs rerun on the QAT build.
+- vision-qat: the preset serves google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0 (its one model file and
+  its projector, picked by the Q4_0 tag); image tokens per page are unchanged (223/416/477/477).
+  gb10-2's model store keeps set A alone: ggml-org/embeddinggemma-2-GGUF,
+  nvidia/Gemma-4-26B-A4B-NVFP4, and ggml-org/gemma-4-26B-A4B-it-GGUF are removed with their blobs
+  (architect). llama.cpp caps the vision model's image tokens at 512 by n_ubatch 512 where the
+  model allows 1120: a preset setting, raised only by escalation.
 
 ## Pending edits
 
