@@ -1014,6 +1014,51 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   (reasoning off), renderers-reasoning-on, corrections, placement, flow, and tiles. The earlier
   six-page scanned run isn't committed, since the findings don't cite it.
 
+- vision-qat (architect, after documents; outside the roadmap's tasks): set A on gb10-2 is held to
+  ai-hosting.md's quantization floor. Gemma 4 26B-A4B moves from ggml-org's post-training Q4_0
+  (with a Q8_0 projector) to Google's QAT Q4_0 (google/gemma-4-26B-A4B-it-qat-q4_0-gguf, with its
+  own projector), as ai-hosting.md's set A names it: the floor accepts a QAT Q4_0, and the memory
+  is the same. Supersedes the host decision that deferred the swap to spike-model-benchmarks.
+  gpt-oss-120b MXFP4 (native), gemma-4-E4B Q8_0 (dense under 8B, ASR), and granite BF16
+  (embedding) already meet the floor. The bake-offs rerun on the QAT build.
+- vision-qat: the preset serves google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0 (its one model file and
+  its projector, picked by the Q4_0 tag); image tokens per page are unchanged (223/416/477/477).
+  gb10-2's model store keeps set A alone: ggml-org/embeddinggemma-2-GGUF,
+  nvidia/Gemma-4-26B-A4B-NVFP4, and ggml-org/gemma-4-26B-A4B-it-GGUF are removed with their blobs
+  (architect). llama.cpp caps the vision model's image tokens at 512 by n_ubatch 512 where the
+  model allows 1120: a preset setting, raised only by escalation.
+- vision-qat (architect): raise the vision model's image-token budget to the model's own cap
+  (1120, read from the model) if the memory pool allows: llama.cpp caps it at n_ubatch, 512 by
+  default, so the vision section takes ub = 1120 after the QAT run at 512 finishes, measured
+  (memory before and after, set A fully loaded) and reverted if it doesn't fit; the bake-offs
+  then rerun, giving post-training at 512, QAT at 512, and QAT at 1120 side by side.
+- vision-qat (Q): gs stays the released renderer. The renderer ranking scores accuracy on the
+  pages with a text or vector layer (clean, degraded) and reports scanned pages apart, since every
+  renderer decodes the same embedded scan; on QAT at 512 image tokens the full ranking put vips
+  first and gs fourth on scanned page 7 alone (its seal block repeated three times with gs, once
+  with vips). Rejected: the ranking unchanged; re-deciding after the 1,120 run.
+- vision-qat (R): ub rises to 1,120 now; corrections, placement, flow, and tiles run at 1,120
+  only; the renderers alone carry post-training 512, QAT 512, and QAT 1,120. Rejected: all five
+  at 512 first.
+- vision-qat: the vision section sets ub = 1120 and leaves b at 2048 and mtmd-batch-max-tokens at
+  512 (a first image always encodes alone in its batch); the cap warning is gone, and the vision
+  instance grew about 800 MiB (17,346 to 18,143 MiB) with set A loaded and about 16 GiB available.
+  Image tokens per letter page: 223 (72 dpi), 416 (100), 920 (150), 1104 from 200 dpi up.
+- vision-qat (Q): ranked on clean and degraded, gs is first on both builds, time deciding every
+  pair (accuracy ties); scanned results are logged as not ranked (processing 302c3c5).
+- vision-qat (S): the default DPI stays 150, per request. Its first reason (150 and 200 dpi cost
+  the same 477 tokens) no longer holds at the full budget (920 against 1,104); the new reason:
+  150 dpi reads clean and degraded print perfectly, more tokens per whole page didn't help scans
+  (scanned CER rose from 0.119 to 0.133 for gs going from 477 to 920 tokens, all of it page 7) and
+  slowed requests (3.0 to 5.1 s), and 200 dpi is untested on whole pages. Tiles are the lever for
+  small marks. Rejected: a 200-dpi default.
+- vision-qat (T): ub = 1120 stays on gb10-2: no run looped at the full budget (QAT at 512 looped
+  twice), it is the model's own budget, and it fits. Rejected: returning to 512.
+- vision-qat: on the QAT build at 1,120 image tokens, gs ranks first in every column (time
+  deciding every pair); page 7's NOFORN is never read, page 7's seal draws more invention, page
+  5's seal reads only from a tile; corrections at 150 dpi now help (Deskew, Unsharp) where they
+  hurt; second passes changed nothing.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -1135,3 +1180,9 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   an image's area at about 2,100 to 2,400 pixels a token) is an input to sizing set A's vision
   slot; spike-ai-pipeline-processing's docs/findings/documents.md has the measurements. gb10-2
   serves ggml-org's Q4_0 weights with mmproj-gemma-4-26B-A4B-it-Q8_0, not Google's QAT Q4_0.
+- coordinator · context/ai-hosting.md, set A on gb10-2: it serves Google's QAT Q4_0 of Gemma 4
+  26B-A4B (google/gemma-4-26B-A4B-it-qat-q4_0-gguf, its own projector) since 2026-10-30, as set A
+  names it, in place of ggml-org's post-training Q4_0, which fails the floor; the vision section
+  sets ub = 1120, since llama.cpp caps a non-causal image's tokens at n_ubatch (default 512)
+  where the model allows 1120 (+800 MiB). The Framework's set A likely has the same 512 cap.
+  gb10-2's store holds set A alone (embeddinggemma-2 and an NVFP4 Gemma were removed).

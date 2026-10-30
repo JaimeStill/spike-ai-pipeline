@@ -91,7 +91,7 @@ org/second-GGUF:MXFP4"
 expect "model_states reads each state, failed over unloaded" \
 	"$(model_states <"$data/models.json")" \
 	"mrutkows/granite-embedding-english-r2-GGUF:BF16 loaded
-ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0 loading
+google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0 loading
 ggml-org/gemma-4-E4B-it-GGUF:Q8_0 unloaded
 ggml-org/gpt-oss-120b-GGUF:MXFP4 failed"
 
