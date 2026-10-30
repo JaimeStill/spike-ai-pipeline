@@ -1053,3 +1053,12 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   "spike-ai-pipeline-processing's `tool` package is the contract: a binary, a script through its
   interpreter, and a digest-pinned image through the docker CLI each run as one Tool, which its
   constructor finds and version-checks (evidence 14, processing v0.1.0)."
+- coordinator · context/ai-hosting.md, "Hosts and access": the llama container publishes 8080 on
+  gb10-2's Tailscale address, which races Tailscale at boot: docker's start fails ("cannot assign
+  requested address"), leaves the container on no network, and a later `docker start` runs it with
+  no published port. gb10-2 now sets `net.ipv4.ip_nonlocal_bind = 1`
+  (/etc/sysctl.d/90-nonlocal-bind.conf, the architect, 2026-10-30), so the bind succeeds before
+  Tailscale is up. A container already stranded is fixed by `docker network connect bridge llama`.
+  The same note goes to spike-model-engines, whose copied scripts publish the port this way.
+- roadmap note · spike-ai-pipeline root: host-update could detect a running llama container with no
+  published port (or no network) and print the fix, instead of waiting out its 120 s health check.
