@@ -18,7 +18,9 @@ each released by tag:
 - [spike-ai-pipeline-client](https://github.com/JaimeStill/spike-ai-pipeline-client): the model
   client.
 - [spike-ai-pipeline-processing](https://github.com/JaimeStill/spike-ai-pipeline-processing): the
-  processing layer and its system-tool adapters.
+  processing layer and its system-tool adapters. It prepares content for a model before inference,
+  such as a PDF's pages as corrected images, regions, and text layers; a layer above runs the
+  inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
   CLI for office documents, a system tool processing runs.
 

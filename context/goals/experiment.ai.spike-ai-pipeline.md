@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O, 6244f46 slice 7), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc), pass 2 (59d5de2, e3c83f9, 75a1b39) · spec 1 (no blocking gaps) · editor —
+slices 7/7 committed in processing (f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, 5fc4815, 7ca98b6, 8e932d6, 6244f46 slice 7) · amendments cee2c65 J, c84d346 K, 4fd1bd4 M, b4d83c3 M's scanned record, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O · slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc), pass 2 (59d5de2, e3c83f9, 75a1b39) · spec 1 (no blocking gaps) · editor —
 
 ## Decisions
 
@@ -795,13 +795,16 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents: whole blob is the page stream's per-page vision calls followed by one final
   inference over the joined page results, returning one response, with no page cap (round 3,
   amending round 1). Rejected: every page image in one vision request; the whole blob and page
-  stream as the PDF's input side (bytes versus an io.Reader).
+  stream as the PDF's input side (bytes versus an io.Reader). Superseded by M: the whole blob is
+  test code.
 - documents: processing requires spike-ai-pipeline-client v0.4.0 by tag and calls vision
   through a one-method Generate interface that *client.Client satisfies. Rejected: stopping at
-  page images and leaving vision to the root.
+  page images and leaving vision to the root. Superseded by M: processing stops at prepared pages,
+  and the client is a test-only requirement.
 - documents: fixtures are generated from committed typst sources, about six clean letter pages
   and about four ImageMagick-degraded copies, ground truth from the source. Rejected:
-  public-domain government documents scored against pdftotext's text layer.
+  public-domain government documents scored against pdftotext's text layer. Amended after slice 2:
+  nine harsher degraded pages and a scanned set.
 - documents: extraction accuracy is character error rate on whitespace-collapsed text, written
   in test code, with word error rate beside it. Rejected: word error rate alone; field-level
   scores.
@@ -812,7 +815,8 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   bakeoff test code so the bake-off reruns. Rejected: all five adapters exported.
 - documents: tool's Invocation gains an optional Usage pointer that the exec runner fills (peak
   RSS, user and system CPU) from the process's rusage; the container runner reports none.
-  Rejected: measuring memory outside the contract; a Tool.RunUsage method.
+  Rejected: measuring memory outside the contract; a Tool.RunUsage method. Amended at slice 3's
+  checkpoint: no peak RSS.
 - documents: every tool runs on the host through the exec runner. Rejected:
   penpotapp/imagemagick:7.1.2-32 for corrections (no gs, so no PDF); minidocks images (latest
   tag only); building images.
@@ -829,13 +833,13 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   winner is wired in. Rejected: source checkpoints alone.
 - documents: one package, document, holds the page-renderer interface, the released renderer,
   the corrections, and vision. Rejected: a pdf package beside an imaging package (a split by
-  topic alone).
+  topic alone). Amended by M: vision is test code.
 - documents: the page-renderer interface is per page, Count and Render(ctx, pdf path, page,
   dpi, w), one process per page. Rejected: a per-document renderer yielding pages from one
   process.
 - documents: vision is a Vision value built from a Generate, a Renderer, and an optional
   corrections stage, with Document and Pages methods. Rejected: package functions taking all
-  three on every call.
+  three on every call. Superseded by M: Vision is the test harness; Preparer is released.
 - documents: a failed page in Pages yields its error and the stream carries on; a failed spool
   or count ends it. Rejected: ending the stream at the first failed page.
 - documents: Pages yields in page order, holding later pages finished early. Rejected:
@@ -848,22 +852,24 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   letter page saturate from ~110 dpi, so 150 costs no context. Rejected: 110 dpi; a pixel
   budget.
 - documents: the bake-off's transcription prompt asks for plain text in reading order,
-  exported as a constant; the instructions stay a per-request value. Rejected: Markdown.
+  exported as a constant; the instructions stay a per-request value. Rejected: Markdown. Amended
+  by M: the constant is unexported test code.
 - documents: Document's final step is a caller's protocol.Request template (model,
   instructions, text format, output limit), required. Rejected: a prompt string sent to the
-  vision model.
+  vision model. Amended after slice 5 (a digest, not a rewrite) and by M (test code).
 - documents: the final request carries one user message with one text part per page, each
   beginning "Page N of M:". Rejected: one joined text with delimiter lines.
 - documents: Document returns every page's result (number, response, error) beside the final
   response. Rejected: the final response alone.
 - documents: a page over the server's 100 MiB request-body limit (cpp-httplib 0.61.0 in
   llama.cpp b11669) is sent anyway, and its 413 is that page's *client.APIError; the package
-  sets no size limit. Rejected: refusing before sending against a caller's MaxRequestBytes.
+  sets no size limit. Rejected: refusing before sending against a caller's MaxRequestBytes. After
+  M, the test harness's (spec review).
 - documents: a failed page fails Document before the final step, the result's pages still
   filled in. Rejected: a final step over the pages that succeeded.
 - documents: a known limit, out of scope: Document's final step over plain-text transcripts may
   exceed the final model's context on long documents (about 30 to 45 pages at 32768), tuned if
-  it bites.
+  it bites. After M, the test harness's (spec review).
 - documents (slice 2 checkpoint): spool's tests reach it through export_test.go for now; slice 5
   moves them onto Pages and Document and deletes export_test.go. Rejected: spooling only through
   an entry point in slice 2.
@@ -871,7 +877,8 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   running no tool; Pages and Document refuse a page past the last against their own count, and a
   direct Render past the last returns the renderer tool's own error. Amends behavior 3. Rejected:
   CheckRender counting on every Render (one extra process per page, inside the bake-off's time).
-- documents: the one-method interface is document.Generator.
+- documents: the one-method interface is document.Generator. Amended by M: generator, unexported
+  test code.
 - documents (fixtures, after slice 2): a scanned fixture set of ~6 pages from herald's
   _project/marked-documents/marked-documents.pdf (Lexmark CX725 scans, image only, already public
   in herald's repository) is copied into processing's testdata, pages picked for legible text,
@@ -896,7 +903,8 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents: the bake-off runs once per renderer and set (15 runs, each capped at 10 minutes);
   one renderer's three sets overran 10 minutes in one run.
 - documents (after slice 3): the scanned rerun found page 7's faded foot reads SECRET but never
-  NOFORN, and 7 runs hit the 8192-token cap reasoning and came back empty. Transcription runs with
+  NOFORN, and 7 runs (8 by the committed JSON, which the findings cite) hit the 8192-token cap
+  reasoning and came back empty. Transcription runs with
   reasoning off (Effort none; Gemma's template switch through Native if the router ignores it);
   error rate is scored over completed runs, and incomplete runs are a criterion of their own,
   ranked right after error rate; the whole bake-off reruns, and the winner is what it ranks
@@ -937,12 +945,12 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   (changes the greedy output every score rests on); leaving it to callers.
 - documents: PageRetries re-sends a nil response too, builds a fresh request copy per attempt
   from the same PNG, and never retries Document's final request; Page.Attempts is 0 for a page
-  that failed before sending. Three integration runs needed no retry.
+  that failed before sending. Three integration runs needed no retry; after M, page 7 stayed
+  incomplete after its retry on 2 of 5 scanned runs (see the scanned-set record line).
 - documents: evidence 11's matrix is its own task, `mise run bakeoff-corrections` (28 runs, each
   capped at 10 minutes, then the matrix); it puts TranscribeInstructions in the request's
   Instructions, as Vision does, so its none cell compares only with its own cells, not with the
-  renderer bake-off's numbers. The reasoning-on scanned JSON holds 8 empty-at-cap transcriptions,
-  where an earlier line here says 7; the findings page cites the JSON.
+  renderer bake-off's numbers.
 - documents (architect, slice 6 checkpoint): processing's libraries provide pre-inference
   preparation; a layer above defines and orchestrates inference and embeddings, so inference
   accuracy and structure in this spike only prove the preparation usable. Confidence scoring, as
@@ -952,7 +960,8 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   concurrency, cancellation); Vision, Pages, Document, Generator, and TranscribeInstructions move
   to test code in the integration and bake-off tiers, which still prove evidence 4, and the client
   becomes a test-only requirement. Amends behaviors 2, 6-8, and 13-15. Rejected: releasing Vision
-  beside the stream; keeping the release as it was.
+  beside the stream; keeping the release as it was. Refined by the (M) line below: the harness is
+  untagged test code.
 - documents (slice 6 checkpoint, L): instruction placement (in the image's message or in the
   request's Instructions) is measured through Vision on the clean, degraded, and scanned sets, 3
   runs each, without correction, and reported as a finding about the inference layer.
@@ -975,20 +984,23 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   only prove the preparation usable; the clean set still asserts completion.
 - documents (N): text and regions reach Images through optional interfaces (TextExtractor,
   RegionRenderer) that Preparer type-asserts, so Renderer isn't widened; SkipText implies Text.
-  Ghostscript.Text uses txtwrite with -sstdout=%stderr; RenderRegion is one gs run of PostScript
-  over pdf_main.ps's pdfshowpage_setpage/finish, pixel-identical to Render for the whole page.
-  Assess is one magick run on Corrector; grayscale is the fraction of pixels with HCL chroma over
-  0.2 below 0.001. txtwrite keeps the page's layout, so a two-column page's text layer reads
+- documents (N): Ghostscript.Text uses txtwrite with -sstdout=%stderr.
+- documents (N): RenderRegion is one gs run of PostScript over pdf_main.ps's
+  pdfshowpage_setpage/finish, pixel-identical to Render for the whole page.
+- documents (N): Assess is one magick run on Corrector; grayscale is the fraction of pixels with
+  HCL chroma over 0.2 below 0.001.
+- documents (N, finding): txtwrite keeps the page's layout, so a two-column page's text layer reads
   across the columns (CER 0.67, every word present): a finding for the inference layer.
 - documents (L, N runs): every staged run puts the instructions beside the image, which L
-  measured better (scanned CER 0.086 against 0.117, deterministic); the first-pass schema puts the
-  transcription first and the corrections as an enum of the catalog's names; a first pass cut off
-  or unparsable leaves the page incomplete, with no second pass. Results: text layers made no model
-  calls on the clean set but read two-column and form pages out of order; the model missed
-  moderate skew, fade, and blur and judged every scanned page poor for its redactions; second
-  passes rarely helped (scanned: 1 helped, 2 hurt, 4 same); all-five beat none on the scanned set
-  (0.068 against 0.086); a 300-dpi full-width band costs as many image tokens as a page and still
-  didn't read page 7's NOFORN ("SPERET NORDEN").
+  measured better (scanned CER 0.086 against 0.117, deterministic).
+- documents (N runs): the first-pass schema puts the transcription first and the corrections as an
+  enum of the catalog's names; a first pass cut off or unparsable leaves the page incomplete, with
+  no second pass.
+- documents (N, results): text layers made no model calls on the clean set but read two-column
+  and form pages out of order; the model missed moderate skew, fade, and blur and judged every
+  scanned page poor for its redactions; second passes rarely helped (scanned: 1 helped, 2 hurt, 4
+  same); all-five beat none on the scanned set (0.068 against 0.086); a 300-dpi full-width band
+  costs as many image tokens as a page and still didn't read page 7's NOFORN ("SPERET NORDEN").
 - documents (O): image tokens follow a region's area, not its shape (about 2,100 to 2,400
   pixels a token, floor 82); a small tile on a known spot reads what the page and its band miss
   (page 5's seal on all six reads, at about a fifth of a page's tokens), but page 7's faded NOFORN
@@ -998,8 +1010,13 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   outside the run-to-run spread, since a tie inside the spread isn't transitive; pdftocairo
   (mean CER 0.0364) ranks below vips (0.0414) by time. gs wins under a plain ordering too.
 - documents (spec review): the 413 and the final-step context limit belong to the test harness
-  after M, so the v0.2.0 CHANGELOG names neither; the findings page covers both. The bake-off result
-  JSON the findings cite is committed beside the page, so its numbers trace to files.
+  after M, so the v0.2.0 CHANGELOG names neither; the findings page covers both.
+- documents (spec review): the bake-off result JSON the findings cite is committed beside the page,
+  in processing's docs/findings/documents-results/, one directory per run, so its numbers trace to
+  files.
+- documents (editor): documents-results has one directory per mise task's run: renderers
+  (reasoning off), renderers-reasoning-on, corrections, placement, flow, and tiles. The earlier
+  six-page scanned run isn't committed, since the findings don't cite it.
 
 ## Pending edits
 
@@ -1071,18 +1088,33 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.1.0:
+  v0.2.0 (this replaces the bullet's v0.1.0 draft, which was never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
-  >   model capabilities. It runs mature system tools through adapters it owns
-  >   (`system-tools.md`), with herald's `internal/format` as its prior art. Its `tool` package,
-  >   on the standard library alone, is the contract: a Tool bound to one program, found and
-  >   version-checked at construction, runs an invocation under the caller's context through the
-  >   exec runner (binaries, and scripts through their interpreter) or the container runner (the
-  >   docker CLI, an image pinned by digest, each run locked down). The PDF renderer is chosen by
-  >   bake-off (pdftoppm, pdftocairo, gs, vips, and ImageMagick over gs); ImageMagick is the image
-  >   tool and its correction stage; ffmpeg and ffprobe take audio and video, live sources
-  >   included.
+  >   model capabilities before inference; a layer above defines and orchestrates the inference
+  >   and embeddings. It runs mature system tools through adapters it owns (`system-tools.md`),
+  >   with herald's `internal/format` as its prior art. Its `tool` package, on the standard library
+  >   alone, is the contract: a Tool bound to one program, found and version-checked at
+  >   construction, runs an invocation under the caller's context through the exec runner
+  >   (binaries, and scripts through their interpreter) or the container runner (the docker CLI, an
+  >   image pinned by digest, each run locked down), and reports the run's CPU time. Its `document`
+  >   package prepares a PDF's pages: Ghostscript, which won the renderer bake-off against
+  >   pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG and
+  >   reads text layers; ImageMagick corrects page images, lists its corrections as a catalog for a
+  >   prompt, and assesses a page for the defects they fix; and a page stream yields the prepared
+  >   pages in order. ffmpeg and ffprobe take audio and video, live sources included.
+- coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
+  "PDF pages through vision", and its summary says what the task delivered:
+
+  ```
+  Pre-inference preparation of a PDF's pages: the renderer bake-off (pdftoppm, pdftocairo, gs,
+  vips, and magick over gs) behind the page-renderer interface, with gs released; ImageMagick
+  corrections in a fixed order, their catalog for a prompt, and a page assessment; text layers,
+  regions, and an ordered, concurrent page stream; and tool's CPU usage report. Inference is test
+  code: a vision harness carries the pages through vision as a whole blob and as a page stream,
+  and the bake-off tier measures the corrections, instruction placement, a staged two-pass flow,
+  and tiles. Tags processing v0.2.0. Evidence 4, 11.
+  ```
 - coordinator · context/system-tools.md, "First case" (optional): add after its first sentence
   "spike-ai-pipeline-processing's `tool` package is the contract: a binary, a script through its
   interpreter, and a digest-pinned image through the docker CLI each run as one Tool, which its

@@ -21,7 +21,9 @@ stage by stage in real time?
    under the same request and response model as Chat Completions, with no change to callers.
 3. The client's base module is standard library only, and the check passes.
 4. A PDF's pages go through vision as a whole blob and as a page stream, with the renderer
-   bake-off's ranking, time and memory per page, license, and footprint.
+   bake-off's ranking, time and memory per page, license, and footprint. Processing's
+   [documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md)
+   records it.
 5. Audio longer than the model's limit is cut at silences (ffmpeg silencedetect) into windows
    under 30 s that overlap by 1 to 2 s, transcribed concurrently within set A's audio slots, and
    joined by aligning the overlapping words at each seam; an optional gpt-oss pass smooths the
@@ -35,7 +37,9 @@ stage by stage in real time?
 10. pgvector as a declared native-tier extension: its install, migration, image pin, and the
     packages allowed to use it.
 11. Image correction: vision extraction accuracy with and without each ImageMagick correction, on
-    the fixed documents.
+    the fixed documents. Processing's
+    [documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md)
+    records it.
 12. Office formats: the Open XML CLI's structure fidelity, memory, cold start, and binary size on
     fixed documents, spreadsheets, and decks, against markitdown and xberg; chart data and
     embedded media in place of page images; and .doc, .xls, and .ppt converted through
