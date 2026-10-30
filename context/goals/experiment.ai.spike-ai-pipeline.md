@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** vision-qat
+- **Branch:** vision-qat
 
 ## Tasks
 
@@ -1013,6 +1013,14 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 - documents (editor): documents-results has one directory per mise task's run: renderers
   (reasoning off), renderers-reasoning-on, corrections, placement, flow, and tiles. The earlier
   six-page scanned run isn't committed, since the findings don't cite it.
+
+- vision-qat (architect, after documents; outside the roadmap's tasks): set A on gb10-2 is held to
+  ai-hosting.md's quantization floor. Gemma 4 26B-A4B moves from ggml-org's post-training Q4_0
+  (with a Q8_0 projector) to Google's QAT Q4_0 (google/gemma-4-26B-A4B-it-qat-q4_0-gguf, with its
+  own projector), as ai-hosting.md's set A names it: the floor accepts a QAT Q4_0, and the memory
+  is the same. Supersedes the host decision that deferred the swap to spike-model-benchmarks.
+  gpt-oss-120b MXFP4 (native), gemma-4-E4B Q8_0 (dense under 8B, ASR), and granite BF16
+  (embedding) already meet the floor. The bake-offs rerun on the QAT build.
 
 ## Pending edits
 
