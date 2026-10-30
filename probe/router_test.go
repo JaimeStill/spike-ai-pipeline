@@ -33,7 +33,7 @@ const (
 // values; it doesn't assign roles, so the probe does, and checks that each is a preset section.
 const (
 	chatModel      = "ggml-org/gpt-oss-120b-GGUF:MXFP4"
-	visionModel    = "ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0"
+	visionModel    = "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0"
 	audioModel     = "ggml-org/gemma-4-E4B-it-GGUF:Q8_0"
 	embeddingModel = "mrutkows/granite-embedding-english-r2-GGUF:BF16"
 )
