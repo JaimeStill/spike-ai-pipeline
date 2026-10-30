@@ -1046,6 +1046,18 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   Image tokens per letter page: 223 (72 dpi), 416 (100), 920 (150), 1104 from 200 dpi up.
 - vision-qat (Q): ranked on clean and degraded, gs is first on both builds, time deciding every
   pair (accuracy ties); scanned results are logged as not ranked (processing 302c3c5).
+- vision-qat (S): the default DPI stays 150, per request. Its first reason (150 and 200 dpi cost
+  the same 477 tokens) no longer holds at the full budget (920 against 1,104); the new reason:
+  150 dpi reads clean and degraded print perfectly, more tokens per whole page didn't help scans
+  (scanned CER rose from 0.119 to 0.133 for gs going from 477 to 920 tokens, all of it page 7) and
+  slowed requests (3.0 to 5.1 s), and 200 dpi is untested on whole pages. Tiles are the lever for
+  small marks. Rejected: a 200-dpi default.
+- vision-qat (T): ub = 1120 stays on gb10-2: no run looped at the full budget (QAT at 512 looped
+  twice), it is the model's own budget, and it fits. Rejected: returning to 512.
+- vision-qat: on the QAT build at 1,120 image tokens, gs ranks first in every column (time
+  deciding every pair); page 7's NOFORN is never read, page 7's seal draws more invention, page
+  5's seal reads only from a tile; corrections at 150 dpi now help (Deskew, Unsharp) where they
+  hurt; second passes changed nothing.
 
 ## Pending edits
 
@@ -1168,3 +1180,9 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   an image's area at about 2,100 to 2,400 pixels a token) is an input to sizing set A's vision
   slot; spike-ai-pipeline-processing's docs/findings/documents.md has the measurements. gb10-2
   serves ggml-org's Q4_0 weights with mmproj-gemma-4-26B-A4B-it-Q8_0, not Google's QAT Q4_0.
+- coordinator · context/ai-hosting.md, set A on gb10-2: it serves Google's QAT Q4_0 of Gemma 4
+  26B-A4B (google/gemma-4-26B-A4B-it-qat-q4_0-gguf, its own projector) since 2026-10-30, as set A
+  names it, in place of ggml-org's post-training Q4_0, which fails the floor; the vision section
+  sets ub = 1120, since llama.cpp caps a non-causal image's tokens at n_ubatch (default 512)
+  where the model allows 1120 (+800 MiB). The Framework's set A likely has the same 512 cap.
+  gb10-2's store holds set A alone (embeddinggemma-2 and an NVFP4 Gemma were removed).
