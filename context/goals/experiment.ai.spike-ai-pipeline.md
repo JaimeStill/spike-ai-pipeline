@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -989,6 +989,11 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   passes rarely helped (scanned: 1 helped, 2 hurt, 4 same); all-five beat none on the scanned set
   (0.068 against 0.086); a 300-dpi full-width band costs as many image tokens as a page and still
   didn't read page 7's NOFORN ("SPERET NORDEN").
+- documents (O): image tokens follow a region's area, not its shape (about 2,100 to 2,400
+  pixels a token, floor 82); a small tile on a known spot reads what the page and its band miss
+  (page 5's seal on all six reads, at about a fifth of a page's tokens), but page 7's faded NOFORN
+  reads in no tile at 200 or 300 dpi ("NOORDEN"), so vision can't be relied on for it. A tile
+  holding a redaction drew a refusal. The hypothesis that wide bands are squashed doesn't hold.
 
 ## Pending edits
 
