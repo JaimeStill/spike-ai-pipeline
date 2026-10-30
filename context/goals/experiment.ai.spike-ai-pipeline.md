@@ -1128,3 +1128,9 @@ slices 7/7 committed in processing (f582769, 81f86d4, caf40e3, 5f5235b, 771a202,
   The same note goes to spike-model-engines, whose copied scripts publish the port this way.
 - roadmap note · spike-ai-pipeline root: host-update could detect a running llama container with no
   published port (or no network) and print the fix, instead of waiting out its 120 s health check.
+- coordinator · roadmap, spike-model-benchmarks (architect, documents): measure vision models on
+  spike-ai-pipeline-processing's committed scanned fixtures (document/testdata/scanned.pdf, ground
+  truth beside it): a larger image-token budget than gemma-4-26B-A4B's default, a dense vision
+  model, and a lighter quantization than Q4_0. Gemma 4 26B-A4B Q4_0 never read scanned page 7's
+  faded NOFORN, even on a 122-token 300-dpi tile, which points to the model, not resolution
+  (docs/findings/documents.md).
