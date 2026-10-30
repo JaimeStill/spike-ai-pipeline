@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -973,6 +973,13 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents: the scanned-set Document integration test records a page still incomplete after its
   retry (page 7's seal loop, 2 of 5 runs after M) instead of failing, since inference outcomes
   only prove the preparation usable; the clean set still asserts completion.
+- documents (N): text and regions reach Images through optional interfaces (TextExtractor,
+  RegionRenderer) that Preparer type-asserts, so Renderer isn't widened; SkipText implies Text.
+  Ghostscript.Text uses txtwrite with -sstdout=%stderr; RenderRegion is one gs run of PostScript
+  over pdf_main.ps's pdfshowpage_setpage/finish, pixel-identical to Render for the whole page.
+  Assess is one magick run on Corrector; grayscale is the fraction of pixels with HCL chroma over
+  0.2 below 0.001. txtwrite keeps the page's layout, so a two-column page's text layer reads
+  across the columns (CER 0.67, every word present): a finding for the inference layer.
 
 ## Pending edits
 
