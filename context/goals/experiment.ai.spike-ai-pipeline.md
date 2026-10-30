@@ -956,6 +956,16 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
 - documents (slice 6 checkpoint, L): instruction placement (in the image's message or in the
   request's Instructions) is measured through Vision on the clean, degraded, and scanned sets, 3
   runs each, without correction, and reported as a finding about the inference layer.
+- documents (slice 6 checkpoint, N): processing gains the correction catalog (each Correction's
+  name and a one-line description for prompts) and ParseCorrection; text layers per page (whether
+  one exists, and its text, from gs txtwrite); Assess(ctx, png) (skew angle, contrast, noise,
+  sharpness, grayscale, from magick); and regions (Render takes an optional crop, a band of the
+  page in page fractions, as one gs run). The bake-off stages the flow the inference layer
+  follows: text layer first, vision only for pages without one, a first pass returning
+  transcription, judgement, and corrections with Assess's figures in the prompt, a second pass
+  only for flagged pages, and a header/footer crop pass on the scanned set, compared with none
+  and all-five on calls, time, and error rate. Amends herald's flow, which ran a full first pass
+  on every page. Rejected: without regions; the catalog and combined pass alone.
 
 ## Pending edits
 
