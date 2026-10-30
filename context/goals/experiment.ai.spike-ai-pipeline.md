@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** documents
-- **Branch:** documents
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -13,7 +13,7 @@
 5. [x] client-messages
 6. [x] client-responses
 7. [x] tools
-8. [ ] documents
+8. [x] documents
 9. [ ] office-cli
 10. [ ] office
 11. [ ] audio
@@ -217,10 +217,6 @@ Checkpoints   after each slice that changes source: the slice's changed source f
               pass before slice 2's checkpoint; and after slice 3, the bake-off's ranking
               table for the architect to confirm the winner before slice 4.
 ```
-
-## Progress
-
-slices 7/7 committed in processing (f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, 5fc4815, 7ca98b6, 8e932d6, 6244f46 slice 7) · amendments cee2c65 J, c84d346 K, 4fd1bd4 M, b4d83c3 M's scanned record, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O · slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc), pass 2 (59d5de2, e3c83f9, 75a1b39) · spec 1 (no blocking gaps) · editor —
 
 ## Decisions
 
