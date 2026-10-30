@@ -1040,6 +1040,12 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 - vision-qat (R): ub rises to 1,120 now; corrections, placement, flow, and tiles run at 1,120
   only; the renderers alone carry post-training 512, QAT 512, and QAT 1,120. Rejected: all five
   at 512 first.
+- vision-qat: the vision section sets ub = 1120 and leaves b at 2048 and mtmd-batch-max-tokens at
+  512 (a first image always encodes alone in its batch); the cap warning is gone, and the vision
+  instance grew about 800 MiB (17,346 to 18,143 MiB) with set A loaded and about 16 GiB available.
+  Image tokens per letter page: 223 (72 dpi), 416 (100), 920 (150), 1104 from 200 dpi up.
+- vision-qat (Q): ranked on clean and degraded, gs is first on both builds, time deciding every
+  pair (accuracy ties); scanned results are logged as not ranked (processing 302c3c5).
 
 ## Pending edits
 
