@@ -943,6 +943,19 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   Instructions, as Vision does, so its none cell compares only with its own cells, not with the
   renderer bake-off's numbers. The reasoning-on scanned JSON holds 8 empty-at-cap transcriptions,
   where an earlier line here says 7; the findings page cites the JSON.
+- documents (architect, slice 6 checkpoint): processing's libraries provide pre-inference
+  preparation; a layer above defines and orchestrates inference and embeddings, so inference
+  accuracy and structure in this spike only prove the preparation usable. Confidence scoring, as
+  herald had, is that layer's concern.
+- documents (slice 6 checkpoint, M): processing releases a prepared-page stream, Images(ctx, pdf,
+  req) iter.Seq2[PageImage, error] (spool, count, render, correct, page order, bounded
+  concurrency, cancellation); Vision, Pages, Document, Generator, and TranscribeInstructions move
+  to test code in the integration and bake-off tiers, which still prove evidence 4, and the client
+  becomes a test-only requirement. Amends behaviors 2, 6-8, and 13-15. Rejected: releasing Vision
+  beside the stream; keeping the release as it was.
+- documents (slice 6 checkpoint, L): instruction placement (in the image's message or in the
+  request's Instructions) is measured through Vision on the clean, degraded, and scanned sets, 3
+  runs each, without correction, and reported as a finding about the inference layer.
 
 ## Pending edits
 
