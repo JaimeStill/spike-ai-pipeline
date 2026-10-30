@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** vision-qat
-- **Branch:** vision-qat
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
