@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O, 6244f46 slice 7), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc), pass 2 (59d5de2, e3c83f9, 75a1b39) · spec — · editor —
+slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M, b4d83c3, 24d5a9d N, 50a1ec6 + c5c0a4c L/N runs and findings, 3da2b9b O, 6244f46 slice 7), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc), pass 2 (59d5de2, e3c83f9, 75a1b39) · spec 1 (no blocking gaps) · editor —
 
 ## Decisions
 
@@ -994,6 +994,12 @@ slices 7/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   (page 5's seal on all six reads, at about a fifth of a page's tokens), but page 7's faded NOFORN
   reads in no tile at 200 or 300 dpi ("NOORDEN"), so vision can't be relied on for it. A tile
   holding a redaction drew a refusal. The hypothesis that wide bands are squashed doesn't hold.
+- documents: the bake-off ranks by pairwise wins, each pair decided by the first criterion
+  outside the run-to-run spread, since a tie inside the spread isn't transitive; pdftocairo
+  (mean CER 0.0364) ranks below vips (0.0414) by time. gs wins under a plain ordering too.
+- documents (spec review): the 413 and the final-step context limit belong to the test harness
+  after M, so the v0.2.0 CHANGELOG names neither; the findings page covers both. The bake-off result
+  JSON the findings cite is committed beside the page, so its numbers trace to files.
 
 ## Pending edits
 
