@@ -1032,6 +1032,14 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   default, so the vision section takes ub = 1120 after the QAT run at 512 finishes, measured
   (memory before and after, set A fully loaded) and reverted if it doesn't fit; the bake-offs
   then rerun, giving post-training at 512, QAT at 512, and QAT at 1120 side by side.
+- vision-qat (Q): gs stays the released renderer. The renderer ranking scores accuracy on the
+  pages with a text or vector layer (clean, degraded) and reports scanned pages apart, since every
+  renderer decodes the same embedded scan; on QAT at 512 image tokens the full ranking put vips
+  first and gs fourth on scanned page 7 alone (its seal block repeated three times with gs, once
+  with vips). Rejected: the ranking unchanged; re-deciding after the 1,120 run.
+- vision-qat (R): ub rises to 1,120 now; corrections, placement, flow, and tiles run at 1,120
+  only; the renderers alone carry post-training 512, QAT 512, and QAT 1,120. Rejected: all five
+  at 512 first.
 
 ## Pending edits
 
