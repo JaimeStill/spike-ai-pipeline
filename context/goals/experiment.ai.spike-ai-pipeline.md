@@ -1134,3 +1134,8 @@ slices 7/7 committed in processing (f582769, 81f86d4, caf40e3, 5f5235b, 771a202,
   model, and a lighter quantization than Q4_0. Gemma 4 26B-A4B Q4_0 never read scanned page 7's
   faded NOFORN, even on a 122-token 300-dpi tile, which points to the model, not resolution
   (docs/findings/documents.md).
+- coordinator · roadmap, spike-model-layout (architect, documents): gemma-4-26B-A4B's image-token
+  budget on gb10-2 (the model's default --image-max-tokens, ~477 tokens a page; image tokens follow
+  an image's area at about 2,100 to 2,400 pixels a token) is an input to sizing set A's vision
+  slot; spike-ai-pipeline-processing's docs/findings/documents.md has the measurements. gb10-2
+  serves ggml-org's Q4_0 weights with mmproj-gemma-4-26B-A4B-it-Q8_0, not Google's QAT Q4_0.
