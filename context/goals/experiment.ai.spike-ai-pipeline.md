@@ -220,7 +220,7 @@ Checkpoints   after each slice that changes source: the slice's changed source f
 
 ## Progress
 
-slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
+slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 2083155, 1323190, cee2c65 J, c84d346 K, 5fc4815, 7ca98b6, 8e932d6, 4fd1bd4 M), slice 3 checkpoint fixes 39ffec5 (D), c481a23 (E), a5705a1 (H, reasoning off; rerun: gs first, 0 incomplete) · standards pass 1 (45ad2f1, c6197cc) · spec — · editor —
 
 ## Decisions
 
@@ -966,6 +966,13 @@ slices 6/7 committed (processing f582769, 81f86d4, caf40e3, 5f5235b, 771a202, 20
   only for flagged pages, and a header/footer crop pass on the scanned set, compared with none
   and all-five on calls, time, and error rate. Amends herald's flow, which ran a full first pass
   on every page. Rejected: without regions; the catalog and combined pass alone.
+- documents (M): the released API is Preparer (NewPreparer(Renderer, *Corrector)) and
+  Images(ctx, pdf, ImagesRequest) iter.Seq2[PageImage, error]; the vision harness (vision,
+  pages, document, generator, transcribeInstructions) lives unexported in untagged
+  document/vision_test.go so its unit tests stay in the check; the client is test-only.
+- documents: the scanned-set Document integration test records a page still incomplete after its
+  retry (page 7's seal loop, 2 of 5 runs after M) instead of failing, since inference outcomes
+  only prove the preparation usable; the clean set still asserts completion.
 
 ## Pending edits
 
