@@ -1027,6 +1027,11 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   nvidia/Gemma-4-26B-A4B-NVFP4, and ggml-org/gemma-4-26B-A4B-it-GGUF are removed with their blobs
   (architect). llama.cpp caps the vision model's image tokens at 512 by n_ubatch 512 where the
   model allows 1120: a preset setting, raised only by escalation.
+- vision-qat (architect): raise the vision model's image-token budget to the model's own cap
+  (1120, read from the model) if the memory pool allows: llama.cpp caps it at n_ubatch, 512 by
+  default, so the vision section takes ub = 1120 after the QAT run at 512 finishes, measured
+  (memory before and after, set A fully loaded) and reverted if it doesn't fit; the bake-offs
+  then rerun, giving post-training at 512, QAT at 512, and QAT at 1120 side by side.
 
 ## Pending edits
 
