@@ -218,7 +218,7 @@ Release       spike-ai-pipeline-office v0.1.0
 
 ## Progress
 
-slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6 accepted; slice 5 escalation answered; 5b, 5c added) · standards — · spec — · editor —
+slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8, 689f271, 5ba731c, 662ccd1, editor 1f209b5; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6, 7 accepted; slice 5 escalation answered; 5b, 5c added) · standards 29c7c2d · spec 2 rounds, gaps closed (662ccd1) · editor done · validated
 
 ## Decisions
 
@@ -1091,8 +1091,9 @@ slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
 - office-cli: one model tree for all three formats; sheets and slides are blocks. Rejected: a
   top-level type per format.
 - office-cli (architect): the corpus is only the committed pool, the generated fixtures re-saved by
-  LibreOffice plus about a dozen hand-scored real-world files from permissive corpora, under a
-  sources manifest. Rejected: a larger must-not-crash set; real only; generated only.
+  LibreOffice plus about a dozen hand-scored real-world files from permissive corpora (30 by the
+  lines below), under a sources manifest. Rejected: a larger must-not-crash set; real only;
+  generated only.
 - office-cli (architect): no robustness sweep; the baseline runs on the pool alone. Rejected: a
   sweep over POI's and LibreOffice's ~2,400 files.
 - office-cli: CI's check runs on ubuntu-24.04 and ubuntu-24.04-arm. Rejected: x64 only.
@@ -1109,8 +1110,10 @@ slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
   per distinct picture so the higher layer runs vision once per picture and can cache by hash;
   each media block keeps its part path, content type, alt text, and location; linked pictures
   get a block with their target and no file. Rejected: ordinal names; the package's part paths.
-- office-cli: the release job runs each architecture's binary --version before attaching it; slice 5's checkpoint has the architect confirm the real-world manifest; the session applies the ruleset on main through gh api; macro-enabled and template variants are out of scope.
-
+- office-cli: the release job runs each architecture's binary's --version before attaching it;
+  slice 5's checkpoint has the architect confirm the real-world manifest; the session applies
+  main's ruleset through gh api; macro-enabled and template variants are out of scope
+  (superseded by the slice 5 escalation: read as their base format).
 - office-cli (architect, slice 1 checkpoint): a deleted paragraph mark right before a table keeps
   its carried text in place as its own paragraph before the table. Rejected: joining it to the
   paragraph after the table, out of document order.
@@ -1137,8 +1140,9 @@ slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
 - office-cli (architect, slice 5 escalation): fix the text-losing docx bugs (row/cell-level
   content controls, smart tags, ruby, a comment range ending between paragraphs), each with a
   real regression file. Rejected: known limits.
-- office-cli (architect, slice 5 escalation): lists carry start value and continuation, and cells
-  their column offset (gridBefore), additive to schema "1". Rejected: known limits.
+- office-cli (architect, slice 5 escalation): lists carry their start value and continuation
+  (`start`), and cells their column offset from gridBefore (`skipBefore`), additive to schema
+  "1". Rejected: known limits.
 - office-cli (architect, slice 5 escalation): chartEx charts read their cached data into the chart
   block, falling back to the mc:Fallback picture as media when none is cached; Strict charts are
   read through a namespace map in ChartReader. Rejected: picture-only; known limits.
@@ -1155,23 +1159,43 @@ slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
   before CI.
 - office-cli (slice 5b): exit 4 "failed" for office's own unexpected errors; OLE objects'
   preview pictures come out as media; placeholder text of content controls and ruby readings are
-  dropped; list levels clamp to Word's nine; lists carry `start`, cells `skipBefore`.
+  dropped; list levels clamp to Word's nine.
 - office-cli (architect, slice 5b checkpoint): the truth format compares a table cell's full blocks
   (lists, headings), extended in slice 5c.
-- office-cli (architect, slice 5c checkpoint): Of16-02.pptx stays in the pool (28 real files), though
-  the session added it to 5c's brief beyond the 27 approved. Both chartEx regression files carry
-  tool-written chartEx parts; a search for an Office-native chartEx file under a permissive license
-  follows.
-- office-cli: correction to the 5c checkpoint: Of16-02.pptx is Office-native chartEx (typed chartEx,
-  cx:chart under Requires="cx1", style/colors parts, embedded workbook, 1980 ZIP dates, no BOM);
-  only POI's chartex.docx is tool-written. Office writes chartEx parts with no CRLF after the
-  declaration and ` />`, and style/colors parts with no declaration; the tool fingerprint is a
-  UTF-8 BOM with lowercase `utf-8`, a part typed as an ordinary chart, or c:chart in the drawing.
+- office-cli (architect, slice 5c checkpoint): Of16-02.pptx stays in the pool (28 real files),
+  though the session added it to 5c's brief beyond the 27 approved; a search for an Office-native
+  chartEx file under a permissive license follows. (The checkpoint took both chartEx regression
+  files as tool-written; the next line corrects it.)
+- office-cli: correction to the 5c checkpoint: Of16-02.pptx is Office-native chartEx (typed
+  chartEx, cx:chart under Requires="cx1", style/colors parts, embedded workbook, 1980 ZIP dates,
+  no BOM); only POI's chartex.docx is tool-written. Office writes chartEx parts with no CRLF
+  after the declaration and ` />`, and style/colors parts with no declaration; the tool
+  fingerprint is a UTF-8 BOM with lowercase `utf-8`, a part typed as an ordinary chart, or
+  c:chart in the drawing.
 - office-cli (architect): add LilLeapo/rsWordParser's chartex-waterfall-2.docx and
   chartex-funnel-2.docx (MIT/Apache-2.0, Word-saved, Requires="cx1"/"cx2") as Office-native docx
   chartEx; the manifest records their self-reported provenance and core.xml's personal name. The
   pool is 30 real files. xlsx chartEx stays with the test-built package. Rejected: an
   architect-saved xlsx.
+- office-cli (architect, slice 7 checkpoint): the findings page adds a real-world-only fidelity
+  table beside the pooled one, since the generated set and office's Markdown were built around
+  the same truth. Chart values count wherever they appear between the chart's title and the next
+  block, not only in a table. markitdown runs as shipped, magika (a local ONNX classifier inside
+  its own process) noted; office never loads either baseline tool.
+- office-cli (slice 7): baseline tool pins live in mise.baseline.toml (MISE_ENV=baseline), never in
+  CI or the binary; peak memory via a C fork/wait4 wrapper; office matched 1,768/1,768 elements
+  over the pool and 1,144/1,144 over the 30 real-world files.
+- office-cli (slice 8, spec review): schema "1" leaves out an optional property with no value,
+  never writing null, so absent means null or none; only an array keeps a null in place (a chart
+  point the cache lacks). The serializer already did this; README and CHANGELOG now say so.
+- office-cli (spec review): the release is created as a draft, its assets uploaded, then
+  published, so a failed upload leaves a draft. Rejected: publishing before the upload.
+- office-cli (spec review): the linux-arm64 binary's size comes from the pull request's CI run
+  (the check job's summary), since a NativeAOT publish for arm64 can't link on the x64 laptop.
+- office-cli (slice 8): office's README no longer says processing runs office or LibreOffice
+  converts legacy files before it; office refuses them, and conversion is the caller's (the
+  `office` task's).
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -1299,13 +1323,30 @@ slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
   sets ub = 1120, since llama.cpp caps a non-causal image's tokens at n_ubatch (default 512)
   where the model allows 1120 (+800 MiB). The Framework's set A likely has the same 512 cap.
   gb10-2's store holds set A alone (embeddinggemma-2 and an NVFP4 Gemma were removed).
-- coordinator · roadmap, the `office` task's summary: add the integration tier that sends office's
-  extracted media through vision on gb10-2 with processing's test-only vision harness; office
-  itself runs no inference (office-cli, architect).
+- coordinator · roadmap, the `office` task's summary, rewritten to name office's released contract
+  and the vision integration tier (office-cli, architect: office itself runs no inference):
+
+  ```
+  The adapter over the Open XML CLI at office v0.1.0, by its release assets (a tar.gz per
+  linux-x64 and linux-arm64, and SHA256SUMS) and its CLI contract (README.md): the JSON model,
+  schema "1", on stdout; embedded media through --media, named by SHA-256; exit codes 0
+  converted, 1 media not written, 2 usage, 3 refused, 4 failed; warnings on stderr. Legacy .doc,
+  .xls, and .ppt converted to OOXML by LibreOffice headless on the container runner, since office
+  refuses them. An integration tier sends office's extracted media through vision on gb10-2 with
+  processing's test-only vision harness. Tags processing v0.3.0. Evidence 12.
+  ```
+- coordinator · roadmap, the `office-cli` task (optional): add `proof = "The check passes on
+  ubuntu-24.04 and ubuntu-24.04-arm, office v0.1.0 is released with both archives and SHA256SUMS,
+  and docs/findings/office-cli.md records the baseline against markitdown and xberg."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-office` bullet (optional), after
+  its first sentence: "Its JSON model is a versioned output contract (schema `1` at v0.1.0). Its
+  Markdown is the document's text, complete without inference, and its media blocks are the only
+  content a higher layer may send to vision; it runs no inference itself."
 - coordinator · roadmap (architect-authorized for office-cli's session end, not sync: a
   `plan-experiment.ai.spike-ai-pipeline` pull request after office-cli ships): insert task `pst`
-  after `office` and before `audio`, then add it to Tasks as 11 and renumber audio and streams;
-  audio's tag moves to processing v0.5.0 and streams' to v0.6.0. Entry:
+  after `office` and before `audio`, then add it to Tasks as 11 and renumber audio and streams
+  to 12 and 13; audio's summary moves its tag to processing v0.5.0 and streams' to v0.6.0. Entry
+  (`[goals.experiment.ai.spike-ai-pipeline.tasks.pst]`):
   name "Outlook mail stores", repos ["spike-ai-pipeline-processing"], summary: Outlook .pst (and
   .ost) stores, proprietary binary, not OOXML ([MS-PST]), read through a mature system tool on the
   container runner (libpff or readpst, chosen in its plan) into folders, messages (headers, body,
