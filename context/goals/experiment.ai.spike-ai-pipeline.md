@@ -16,8 +16,9 @@
 8. [x] documents
 9. [x] office-cli
 10. [ ] office
-11. [ ] audio
-12. [ ] streams
+11. [ ] pst
+12. [ ] audio
+13. [ ] streams
 
 ## Task brief · experiment.ai.spike-ai-pipeline · office-cli
 
@@ -1358,13 +1359,5 @@ Release       spike-ai-pipeline-office v0.1.0
   its first sentence: "Its JSON model is a versioned output contract (schema `1` at v0.1.0). Its
   Markdown is the document's text, complete without inference, and its media blocks are the only
   content a higher layer may send to vision; it runs no inference itself."
-- coordinator · roadmap (architect-authorized for office-cli's session end, not sync: a
-  `plan-experiment.ai.spike-ai-pipeline` pull request after office-cli ships): insert task `pst`
-  after `office` and before `audio`, then add it to Tasks as 11 and renumber audio and streams
-  to 12 and 13; audio's summary moves its tag to processing v0.5.0 and streams' to v0.6.0. Entry
-  (`[goals.experiment.ai.spike-ai-pipeline.tasks.pst]`):
-  name "Outlook mail stores", repos ["spike-ai-pipeline-processing"], summary: Outlook .pst (and
-  .ost) stores, proprietary binary, not OOXML ([MS-PST]), read through a mature system tool on the
-  container runner (libpff or readpst, chosen in its plan) into folders, messages (headers, body,
-  threads), and attachments; each attachment routed back through the document stages. Tags
-  processing v0.4.0. Evidence: a new item for mail stores, written when `pst` is planned.
+- (applied) coordinator · roadmap: task `pst` inserted after `office`, audio and streams moved to
+  processing v0.5.0 and v0.6.0 (standards-lab pull request 111); remove at the next plan or start.
