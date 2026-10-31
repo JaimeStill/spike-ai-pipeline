@@ -218,7 +218,7 @@ Release       spike-ai-pipeline-office v0.1.0
 
 ## Progress
 
-slices 0/8 committed · standards — · spec — · editor —
+slices 7/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6 accepted; slice 5 escalation answered; 5b, 5c added) · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1111,6 +1111,67 @@ slices 0/8 committed · standards — · spec — · editor —
   get a block with their target and no file. Rejected: ordinal names; the package's part paths.
 - office-cli: the release job runs each architecture's binary --version before attaching it; slice 5's checkpoint has the architect confirm the real-world manifest; the session applies the ruleset on main through gh api; macro-enabled and template variants are out of scope.
 
+- office-cli (architect, slice 1 checkpoint): a deleted paragraph mark right before a table keeps
+  its carried text in place as its own paragraph before the table. Rejected: joining it to the
+  paragraph after the table, out of document order.
+- office-cli (architect, slice 1 checkpoint): the Markdown renderer gets independent tests over
+  hand-built models with hand-written expectations, beside the snapshot goldens.
+- office-cli (slice 1): refusals exit 3; format sniffed from content; lists grouped by abstract
+  numbering definition (LibreOffice re-saves split one list across instances); empty paragraphs
+  and headings dropped, empty list items kept; merged cells as colSpan/rowSpan on the anchor.
+- office-cli (architect, slice 3 checkpoint): index xlsx merges by cell in slice 4, since the
+  baseline times each file. Rejected: scanning every merge per cell.
+- office-cli (slice 3): xlsx tables are sparse (rows carry `row`, cells their `ref`); hidden and very
+  hidden sheets are both `hidden: true`; the 1900 leap day, negative serials, and years past 9999
+  stay numbers.
+- office-cli (architect, slice 4 checkpoint): add an xlsx merge case that exercises the merge
+  index's expiry in slice 5.
+- office-cli (slice 4): each slide renders as `# Slide N` with its own headings one level down and
+  notes under `**Notes**`; shapes read in shape-tree order; media `slide` is the 0-based index.
+- office-cli (slice 5): the implementer ran the binary over all 649 downloaded corpus files while
+  selecting, beyond the architect's pool rule; nothing from that run is committed. It found three
+  bugs, fixed in ef4d7fa (invalid attribute values and missing parts refused as malformed, not
+  crashing; Excel Online's spaced shared-string index read).
+- office-cli (architect, slice 5 escalation): documents nested past 8 tables are refused (exit 3)
+  with the depth and location named. Rejected: id-referenced side tables (additive later).
+- office-cli (architect, slice 5 escalation): fix the text-losing docx bugs (row/cell-level
+  content controls, smart tags, ruby, a comment range ending between paragraphs), each with a
+  real regression file. Rejected: known limits.
+- office-cli (architect, slice 5 escalation): lists carry start value and continuation, and cells
+  their column offset (gridBefore), additive to schema "1". Rejected: known limits.
+- office-cli (architect, slice 5 escalation): chartEx charts read their cached data into the chart
+  block, falling back to the mc:Fallback picture as media when none is cached; Strict charts are
+  read through a namespace map in ChartReader. Rejected: picture-only; known limits.
+- office-cli (architect, slice 5 escalation): the real-world pool grows to 27 files: ComplexNumberedLists,
+  tika-3816, WordWithAttachments, XSSFSheet.copyRows, SimpleStrict, WithDrawing, 56812, endnotes,
+  form_footnotes, 61470, chartex, word_tables (re-zipped), and one O14ISOStrict chart file (SDK
+  re-save), with the manifest noting each exception.
+- office-cli (architect, slice 5 escalation): macro-enabled files and templates are read as their
+  base format, macros ignored and never run, documented in README and CHANGELOG. Rejected: refusing.
+- office-cli (architect, slice 5 escalation): a single invalid reference is skipped with a warning
+  on stderr and the rest converts (exit 0); packages broken at ZIP or part level stay refused.
+- office-cli: the escalation's work runs as slices 5b (docx fixes, nesting refusal, lenient
+  references, macro docs, their files) and 5c (Strict and chartEx charts, the remaining files)
+  before CI.
+- office-cli (slice 5b): exit 4 "failed" for office's own unexpected errors; OLE objects'
+  preview pictures come out as media; placeholder text of content controls and ruby readings are
+  dropped; list levels clamp to Word's nine; lists carry `start`, cells `skipBefore`.
+- office-cli (architect, slice 5b checkpoint): the truth format compares a table cell's full blocks
+  (lists, headings), extended in slice 5c.
+- office-cli (architect, slice 5c checkpoint): Of16-02.pptx stays in the pool (28 real files), though
+  the session added it to 5c's brief beyond the 27 approved. Both chartEx regression files carry
+  tool-written chartEx parts; a search for an Office-native chartEx file under a permissive license
+  follows.
+- office-cli: correction to the 5c checkpoint: Of16-02.pptx is Office-native chartEx (typed chartEx,
+  cx:chart under Requires="cx1", style/colors parts, embedded workbook, 1980 ZIP dates, no BOM);
+  only POI's chartex.docx is tool-written. Office writes chartEx parts with no CRLF after the
+  declaration and ` />`, and style/colors parts with no declaration; the tool fingerprint is a
+  UTF-8 BOM with lowercase `utf-8`, a part typed as an ordinary chart, or c:chart in the drawing.
+- office-cli (architect): add LilLeapo/rsWordParser's chartex-waterfall-2.docx and
+  chartex-funnel-2.docx (MIT/Apache-2.0, Word-saved, Requires="cx1"/"cx2") as Office-native docx
+  chartEx; the manifest records their self-reported provenance and core.xml's personal name. The
+  pool is 30 real files. xlsx chartEx stays with the test-built package. Rejected: an
+  architect-saved xlsx.
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
