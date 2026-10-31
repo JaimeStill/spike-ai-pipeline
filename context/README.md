@@ -44,6 +44,9 @@ stage by stage in real time?
     fixed documents, spreadsheets, and decks, against markitdown and xberg; chart data and
     embedded media in place of page images; and .doc, .xls, and .ppt converted through
     LibreOffice in a container, with what the round trip loses and the container's footprint.
+    Office's
+    [office-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-office/blob/main/docs/findings/office-cli.md)
+    records the baseline.
 13. Live media: a live or real-time-paced audio and video source processed as it arrives, with
     per-window latency, as an event stream with cancellation.
 14. One tool run through each runner, exec and container, under the same tool contract.

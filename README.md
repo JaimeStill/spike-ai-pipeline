@@ -22,7 +22,10 @@ each released by tag:
   such as a PDF's pages as corrected images, regions, and text layers; a layer above runs the
   inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
-  CLI for office documents, a system tool processing runs.
+  CLI, a NativeAOT binary that turns docx, xlsx, and pptx files into a JSON document model and
+  Markdown, with chart data and embedded media in place of page images. It is built for
+  processing to run as a system tool; processing's adapter is planned. Its README gives the CLI
+  contract.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web

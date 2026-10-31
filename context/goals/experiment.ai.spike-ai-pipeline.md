@@ -14,208 +14,206 @@
 6. [x] client-responses
 7. [x] tools
 8. [x] documents
-9. [ ] office-cli
+9. [x] office-cli
 10. [ ] office
 11. [ ] audio
 12. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · documents
+## Task brief · experiment.ai.spike-ai-pipeline · office-cli
 
 ```
-Problem       Processing has its tool contract (v0.1.0) but no document stage. Evidence 4
-              asks that a PDF's pages go through vision as a whole blob and as a page
-              stream, with the renderer bake-off's ranking, time and memory per page,
-              license, and footprint; evidence 11 asks for vision extraction accuracy with
-              and without each ImageMagick correction. Five renderers are installed on the
-              laptop over two rasterizers: poppler (pdftoppm, pdftocairo, and vips through
-              its poppler module) and Ghostscript (gs, and magick over gs). Docker Hub has
-              no maintained, versioned image for poppler, gs, or vips, so every tool runs
-              on the host. This task adds a per-run usage report to the tool contract; a
-              document package with the page-renderer interface, the scan corrections, and
-              pages through vision over spike-ai-pipeline-client v0.4.0; generated fixtures
-              with exact ground truth; and a bake-off tier that ranks the five renderers.
-              Only the winner is released. Gemma 4 26B-A4B on gb10-2 takes a letter page
-              at ~477 image tokens from 110 dpi up, and the server's request-body limit,
-              100 MiB, sits far above a page image (0.3 to 14 MB). The task tags processing
-              v0.2.0.
+Problem       The office layer is a scaffold that answers only --version, so the spike has no
+              way to read docx, xlsx, or pptx. Evidence 12 asks for the Open XML CLI's
+              structure fidelity, memory, cold start, and binary size against markitdown and
+              xberg on fixed files, with chart data and embedded media in place of page
+              images. The later `office` task's processing adapter needs a released binary
+              with a versioned output contract. Processing has no document model to match:
+              the documents task released page images only. A NativeAOT publish on Open XML
+              SDK 3.5.1 builds with no warnings at 28.5 MB, and it read all three formats in
+              about 15 ms and 42 MB peak. GitHub's hosted arm64 runners are free on this
+              public repository. This task adds the extraction, its Markdown rendering,
+              committed fixtures with exact ground truth, CI on both architectures, a release
+              that attaches both binaries, and the baseline. It tags office v0.1.0.
 
 Behaviors
-  1.  An Invocation can ask for the run's resource usage: an optional Usage pointer
-      that Run fills once the program has been reaped, whether it exited zero, exited
-      nonzero, or was cancelled. Through the exec runner it holds peak resident memory
-      in bytes and user and system CPU time, taken from the process's own rusage, which
-      on Linux includes children it reaped (magick's gs among them). The container
-      runner leaves it zero, and its documentation says the docker CLI's usage isn't
-      the container's. A nil pointer asks for nothing. Run's signature is unchanged,
-      and the addition is additive.
-  2.  One package, document, builds on Linux only, on the standard library, this
-      module, and spike-ai-pipeline-client. It holds the page-renderer interface, the
-      released renderer, the corrections stage, and the vision entry points.
-      Processing requires the client at v0.4.0 by tag, with no replace directive.
-  3.  The page-renderer interface works per page. Count takes the caller's context and
-      a PDF path and returns the page count. Render takes the context, the PDF path, a
-      1-based page number, and a DPI, and writes that page as PNG to a writer, one
-      process per page. A renderer counts pages with a tool from its own package, so
-      the poppler renderers use pdfinfo. A page out of range, or a DPI of zero or less,
-      is refused before any tool runs.
-  4.  The released renderer is the bake-off's winner, built over Tools that the caller
-      constructs through either runner, each with a minimum version. Its tests, unit
-      and integration, are the bake-off adapter's, kept in the released package.
-  5.  The corrections stage is per request: a set of typed options, Deskew, Despeckle,
-      ContrastStretch, Unsharp, and Grayscale. Each maps to one ImageMagick operator
-      (-deskew 40%, -despeckle, -contrast-stretch 0.5%x0.5%, -unsharp 0x1, -colorspace
-      Gray), applied in that fixed order. One magick run per page reads PNG on stdin
-      and writes PNG on stdout. An empty set runs nothing. The stage is built from a
-      magick Tool with minimum version 7.1, and it works on any page image, not only a
-      rendered one.
-  6.  Vision is one value, built at the composition root from three things: a
-      one-method Generate interface (Generate(ctx, *protocol.Request)
-      (*protocol.Response, error)) that *client.Client satisfies, a Renderer, and an
-      optional corrections stage. A request carries:
-      - the working directory, which the caller owns
-      - the per-page request template (model, instructions, and other request fields)
-      - the DPI, zero meaning 150
-      - the corrections
-      - the concurrency, zero meaning 1
-      A request that names corrections when the value has no corrections stage is
-      refused. The package exports the bake-off's transcription instructions (every
-      word on the page in reading order, as plain text, nothing else) as a constant;
-      the instructions themselves stay a per-request value. The PDF arrives as an
-      io.Reader, is spooled into the request's directory, and is removed when the call
-      ends.
-  7.  Pages(ctx, pdf, req) returns iter.Seq2[Page, error] and is lazy: nothing runs
-      until it is ranged. It counts the pages, then renders, corrects, and sends each
-      page as one user message: the template's input with an InputImage PNG data URL,
-      detail unset. At most the request's concurrency of pages are in flight, rendering
-      included. Pages are yielded in page order, with finished later pages held until
-      the earlier ones arrive. A Page carries its number, the page count, and its
-      response. A page that fails, whether in rendering, correcting, or sending,
-      yields its number with the error, and the stream carries on. A failed spool or
-      count yields one error and ends. Breaking out cancels the work in flight and
-      returns once it has ended. An ended ctx stops the stream with ctx's error.
-  8.  Document(ctx, pdf, req) runs the page stream's calls and then one final Generate.
-      The request's final-step template (a protocol.Request: model, instructions, text
-      format, output limit) is required, and a missing one is refused before anything
-      runs. Document appends one user message to it, with one text part per page,
-      each beginning "Page N of M:" and followed by that page's output text. It returns
-      a result holding every page's number, response, and error, and the final
-      response. There is no page cap. A failed page fails Document before the final
-      step, with an error naming each failed page and the result's page entries
-      filled in. A final response whose status isn't completed is an error, with the
-      final response kept in the result.
-  9.  The package sets no size limit. A page image over the server's request-body
-      limit is sent anyway, and the server's 413 comes back as that page's
-      *client.APIError.
-  10. The fixtures are generated from committed typst sources, letter size, and
-      byte-reproducible:
-      - about six clean pages: prose, two columns, a table, 8 pt print, a form, and a
-        figure with a caption
-      - about four degraded copies (skew, fade, speckle, blur), made from clean
-        renders by ImageMagick and wrapped back into PDF
-      Each page's ground truth is its plain text in reading order, taken from the
-      source. The test data's README gives the regenerating commands and each file's
-      SHA-256. typst never runs in the check.
-  11. The bake-off tier: mise run bakeoff runs the -tags bakeoff tests against the
-      router SPIKE_ROUTER_URL names, each run capped at 10 minutes.
-      - Adapters: five renderers, as test code behind the page-renderer interface,
-        each on the host's exec runner at 150 dpi: pdftoppm, pdftocairo, gs, vips, and
-        magick over gs.
-      - Runs: every fixture page from each renderer goes to Gemma 4 26B-A4B with the
-        exported transcription instructions, greedy (temperature 0 through Native), 4
-        requests in flight, 3 runs per cell.
-      - Scores: character error rate (edit distance over the ground truth's length,
-        whitespace collapsed) is the primary score, with word error rate beside it and
-        the run-to-run spread of each. The edit distance is written in test code.
-      - Measures: time and peak memory per page (through the tool's usage report), page
-        PNG bytes, install footprint, license, the tools each renderer needs, and
-        whether it streams one page per process from stdin to stdout.
-      - Ranking: by error rate, then time, memory, streaming, license, image size, and
-        number of tools. A difference inside the run-to-run spread is a tie, and the
-        next criterion decides.
-      - Output: the run logs the ranking table as recorded lines.
-  12. Evidence 11, also in the bake-off tier: on the degraded pages, through Pages with
-      the released renderer, seven cells: each correction alone, all five together,
-      and none. Each cell gets 3 greedy runs, scored by character and word error rate
-      with their spread.
-  13. The integration tier (-tags integration) checks the released renderer's and
-      magick's versions on the laptop. It runs Pages and Document on the clean
-      fixtures against gb10-2 and records each one's time and error rate. Document's
-      final step uses a summary template on gpt-oss-120b.
-  14. A findings page in processing holds:
-      - the ranking table and evidence 11's matrix
-      - time and memory per page, license, and footprint
-      - the measured image tokens per page
-      - the run's llama.cpp build, gb10-2's stack, and the network path
-      The root's evidence list links it.
-  15. Processing's README, its capability map, the package documentation (doc.go
-      inventories, tool's Usage included), and the CHANGELOG describe the usage report,
-      the page-renderer interface, the released renderer, the corrections, Pages,
-      Document, the 413, and the known limit. The CHANGELOG has a v0.2.0 entry.
+  1.  The CLI is one NativeAOT binary named spike-ai-pipeline-office. It builds on the
+      .NET 10 base library, the Open XML SDK, and System.CommandLine, and on nothing else;
+      Markdig is a test-only dependency. The publish for linux-x64 and for linux-arm64
+      gives no AOT or trim warning, and any suppression carries a comment saying why it is
+      safe. --version prints the version from the assembly.
+  2.  The CLI takes one input path, --format json|markdown (json when omitted), and
+      --media <dir>. It writes the chosen rendering to stdout and nothing else there.
+      Usage errors print usage to stderr and exit 2. Each refusal happens before any
+      output is written, with a message on stderr and a nonzero exit: a missing file, a
+      format other than docx, xlsx, or pptx, an encrypted package, or a malformed package.
+      With --media, every embedded picture is written to that directory, as stored,
+      once per distinct content, named by the SHA-256 of its bytes plus its stored
+      extension. Every media block that uses it points at that one file. Without
+      --media, nothing is written to disk and the names still appear in the model. A
+      linked (external) picture gets a media block with its target and no file; office
+      never fetches it.
+  3.  The JSON model is one tree for all three formats, and the spike owns its schema. A
+      document records its source format and holds ordered blocks: headings with their
+      level, paragraphs, nested ordered and unordered lists, and tables of rows and
+      cells. A chart block holds its type, title, and series (name, categories, values).
+      A media block holds its name relative to the media directory, its content type,
+      its alternative text, its source part path, and where it sits (section, sheet, or
+      slide). A sheet block and a slide block hold their own blocks.
+      The split follows processing's text-first flow: everything but media blocks is the
+      document's text, complete without any inference, and media blocks are the only
+      content a higher layer may send to vision. A chart with its data in the package
+      comes out as data, never as an image. The
+      model is serialized by the base library's source-generated JSON. The schema is
+      office's output contract: it is versioned with office's tags, and every change to
+      it is a CHANGELOG entry.
+  4.  docx body: headings, paragraphs, lists, tables, charts, and media come out in
+      document order. Tracked changes are read in their accepted state: insertions and a
+      move's destination are kept; deletions and a move's source are dropped; a paragraph
+      whose paragraph mark was deleted joins the next one. No deleted text appears in any
+      output, and moved text appears once.
+  5.  docx headers and footers are kept for each section, with their kind (default,
+      first, or even). A first-page variant counts only when the section asks for a
+      distinct first page, and an even-page variant only when the document turns on
+      separate even and odd headers. A section without its own header or footer inherits
+      the previous section's. Their content is the same blocks as the body.
+  6.  docx footnotes and endnotes: each reference marks its place in the text, and each
+      note holds its blocks. Word's separator notes are skipped.
+  7.  docx comments: each comment holds its text, author, the anchored range (the
+      commented text, located in the body), its replies in order, and its resolved
+      state.
+  8.  xlsx: sheets come out in workbook order, each as a table of cells. A cell holds a
+      typed value (number, text, boolean, or error); a number with a date format becomes
+      ISO 8601, and no other number format is applied. A formula cell holds its cached
+      value and its formula text; with no cached value, the value is null and the formula
+      is still given. A cell that is part of a shared formula, other than the anchor cell
+      holding the text, carries the anchor cell's reference in place of formula text.
+      Nothing is evaluated. Charts and media on a sheet go with that sheet.
+  9.  pptx: slides come out in presentation order, each with its blocks (text, lists,
+      tables, charts, media) and its notes.
+  10. The Markdown rendering is the same model, in this form:
+      - headings as #, lists as nested lists, tables as GFM tables
+      - a chart as its title followed by a table of its series
+      - media as image links relative to the media directory
+      - each sheet and each slide under its own heading, a slide's notes after its
+        content
+      - each distinct header first and each distinct footer last, once each
+      - footnotes and endnotes as GFM footnotes ([^n])
+      - comments as footnote-style references ([^cN] at the end of the commented text),
+        their definitions after the notes, giving the author, the resolved state, and
+        the replies
+  11. The fixtures are committed and never generated in the check, in two sets:
+      - Generated: a committed Python generator (python-docx, openpyxl, python-pptx, all
+        pinned) writes each file from committed sources, and each file is then re-saved
+        by LibreOffice headless. The generator writes each file's element-level ground
+        truth, covering every behavior above.
+      - Real-world: about a dozen files from the permissive corpora (the Open XML SDK's
+        test assets, Apache POI's test data, Docling's tests, and ClosedXML's tests),
+        with hand-written element-level ground truth. They include a Word-authored docx
+        with a chart, since python-docx writes none.
+      A sources manifest lists, for each real-world file, its repository, commit, path,
+      license, and SHA-256, and the license notices travel with the files; no GPL file
+      is committed. The fixture README gives the regenerating commands, the LibreOffice
+      version, and each file's SHA-256. The pool is these two sets, and nothing beyond
+      them runs, locally or in CI.
+  12. The baseline tier: `mise run baseline` runs on the laptop, never in CI, over the
+      pool only. It runs office, markitdown, and xberg, the last two pinned in mise and
+      covered by currency.
+      - Structure fidelity: each tool's Markdown is parsed by Markdig and compared with
+        the ground truth element by element: heading levels, list items, table cells,
+        sheet names, slide order and notes, chart values, media references, headers and
+        footers, notes, and comments. The results are one row per element kind and tool.
+      - Memory and time: peak resident memory per file is taken from the finished child
+        process's own rusage, or from a cgroup's peak memory. Time per file and cold
+        start are measured over repeated runs, giving the first run, the median, and the
+        spread.
+      - Footprint and license: office's binary size per architecture, markitdown's
+        installed footprint, xberg's binary size, and each tool's license.
+      - Output: each run's result JSON is committed beside the findings page, one
+        directory per run.
+  13. A findings page in office holds the fidelity table, memory, time, cold start,
+      footprint, and licenses. It explains the rows a baseline tool can't score, such as
+      comments, which neither renders in Markdown, and headers and footers, which
+      markitdown doesn't read. The root's evidence 12 links the page; that one line
+      lands with the goal record's commit in the root.
+  14. CI:
+      - The check runs on every pull request into main and every push to it, on the
+        ubuntu-24.04 and ubuntu-24.04-arm runners, through mise, the same check a
+        developer runs.
+      - office's marathon config makes the merge wait on the pull request's checks.
+      - A ruleset on main requires a pull request and forbids deleting or force-pushing
+        the branch.
+      - The currency script also reports GitHub Action pins that trail their latest
+        release.
+  15. Release: a pushed tag vX.Y.Z creates the GitHub release from the tag's CHANGELOG
+      section. Each runner builds its architecture's binary natively and attaches it as a
+      tar.gz holding the binary and LICENSE, named by binary, tag, and runtime identifier.
+      A SHA256SUMS file covers both archives, and each binary runs its --version before it
+      is attached. Runs for one tag are serialized. The tag is pushed only after main's
+      CI passes.
+  16. Office's README, its capability map, and the CHANGELOG (Keep a Changelog, with a
+      v0.1.0 entry) describe the CLI surface, the model, the Markdown form, the release
+      assets, and these known limits:
+      - formulas are not evaluated; number formats other than dates are not applied
+      - tracked changes are read accepted only
+      - no page images
+      - legacy .doc, .xls, and .ppt are not read
+      - content outside the behaviors above (for example equations, text boxes, SmartArt,
+        and embedded OLE objects) is not extracted
 
-Test seams    document's exported API: the page-renderer interface, the released
-              renderer's constructor, the corrections stage, and Vision's Pages and
-              Document; and tool's Invocation.Usage. The unit tier uses:
-              - a stand-in Generate that records requests and returns canned
-                responses, errors, and a 413 *client.APIError
-              - a stand-in Renderer
-              - stand-in tools built from the test binary, as the tool package's are
-              The integration tier (-tags integration) runs the real renderer and magick
-              on the laptop and gb10-2's router. The bake-off tier (-tags bakeoff) runs
-              the five adapters and the scoring against gb10-2.
+Test seams    The converter's entry point (a document in, the model out) and the Markdown
+              renderer over the model, exercised in process against the fixtures and their
+              ground truth. The CLI's process contract (arguments, stdout, stderr, exit
+              code, the media directory) runs on the published NativeAOT binary inside the
+              check. The baseline tier runs the three tools as processes over the pool.
 
-Slices        1. The usage report: Invocation.Usage filled by the exec runner (peak
-                 memory, user and system CPU) whether the run succeeds, fails, or is
-                 cancelled; the container runner leaves it zero. Unit tests over a
-                 stand-in tool that allocates a known amount. Checkpoint: source files
-                 the slice changed, lowest dependency first, each with what to look for.
-              2. The document package's foundation: the client v0.4.0 requirement, the
-                 Generate interface, the page-renderer interface, spooling into the
-                 caller's directory, the corrections stage, and the generated fixtures
-                 with ground truth. Unit tests over stand-ins; the corrections on the
-                 host's magick in the integration tier. Checkpoint as slice 1, after a
-                 standards-review pass.
-              3. The bake-off: the five renderer adapters as bake-off test code, the
-                 error-rate scorer, greedy runs at 150 dpi, the measures, and the
-                 ranking, under mise run bakeoff. Checkpoint as slice 1, plus the
-                 ranking table for the architect to confirm the winner before it is
-                 wired in.
-              4. The released renderer: the confirmed winner's adapter moved into
-                 document, with its unit and integration tests; the bake-off keeps using
-                 it. Checkpoint as slice 1.
-              5. Pages and Document: page order, concurrency, per-page errors, the
-                 final-step template, per-page text parts, the result, the 413 and
-                 failed-page contracts. Unit tests over stand-in Generate and Renderer;
-                 both entry points on the clean fixtures against gb10-2 in the
-                 integration tier. Checkpoint as slice 1.
-              6. Evidence 11's seven-cell matrix in the bake-off tier, evidence 4's
-                 integration records, and the findings page. Checkpoint only if the
-                 slice changed source.
-              7. Release preparation: CHANGELOG v0.2.0, module README, capability map,
-                 package documentation. Checkpoint as slice 1.
+Slices        1. The model and the docx body: the CLI surface and refusals, the binary's
+                 name, the one-tree model and its JSON, the docx body with accepted
+                 tracked changes, the Markdown renderer for those blocks, and the
+                 generator with its first docx fixtures and ground truth. Checkpoint:
+                 source files the slice changed, lowest dependency first, each with what
+                 to look for, after a standards-review pass.
+              2. docx layers: headers and footers per section and kind, footnotes and
+                 endnotes, comments with anchors, replies, and resolved state, and docx
+                 charts and media through --media, with their Markdown forms and
+                 fixtures. Checkpoint as slice 1, without the review pass.
+              3. xlsx: sheets, typed cells, ISO dates, cached values and formula text,
+                 shared formulas, and sheet charts and media, with fixtures. Checkpoint
+                 as slice 2.
+              4. pptx: slides in order, notes, tables, charts, and media, with fixtures.
+                 Checkpoint as slice 2.
+              5. The real-world set: about a dozen files, the sources manifest, the
+                 notices, and hand-written ground truth, all passing in the check.
+                 Checkpoint as slice 2, plus the manifest for the architect to confirm the
+                 files.
+              6. CI and release: the check on both runners, the merge waiting on checks,
+                 the ruleset on main (applied by the session through `gh api`), Action-pin
+                 currency, and the release workflow building both archives and SHA256SUMS.
+                 Checkpoint as slice 2.
+              7. The baseline: markitdown and xberg pinned in mise, `mise run baseline`,
+                 the scorer, the measures, the committed results, the findings page, and
+                 the root's evidence 12 link. Checkpoint as slice 2 if the slice changed
+                 source, plus the fidelity table.
+              8. Release preparation: CHANGELOG v0.1.0 with the known limits, the README,
+                 the capability map, and the version. Checkpoint as slice 2.
               Every slice: check passes.
 
-Out of scope  container images for these tools (none maintained and versioned exists for
-              poppler, gs, or vips; building images); the four losing renderers as
-              released code; a request-size option; a page cap; Markdown or structured
-              per-page output; DPI as a pixel budget; changing gb10-2's
-              --image-max-tokens; the container runner's usage report; office documents;
-              a CI job for the integration or bake-off tiers; the root's consumer check
-              taking v0.2.0.
-              Known limits: Document's final step over plain-text transcripts may exceed
-              the final model's context on long documents (about 30 to 45 pages at
-              32768), to be tuned if it bites; the 413 over the server's 100 MiB limit is
-              confirmed from llama.cpp b11669's source, not a live upload.
+Out of scope  any inference, in the CLI or its tests: office prepares content and never calls
+              a model; vision over extracted media, summaries, and embeddings belong to the
+              higher layers. Converting media to vision-ready formats (EMF, WMF, TIFF are
+              written as stored). Processing's adapter, legacy conversion through LibreOffice,
+              and the integration tier that sends office's media through vision on gb10-2
+              (the `office` task, by processing's precedent); page images or any render path; formula evaluation; number formats
+              other than dates; tracked changes as stored; Docling's schema; corpora or
+              sweeps beyond the committed pool; a CI job for the baseline tier; macro-enabled
+              and template variants as distinct inputs; the root's consumer check (office
+              ships a binary, not a Go module).
 
-Door          one-way for the release (tag v0.2.0 pushed; the document package and the
-              client requirement become public). Two-way otherwise: a new package and an
-              additive field in an unreleased minor.
+Door          one-way for the release: tag v0.1.0 and its assets make the binary's name, the
+              asset naming, the CLI surface, and the JSON and Markdown contract public.
+              Two-way otherwise: a new, unreleased CLI, plus repository settings (the
+              ruleset and the merge wait), which can be changed back.
 
-Release       spike-ai-pipeline-processing v0.2.0
-
-Checkpoints   after each slice that changes source: the slice's changed source files,
-              lowest dependency first, each with what to look for; a standards-review
-              pass before slice 2's checkpoint; and after slice 3, the bake-off's ranking
-              table for the architect to confirm the winner before slice 4.
+Release       spike-ai-pipeline-office v0.1.0
 ```
 
 ## Decisions
@@ -1058,6 +1056,161 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   deciding every pair); page 7's NOFORN is never read, page 7's seal draws more invention, page
   5's seal reads only from a tile; corrections at 150 dpi now help (Deskew, Unsharp) where they
   hurt; second passes changed nothing.
+- office-cli: one task, with the markitdown and xberg baseline beside the v0.1.0 release; slices
+  go one format at a time. Rejected: the baseline as its own task.
+- office-cli: the JSON model's schema is the spike's own, versioned with office's tags; processing
+  has no model to match. Rejected: Docling's DoclingDocument (page provenance, layout boxes).
+- office-cli: the chosen rendering (--format json|markdown) goes to stdout, media to --media's
+  directory, named relative to it. Rejected: always writing everything into an output directory.
+- office-cli: the binary is spike-ai-pipeline-office. Rejected: office (too generic);
+  SpikeAiPipeline.Office.
+- office-cli: System.CommandLine 2.0.14 parses arguments (MIT, no AOT warnings, +1.75 MB).
+  Rejected: a hand-written parser.
+- office-cli: fidelity is scored on each tool's Markdown, parsed by Markdig (test-only), against
+  element-level ground truth; office's JSON is checked exactly in its own tests. Rejected: scoring
+  native outputs.
+- office-cli: linux-arm64 is built natively on ubuntu-24.04-arm. Rejected: cross-compiling on x64.
+- office-cli: release assets are a tar.gz per runtime identifier (binary and LICENSE) plus
+  SHA256SUMS. Rejected: bare binaries.
+- office-cli: office's merge waits on the pull request's checks. Rejected: merging without
+  waiting, as client and processing still do.
+- office-cli: docx tracked changes are read accepted. Rejected: as stored with revisions marked.
+- office-cli: docx headers and footers are in v0.1.0, per section with default, first, and even
+  kinds. Rejected: out as a known limit.
+- office-cli: docx footnotes and endnotes are in v0.1.0, separator notes skipped. Rejected: out.
+- office-cli (architect): docx comments are in v0.1.0 with text, author, anchored range, replies,
+  and resolved state, because comments can hold critical context. Rejected: out as a known limit.
+- office-cli: xlsx cells carry cached value plus formula text, never evaluated; null when no cached
+  value; shared-formula cells carry the anchor's reference. Rejected: value only; evaluating.
+- office-cli: xlsx cells hold a typed value with dates as ISO 8601, no other number format.
+  Rejected: displayed text through number formats.
+- office-cli: one model tree for all three formats; sheets and slides are blocks. Rejected: a
+  top-level type per format.
+- office-cli (architect): the corpus is only the committed pool, the generated fixtures re-saved by
+  LibreOffice plus about a dozen hand-scored real-world files from permissive corpora (30 by the
+  lines below), under a sources manifest. Rejected: a larger must-not-crash set; real only;
+  generated only.
+- office-cli (architect): no robustness sweep; the baseline runs on the pool alone. Rejected: a
+  sweep over POI's and LibreOffice's ~2,400 files.
+- office-cli: CI's check runs on ubuntu-24.04 and ubuntu-24.04-arm. Rejected: x64 only.
+- office-cli: comments render in Markdown as footnote-style [^cN] references, defined after the
+  notes with author, resolved state, and replies. Rejected: comments in the JSON alone.
+- office-cli (architect): office runs no inference, not even in tests; its Markdown is the
+  document's text and media blocks are the only content for vision, following processing's
+  text-first flow. The gb10-2 vision integration over office's media belongs to processing's
+  `office` task (pending edit to the roadmap's tasks.office). Rejected: a vision tier in office.
+- office-cli (architect): Outlook .pst joins the spike as its own task, `pst`, after `office` and
+  before `audio`, through a coordinator pull request at this session's end; it is a container
+  format, not OOXML, needing its own adapter. Rejected: leaving mail stores out of the spike.
+- office-cli: media files are content-addressed (SHA-256 plus stored extension), written once
+  per distinct picture so the higher layer runs vision once per picture and can cache by hash;
+  each media block keeps its part path, content type, alt text, and location; linked pictures
+  get a block with their target and no file. Rejected: ordinal names; the package's part paths.
+- office-cli: the release job runs each architecture's binary's --version before attaching it;
+  slice 5's checkpoint has the architect confirm the real-world manifest; the session applies
+  main's ruleset through gh api; macro-enabled and template variants are out of scope
+  (superseded by the slice 5 escalation: read as their base format).
+- office-cli (architect, slice 1 checkpoint): a deleted paragraph mark right before a table keeps
+  its carried text in place as its own paragraph before the table. Rejected: joining it to the
+  paragraph after the table, out of document order.
+- office-cli (architect, slice 1 checkpoint): the Markdown renderer gets independent tests over
+  hand-built models with hand-written expectations, beside the snapshot goldens.
+- office-cli (slice 1): refusals exit 3; format sniffed from content; lists grouped by abstract
+  numbering definition (LibreOffice re-saves split one list across instances); empty paragraphs
+  and headings dropped, empty list items kept; merged cells as colSpan/rowSpan on the anchor.
+- office-cli (architect, slice 3 checkpoint): index xlsx merges by cell in slice 4, since the
+  baseline times each file. Rejected: scanning every merge per cell.
+- office-cli (slice 3): xlsx tables are sparse (rows carry `row`, cells their `ref`); hidden and very
+  hidden sheets are both `hidden: true`; the 1900 leap day, negative serials, and years past 9999
+  stay numbers.
+- office-cli (architect, slice 4 checkpoint): add an xlsx merge case that exercises the merge
+  index's expiry in slice 5.
+- office-cli (slice 4): each slide renders as `# Slide N` with its own headings one level down and
+  notes under `**Notes**`; shapes read in shape-tree order; media `slide` is the 0-based index.
+- office-cli (slice 5): the implementer ran the binary over all 649 downloaded corpus files while
+  selecting, beyond the architect's pool rule; nothing from that run is committed. It found three
+  bugs, fixed in ef4d7fa (invalid attribute values and missing parts refused as malformed, not
+  crashing; Excel Online's spaced shared-string index read).
+- office-cli (architect, slice 5 escalation): documents nested past 8 tables are refused (exit 3)
+  with the depth and location named. Rejected: id-referenced side tables (additive later).
+- office-cli (architect, slice 5 escalation): fix the text-losing docx bugs (row/cell-level
+  content controls, smart tags, ruby, a comment range ending between paragraphs), each with a
+  real regression file. Rejected: known limits.
+- office-cli (architect, slice 5 escalation): lists carry their start value and continuation
+  (`start`), and cells their column offset from gridBefore (`skipBefore`), additive to schema
+  "1". Rejected: known limits.
+- office-cli (architect, slice 5 escalation): chartEx charts read their cached data into the chart
+  block, falling back to the mc:Fallback picture as media when none is cached; Strict charts are
+  read through a namespace map in ChartReader. Rejected: picture-only; known limits.
+- office-cli (architect, slice 5 escalation): the real-world pool grows to 27 files: ComplexNumberedLists,
+  tika-3816, WordWithAttachments, XSSFSheet.copyRows, SimpleStrict, WithDrawing, 56812, endnotes,
+  form_footnotes, 61470, chartex, word_tables (re-zipped), and one O14ISOStrict chart file (SDK
+  re-save), with the manifest noting each exception.
+- office-cli (architect, slice 5 escalation): macro-enabled files and templates are read as their
+  base format, macros ignored and never run, documented in README and CHANGELOG. Rejected: refusing.
+- office-cli (architect, slice 5 escalation): a single invalid reference is skipped with a warning
+  on stderr and the rest converts (exit 0); packages broken at ZIP or part level stay refused.
+- office-cli: the escalation's work runs as slices 5b (docx fixes, nesting refusal, lenient
+  references, macro docs, their files) and 5c (Strict and chartEx charts, the remaining files)
+  before CI.
+- office-cli (slice 5b): exit 4 "failed" for office's own unexpected errors; OLE objects'
+  preview pictures come out as media; placeholder text of content controls and ruby readings are
+  dropped; list levels clamp to Word's nine.
+- office-cli (architect, slice 5b checkpoint): the truth format compares a table cell's full blocks
+  (lists, headings), extended in slice 5c.
+- office-cli (architect, slice 5c checkpoint): Of16-02.pptx stays in the pool (28 real files),
+  though the session added it to 5c's brief beyond the 27 approved; a search for an Office-native
+  chartEx file under a permissive license follows. (The checkpoint took both chartEx regression
+  files as tool-written; the next line corrects it.)
+- office-cli: correction to the 5c checkpoint: Of16-02.pptx is Office-native chartEx (typed
+  chartEx, cx:chart under Requires="cx1", style/colors parts, embedded workbook, 1980 ZIP dates,
+  no BOM); only POI's chartex.docx is tool-written. Office writes chartEx parts with no CRLF
+  after the declaration and ` />`, and style/colors parts with no declaration; the tool
+  fingerprint is a UTF-8 BOM with lowercase `utf-8`, a part typed as an ordinary chart, or
+  c:chart in the drawing.
+- office-cli (architect): add LilLeapo/rsWordParser's chartex-waterfall-2.docx and
+  chartex-funnel-2.docx (MIT/Apache-2.0, Word-saved, Requires="cx1"/"cx2") as Office-native docx
+  chartEx; the manifest records their self-reported provenance and core.xml's personal name. The
+  pool is 30 real files. xlsx chartEx stays with the test-built package. Rejected: an
+  architect-saved xlsx.
+- office-cli (architect, slice 7 checkpoint): the findings page adds a real-world-only fidelity
+  table beside the pooled one, since the generated set and office's Markdown were built around
+  the same truth. Chart values count wherever they appear between the chart's title and the next
+  block, not only in a table. markitdown runs as shipped, magika (a local ONNX classifier inside
+  its own process) noted; office never loads either baseline tool.
+- office-cli (slice 7): baseline tool pins live in mise.baseline.toml (MISE_ENV=baseline), never in
+  CI or the binary; peak memory via a C fork/wait4 wrapper; office matched 1,768/1,768 elements
+  over the pool and 1,144/1,144 over the 30 real-world files.
+- office-cli (slice 8, spec review): schema "1" leaves out an optional property with no value,
+  never writing null, so absent means null or none; only an array keeps a null in place (a chart
+  point the cache lacks). The serializer already did this; README and CHANGELOG now say so.
+- office-cli (spec review): the release is created as a draft, its assets uploaded, then
+  published, so a failed upload leaves a draft. Rejected: publishing before the upload.
+- office-cli (spec review): the linux-arm64 binary's size comes from the pull request's CI run
+  (the check job's summary), since a NativeAOT publish for arm64 can't link on the x64 laptop.
+- office-cli (slice 8): office's README no longer says processing runs office or LibreOffice
+  converts legacy files before it; office refuses them, and conversion is the caller's (the
+  `office` task's).
+- office-cli (architect, brief redirect): the markitdown and xberg comparison is closed: runs
+  2026-10-31-1 and -2 and the findings page's three-tool tables stay as evidence 12's recorded
+  answer, measured once at markitdown 0.1.9 and xberg 1.3.10. From now on `mise run baseline`
+  measures office alone (fidelity against the truth, time, cold start, peak memory, size); the two
+  tools leave mise.baseline.toml, the bench, and currency. Behavior 12 becomes office's own
+  baseline. Rejected: removing the comparison with the tools.
+- office-cli (redirect): run 2026-10-31-3 is office alone (fidelity 1.000 on every kind, median
+  file 17.21 ms, peak 35.32 MiB, 11 s end to end); results.json moves to version 3. An uncommitted
+  three-tool run found at runs/2026-10-31-3 before the redirect was moved, not deleted, to
+  .state/baseline/stray-run-2026-10-31-3/.
+- office-cli (architect, brief redirect 2): a baseline run keeps findings only with
+  `--record [name]`, which writes docs/findings/office-cli/runs/<name>/ (default the date-stamped
+  name); without it results stay in .state/baseline/. Two runs are kept, renamed: 2026-10-31-2 as
+  `comparison` (the latest three-tool run) and 2026-10-31-4 as `office` (the latest office-only
+  run, whose numbers the page now cites); -1, -3, and the stray 19:15 run are removed. Rejected:
+  the stray 19:15 run as the comparison.
+- office-cli (ship): office v0.1.0 released from b9bb1a2 after main's CI passed on ubuntu-24.04
+  and ubuntu-24.04-arm; the release went draft → three assets (both tar.gz and SHA256SUMS,
+  `sha256sum -c` OK, each holding the binary and LICENSE) → published; the linux-x64 binary
+  prints 0.1.0. The linux-arm64 binary is 30,402,544 bytes, from pull request 1's CI run.
 
 ## Pending edits
 
@@ -1186,3 +1339,32 @@ Checkpoints   after each slice that changes source: the slice's changed source f
   sets ub = 1120, since llama.cpp caps a non-causal image's tokens at n_ubatch (default 512)
   where the model allows 1120 (+800 MiB). The Framework's set A likely has the same 512 cap.
   gb10-2's store holds set A alone (embeddinggemma-2 and an NVFP4 Gemma were removed).
+- coordinator · roadmap, the `office` task's summary, rewritten to name office's released contract
+  and the vision integration tier (office-cli, architect: office itself runs no inference):
+
+  ```
+  The adapter over the Open XML CLI at office v0.1.0, by its release assets (a tar.gz per
+  linux-x64 and linux-arm64, and SHA256SUMS) and its CLI contract (README.md): the JSON model,
+  schema "1", on stdout; embedded media through --media, named by SHA-256; exit codes 0
+  converted, 1 media not written, 2 usage, 3 refused, 4 failed; warnings on stderr. Legacy .doc,
+  .xls, and .ppt converted to OOXML by LibreOffice headless on the container runner, since office
+  refuses them. An integration tier sends office's extracted media through vision on gb10-2 with
+  processing's test-only vision harness. Tags processing v0.3.0. Evidence 12.
+  ```
+- coordinator · roadmap, the `office-cli` task (optional): add `proof = "The check passes on
+  ubuntu-24.04 and ubuntu-24.04-arm, office v0.1.0 is released with both archives and SHA256SUMS,
+  and docs/findings/office-cli.md records the baseline against markitdown and xberg."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-office` bullet (optional), after
+  its first sentence: "Its JSON model is a versioned output contract (schema `1` at v0.1.0). Its
+  Markdown is the document's text, complete without inference, and its media blocks are the only
+  content a higher layer may send to vision; it runs no inference itself."
+- coordinator · roadmap (architect-authorized for office-cli's session end, not sync: a
+  `plan-experiment.ai.spike-ai-pipeline` pull request after office-cli ships): insert task `pst`
+  after `office` and before `audio`, then add it to Tasks as 11 and renumber audio and streams
+  to 12 and 13; audio's summary moves its tag to processing v0.5.0 and streams' to v0.6.0. Entry
+  (`[goals.experiment.ai.spike-ai-pipeline.tasks.pst]`):
+  name "Outlook mail stores", repos ["spike-ai-pipeline-processing"], summary: Outlook .pst (and
+  .ost) stores, proprietary binary, not OOXML ([MS-PST]), read through a mature system tool on the
+  container runner (libpff or readpst, chosen in its plan) into folders, messages (headers, body,
+  threads), and attachments; each attachment routed back through the document stages. Tags
+  processing v0.4.0. Evidence: a new item for mail stores, written when `pst` is planned.
