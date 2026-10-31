@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** office-cli
-- **Branch:** office-cli
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -14,7 +14,7 @@
 6. [x] client-responses
 7. [x] tools
 8. [x] documents
-9. [ ] office-cli
+9. [x] office-cli
 10. [ ] office
 11. [ ] audio
 12. [ ] streams
@@ -215,10 +215,6 @@ Door          one-way for the release: tag v0.1.0 and its assets make the binary
 
 Release       spike-ai-pipeline-office v0.1.0
 ```
-
-## Progress
-
-slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8, 689f271, 5ba731c, 662ccd1, editor 1f209b5, redirect 6ed0d0e, aca7978; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6, 7 accepted; slice 5 escalation answered; 5b, 5c added) · standards 29c7c2d · spec 2 rounds, gaps closed (662ccd1) · editor done · validated
 
 ## Decisions
 
@@ -1211,6 +1207,10 @@ slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
   `comparison` (the latest three-tool run) and 2026-10-31-4 as `office` (the latest office-only
   run, whose numbers the page now cites); -1, -3, and the stray 19:15 run are removed. Rejected:
   the stray 19:15 run as the comparison.
+- office-cli (ship): office v0.1.0 released from b9bb1a2 after main's CI passed on ubuntu-24.04
+  and ubuntu-24.04-arm; the release went draft → three assets (both tar.gz and SHA256SUMS,
+  `sha256sum -c` OK, each holding the binary and LICENSE) → published; the linux-x64 binary
+  prints 0.1.0. The linux-arm64 binary is 30,402,544 bytes, from pull request 1's CI run.
 
 ## Pending edits
 
