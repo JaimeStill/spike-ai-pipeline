@@ -218,7 +218,7 @@ Release       spike-ai-pipeline-office v0.1.0
 
 ## Progress
 
-slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8, 689f271, 5ba731c, 662ccd1, editor 1f209b5, redirect 6ed0d0e; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6, 7 accepted; slice 5 escalation answered; 5b, 5c added) · standards 29c7c2d · spec 2 rounds, gaps closed (662ccd1) · editor done · validated
+slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4d7fa, 5b c039f37, 5c 470ed2d, 932c344, 6dc15b2, b8a64f8, 689f271, 5ba731c, 662ccd1, editor 1f209b5, redirect 6ed0d0e, aca7978; ruleset 26280501 applied; checkpoints 1-4, 5b, 5c, 6, 7 accepted; slice 5 escalation answered; 5b, 5c added) · standards 29c7c2d · spec 2 rounds, gaps closed (662ccd1) · editor done · validated
 
 ## Decisions
 
@@ -1205,6 +1205,12 @@ slices 8/8 committed (051b02e, standards 7b9c235, a302ea8, 21940de, b717baf, ef4
   file 17.21 ms, peak 35.32 MiB, 11 s end to end); results.json moves to version 3. An uncommitted
   three-tool run found at runs/2026-10-31-3 before the redirect was moved, not deleted, to
   .state/baseline/stray-run-2026-10-31-3/.
+- office-cli (architect, brief redirect 2): a baseline run keeps findings only with
+  `--record [name]`, which writes docs/findings/office-cli/runs/<name>/ (default the date-stamped
+  name); without it results stay in .state/baseline/. Two runs are kept, renamed: 2026-10-31-2 as
+  `comparison` (the latest three-tool run) and 2026-10-31-4 as `office` (the latest office-only
+  run, whose numbers the page now cites); -1, -3, and the stray 19:15 run are removed. Rejected:
+  the stray 19:15 run as the comparison.
 
 ## Pending edits
 
