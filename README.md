@@ -19,13 +19,13 @@ each released by tag:
   client.
 - [spike-ai-pipeline-processing](https://github.com/JaimeStill/spike-ai-pipeline-processing): the
   processing layer and its system-tool adapters. It prepares content for a model before inference,
-  such as a PDF's pages as corrected images, regions, and text layers; a layer above runs the
-  inference.
+  such as a PDF's pages as corrected images, regions, and text layers, or an office document's
+  model or Markdown with its pictures; a layer above runs the inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
   CLI, a NativeAOT binary that turns docx, xlsx, and pptx files into a JSON document model and
   Markdown, with chart data and embedded media in place of page images. It is built for
-  processing to run as a system tool; processing's adapter is planned. Its README gives the CLI
-  contract.
+  processing to run as a system tool, which processing's `office` package does. Its README gives
+  the CLI contract.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
