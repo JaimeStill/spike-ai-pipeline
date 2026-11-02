@@ -205,7 +205,7 @@ Release       spike-ai-pipeline-processing v0.3.0
 
 ## Progress
 
-slices 4/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0; escalation open: EMF/WMF page framing) · standards mid-pass c08efa2 · spec — · editor —
+slices 4/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0) · standards mid-pass c08efa2 · spec — · editor —
 
 ## Decisions
 
@@ -1265,6 +1265,16 @@ slices 4/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0; escalation ope
   request's file name (.doc and .dot to docx, .xls and .xlt to xlsx, .ppt, .pps and .pot to
   pptx). Any other OLE2 file, such as an encrypted OOXML package, goes to office to be refused.
   Rejected: reading the compound file's stream names in Go.
+- office (escalation, slice 4): soffice's PNG export of an EMF or WMF writes the whole Draw page
+  (794x1123 A4, the picture at 96 dpi in its middle). An EMF or WMF is rendered at a scale through
+  draw_png_Export's PixelWidth/PixelHeight and trimmed to the picture with magick -trim +repage, PNG
+  to PNG; it then needs both LibreOffice and magick. Measured: with-drawing.xlsx's three pictures
+  trim to 256x179, 224x136, 180x193 at 96 dpi and 767x536, 672x405, 540x577 at 3x. Rejected: the
+  page as written (~400 tokens for ~20 of picture); the 96 dpi trim (too coarse); a UNO macro
+  through GraphicProvider (untested, changes how soffice runs).
+- office (escalation, slice 4): the scale is a per-request value, 3 when unset, since vision's
+  cost follows area (STANDARDS.md: a tool's options are per-request values). Rejected: a fixed
+  scale.
 
 ## Pending edits
 
