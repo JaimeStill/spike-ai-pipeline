@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** office
-- **Branch:** office
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -15,7 +15,7 @@
 7. [x] tools
 8. [x] documents
 9. [x] office-cli
-10. [ ] office
+10. [x] office
 11. [ ] pst
 12. [ ] audio
 13. [ ] streams
@@ -203,9 +203,6 @@ Door          one-way for the release: tag v0.3.0 makes the office package's API
 Release       spike-ai-pipeline-processing v0.3.0
 ```
 
-## Progress
-
-slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 170f5df, 6 9bf84f4 4e85221 5f0f05f + root 1e2cf30) · standards c08efa2 a483e0d a2dbe7d · spec no gaps · editor done
 
 ## Decisions
 
