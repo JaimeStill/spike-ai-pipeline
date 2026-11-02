@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** mail-cli
+- **Branch:** mail-cli
 
 ## Tasks
 
@@ -21,189 +21,212 @@
 13. [ ] audio
 14. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · office
+## Task brief · experiment.ai.spike-ai-pipeline · mail-cli
 
 ```
-Problem       Processing reads PDFs but no office documents. office v0.1.0 is released: a
-              NativeAOT CLI with a tar.gz per linux-x64 and linux-arm64 plus SHA256SUMS. It
-              writes a JSON model (schema "1") or Markdown to stdout, writes media named by
-              SHA-256 through --media, and exits 0 converted, 1 media not written, 2 usage,
-              3 refused, or 4 failed, with warnings on stderr. Nothing in processing runs it.
-              office refuses legacy .doc, .xls and .ppt, and leaves converting them to the
-              caller. It writes media as stored, so EMF, WMF and TIFF reach a caller that
-              llama.cpp's vision can't decode; these are 10 of the 44 media parts in
-              office's fixtures. Evidence 12 still asks for legacy files converted through
-              LibreOffice in a container, with what the round trip loses and the
-              container's footprint. The office-cli task moved vision over office's media
-              into this task. This task adds the adapter, the legacy and picture
-              conversions through LibreOffice on the container runner, their measurements,
-              and the vision tier against gb10-2. It tags processing v0.3.0, additive to
-              v0.2.0.
+Problem       The spike reads no mail. Evidence 16 asks for Outlook .pst stores and .msg
+              messages read into folders, messages and attachments, with fields
+              recovered per kind against hand truth and each store's time. Processing's
+              email task needs a released CLI to adapt. spike-ai-pipeline-mail is a
+              scaffold that only prints its version. Two readers fall short:
+              - msg_parser 0.3.6 reads no embedded messages and no threading fields
+                beyond Message-ID, and drops ANSI text that isn't UTF-8. .msg is
+                therefore read through cfb by the CLI's own MS-OXMSG reader.
+              - outlook-pst 1.2.0 can't read embedded messages: real stores fail on a
+                missing PidTagAttachMethod, and the spec-shaped path locks a mutex it
+                already holds. The fix is unmerged upstream, so in a .pst they are a
+                known limit.
+              This task builds the CLI over both formats, its fixtures and their
+              generator, CI and release, and the CLI's finding for evidence 16. It
+              tags mail v0.1.0.
 
 Behaviors
-  1.  A new package, office, prepares office documents for a model. It is built on Linux,
-      the standard library and processing's tool contract, and nothing else; the client
-      remains a test-only requirement. Every program it runs is a Tool the caller built.
-      It declares office's spec: the program spike-ai-pipeline-office, its --version
-      output, and a minimum of 0.1.0. Its constructor refuses an office Tool older than
-      that minimum, and a missing or outdated office fails at construction.
-  2.  A conversion reads a document from a reader and spools it into the working
-      directory the caller's request names. It runs office once, with the media
-      directory in the caller's working directory, and returns one of two results:
-      - JSON (the default): the model decoded into typed Go values that mirror schema
-        "1", through the standard library's encoding/json/v2. A document whose schema
-        isn't "1" is an error naming the schema it found. Properties schema "1" leaves
-        out mean none, and an array keeps its nulls in place. A block kind the adapter
-        doesn't know is kept with its type and its raw JSON, never an error, since
-        office's model grows by adding kinds.
-      - Markdown: office's Markdown text, unchanged except for the link rewriting in
-        behavior 6.
-      A conversion that has finished removes the spooled document; the media and any
-      converted pictures stay, since the caller owns them.
-  3.  office's outcomes map to errors a caller can tell apart: exit 3 is a refusal that
-      carries office's reason; exit 1 is media not written; exit 2 is a usage error (a
-      fault in the adapter); exit 4 is a failure inside office. Each matches its own
-      sentinel through errors.Is. Each office warning line on stderr becomes an entry in
-      the result's warnings, and a conversion with warnings still succeeds. A cancelled
-      conversion returns an error matching the context's, as every Tool run does.
-  4.  Both results carry the media list. It has one entry per distinct file in the media
-      directory, giving office's stored name, its content type, the file handed onward,
-      and whether that file was converted. A linked picture has no file and is never
-      fetched.
-  5.  Pictures follow one standard, and no processing stage re-encodes a picture
-      lossily. Pictures vision decodes (PNG, JPEG, GIF, BMP) are handed on exactly as
-      stored. EMF and WMF are converted once to PNG through LibreOffice, and TIFF once to
-      PNG through magick. A converted picture is named by its original's SHA-256 with
-      .png, and the original stays beside it. When a needed converter wasn't given to
-      the adapter, the picture is listed with no file handed onward and the conversion
-      still succeeds; a failed picture conversion fails the conversion.
-  6.  In a Markdown result, each link to a converted picture is rewritten to the PNG
-      handed onward. The rewrite swaps the exact <sha256>.<ext> name the media list
-      gives, and parses no Markdown. Links to pictures handed on as stored are left as
-      office wrote them.
-  7.  A legacy document is one with the OLE2 compound-file signature whose request file
-      name has a legacy extension: .doc and .dot become docx, .xls and .xlt become xlsx,
-      and .ppt, .pps and .pot become pptx. Given a LibreOffice converter, the adapter
-      converts it to that OOXML format in the request's working directory, runs office on
-      the result, and the result records that it was converted and from which format.
-      Without a converter, a legacy document is refused before any program runs, with an
-      error saying so. Any other OLE2 file, such as an encrypted OOXML package, goes to
-      office, which refuses it as office does.
-  8.  The LibreOffice converter runs soffice headless through the container runner. The
-      package declares soffice's spec, with its version pattern and minimum, and exports
-      a default image a caller may replace: gotenberg/gotenberg:8.39.0-libreoffice,
-      pinned by digest. A run keeps the runner's full lockdown (no network, the caller's
-      uid:gid, every capability dropped), and soffice's user profile lives inside the
-      mounted working directory. The default image's pin is a Go literal that currency
-      scans.
-  9.  office is pinned at 0.1.0 in processing's mise tools from its GitHub release,
-      checked against the release's digest, and currency reports a newer office. The
-      hermetic check tests the adapter two ways:
-      - a stand-in office (the test binary re-run under office's name) for exits 1 to 4,
-        stderr warnings, the arguments, and the working directory;
-      - the real pinned binary over processing's OOXML fixtures, decoding every schema
-        "1" block kind, with the media list and the Markdown names agreeing.
-      Stand-ins cover LibreOffice's and magick's arguments, the rewrite, and the media
-      list in the check. The real LibreOffice and magick run in the integration tier.
-  10. Fixtures are committed and never generated in the check:
-      - OOXML: a handful of office v0.1.0's fixtures copied byte for byte, covering
-        docx, xlsx and pptx, charts, and every media kind (PNG, JPEG, EMF, WMF), with a
-        sources file naming office's tag and each file's SHA-256, and their license
-        notices.
-      - Legacy, generated: office's generated OOXML fixtures saved as .doc, .xls and
-        .ppt by LibreOffice, from a committed script that records LibreOffice's version
-        and each file's SHA-256.
-      - Legacy, real: about three Office-written files from Apache POI's test data
-        (Apache-2.0), one per format, each with a hand-written truth and a sources entry
-        giving the repository, commit, path, license and SHA-256.
-  11. The integration tier converts every legacy fixture through the default image, then
-      runs office on the result:
-      - Loss for a generated file is the difference between office's model of the OOXML
-        original and of the round-tripped file. Loss for a real file is measured against
-        its hand truth. Both are recorded per element kind.
-      - Footprint is the image's compressed and on-disk size, and each conversion's wall
-        time on the first run and on a repeat. No peak memory is measured.
-      - Every EMF, WMF and TIFF picture in the fixtures converts to a PNG that decodes.
-      The tier asserts that each conversion succeeds and that the result decodes; loss
-      and time are recorded, not asserted.
-  12. The vision tier, in the integration tier: each distinct picture handed onward from
-      the OOXML and legacy fixtures goes in one request to Gemma 4 26B-A4B on the router
-      SPIKE_ROUTER_URL names. The tier uses its own small router client, asserts only
-      completion, and records each picture's time and image tokens. Charts are data and
-      never sent. There is no stand-in tier for these tests.
-  13. A findings page in processing records evidence 12's legacy answer and the vision
-      runs: the round-trip loss per element kind and per format, the container's
-      footprint, and each picture's time and image tokens. The root's evidence 12 links
-      the page; that line lands with the goal record's commit in the root.
-  14. Processing's README, its capability map, its STANDARDS (adding the rule that no
-      stage re-encodes a picture lossily), and its CHANGELOG (a v0.3.0 entry) describe the
-      office package, the picture standard, the legacy conversion, the default image, and
-      the host prerequisites: office through mise, docker, and magick for TIFF. Known
-      limits:
-      - EMF and WMF without the LibreOffice converter, and TIFF without magick, have no
-        picture handed onward.
-      - A legacy file is recognized only by its signature and a legacy extension.
-      - Legacy conversion inherits LibreOffice's losses, which the findings page
-        records.
-      - The adapter evaluates nothing office doesn't.
+  1.  The binary spike-ai-pipeline-mail takes one input and an optional
+      --attachments <dir>. Its arguments are parsed by hand on the standard
+      library. --version prints the bare version, "0.1.0" at release. A usage error
+      prints usage to stderr and exits 2. The input's format is sniffed from its
+      content, never from its extension: a PST header, or an OLE2 compound file
+      holding an MS-OXMSG message.
+  2.  Refusal exits 3 with one reason line on stderr and nothing on stdout. An input
+      is refused when it is:
+      - missing or unreadable;
+      - neither a .pst nor a .msg;
+      - an .ost (client magic "SO"), with a reason saying it is a server mailbox's
+        cache and can be exported from Outlook as a .pst;
+      - a PST version outlook-pst doesn't read;
+      - a store whose header, root or IPM subtree can't be read.
+      ANSI stores and password-protected stores are read like any other. The store
+      line records which encoding the store uses and whether it has a password.
+  3.  stdout is JSON Lines, schema "1", and nothing else:
+      - one store line first: schema, format (pst or msg) and the source's facts;
+      - for a .pst, one folder line per folder, depth-first, each written before its
+        messages. A folder line gives the folder's id, parent id, path, display name
+        and container class.
+      - one message line per item, naming its folder, in the folder's contents
+        order;
+      - a skipped line wherever a record can't be read.
+      A .msg is a store line plus one message line. Properties with no value are
+      left out, never written as null. The same input always gives byte-identical
+      output.
+  4.  Every item is emitted whatever its message class. A message line carries:
+      - the class, subject, sender and recipients (to, cc and bcc, each with name,
+        address and address type);
+      - the submit, delivery, creation and modification times in ISO 8601 UTC;
+      - importance and sensitivity;
+      - the raw transport headers;
+      - the threading fields as stored: Message-ID, In-Reply-To, References,
+        conversation topic, and conversation index (hex).
+      Nothing is grouped into threads, and no class-specific fields are written.
+  5.  Strings are decoded by their code page through codepage-strings:
+      - PT_UNICODE as UTF-16;
+      - PT_STRING8 by the message's code page, falling back to the store's.
+      A string in a code page that can't be decoded is decoded lossily, with a
+      warning.
+  6.  Bodies:
+      - Stored bodies are written as stored: plain text, HTML (decoded by its
+        internet code page), and RTF decompressed through compressed-rtf.
+      - HTML from RTF: when the RTF carries encapsulated HTML (\fromhtml1,
+        MS-OXRTFEX), the HTML recovered from it is written as a derived body. This
+        is the CLI's own code.
+      - Markdown: every message also carries a derived Markdown body, made by htmd
+        from the stored HTML, else from the HTML recovered from RTF, else from the
+        plain text, with Markdown-significant characters escaped so it reads
+        literally.
+      Derived bodies are marked as derived.
+  7.  An attachment record carries:
+      - its file's name: the lowercase hex SHA-256 of its bytes, plus the stored
+        extension when it is short and alphanumeric;
+      - the filename (long, else short), mime tag, content-id, inline flag, attach
+        method, and size.
+      With --attachments, each distinct content is written once into that
+      directory, created if missing. Each message's files are written before its
+      line. Without the flag, nothing is written to disk. Content that can't be
+      written exits 1. By-reference attachments have no file. afStorage
+      attachments are written as stored.
+  8.  Embedded messages:
+      - In a .msg, an embedded message is a nested message, with every field of
+        behavior 4 and its own attachments, recursively.
+      - In a .pst, the CLI reads the attach method from the attachment table and
+        never opens a method-5 attachment. Each one is listed with its metadata and
+        no content, with a warning naming it.
+  9.  A folder, message or attachment that can't be read inside a readable store is
+      skipped:
+      - a skipped line names its kind, where it is and the reason, and a warning
+        goes to stderr;
+      - a panic inside a reader is caught for that record and treated the same way;
+      - the run still exits 0.
+      Exit 4 is kept for a fault of the CLI's own. Warnings are one line each:
+      "spike-ai-pipeline-mail: warning: <where>: <what>".
+  10. .msg is read by the CLI's own MS-OXMSG reader over cfb. It reads:
+      - the property streams;
+      - the recipient and attachment storages;
+      - named properties;
+      - embedded message storages, whose property header is the embedded form.
+      It produces the same message model as a .pst, through the one mapping from
+      MAPI properties to the model.
+  11. Fixtures are committed and never generated in the check:
+      - Generated: hand-written .eml sources are the truth. They cover folders,
+        bodies, inline and file attachments, and non-ASCII code pages. A small C#
+        program in a separate mise environment (.NET 10, PstBuilder.Eml 1.3.0,
+        MsgKit 3.0.6) turns them into .pst and .msg files, recorded in a manifest
+        with each file's SHA-256 and the tool versions.
+      - Public: Tika's testPST.pst and testPST_variousBodyTypes.pst, with hand
+        truth for the threading fields; libyal's outlook.pst; java-libpst's
+        dist-list.pst and passworded.pst; and a handful of Tika and Apache POI .msg
+        files, including an embedded message and a Chinese ANSI message. Each has a
+        sources entry (repository, commit, path, license, SHA-256) and its license
+        notice.
+      - The .ost refusal is tested on a test-built header, not a committed .ost.
+  12. The generator's scale mode builds a large store (about 50k messages, 2 GB)
+      from a seed on demand. It is never committed.
+  13. The CLI's finding for evidence 16 records:
+      - fields recovered per field kind against the truth, for the generated and
+        public fixtures;
+      - time and peak memory for plaso's 59 MB store (fetched and checked against
+        its SHA-256, never committed) and for the scale store.
+      A run keeps its results only when asked to record them.
+  14. CI runs `mise run check` natively on ubuntu-24.04 and ubuntu-24.04-arm on pull
+      requests and main. A pushed v*.*.* tag runs the release:
+      - each architecture builds its static musl binary and refuses to pack it
+        unless --version equals the tag;
+      - each is packed as a tar.gz (binary and LICENSE);
+      - SHA256SUMS is added;
+      - the release is created as a draft, the assets attached, then published.
+      Currency also reports Action pins.
+  15. README (the CLI contract, exit codes, schema "1", known limits), the capability
+      map, and a CHANGELOG v0.1.0 entry describe the CLI. Known limits:
+      - in a .pst, embedded messages are listed without content;
+      - ANSI stores are read but untested;
+      - .ost is refused;
+      - by-reference attachments have no file;
+      - class-specific fields are absent;
+      - a code page that can't be decoded is decoded lossily.
 
-Test seams    The office package's constructor and its conversion call, a document in and a
-              typed model or Markdown with its media list out, over Tools from the exec
-              runner (the stand-in or the real pinned office) in the check. The same call
-              through the container runner's LibreOffice and the router in the integration
-              tier.
+Test seams    The built binary: an input file in; stdout's lines, stderr, the exit code
+              and the attachments directory out. This covers the committed fixtures
+              and test-built inputs, with goldens and the truth. The MS-OXRTFEX
+              de-encapsulation and the MS-OXMSG property reader also get
+              crate-internal tests over byte inputs.
 
-Slices        1. Upgrade: jdx/mise-action v5.2.4 -> v5.2.5 and linuxserver/ffmpeg
-                 9.0.2-cli-ls87 -> 9.0.2-cli-ls88, pinned by digest. Done when currency
-                 exits 0 and the check passes. Checkpoint: the diff.
-              2. The adapter over OOXML: the office package, office's spec and
-                 constructor, the schema "1" types, the JSON and Markdown results, the
-                 exit-code errors and warnings, and the media list with every picture
-                 handed on as stored. office pinned in mise; the copied OOXML fixtures;
-                 the stand-in and the real-binary tests in the check (behaviors 1 to 4, 9,
-                 and 10's OOXML). Checkpoint: source files the slice changed, lowest
-                 dependency first, each with what to look for, after a standards-review
-                 pass.
-              3. LibreOffice and legacy documents: soffice's spec, the default gotenberg
-                 image by digest, the locked-down run with its profile in the working
-                 directory, legacy detection and conversion, the legacy fixtures, and the
-                 integration tier's conversions, loss, and footprint (behaviors 7, 8, 10's
-                 legacy sets, 11's legacy parts). If soffice won't run locked down in
-                 gotenberg's image, the linuxserver image is tried next. Building our own
-                 image is an escalation, not planned work. Checkpoint as slice 2, without
-                 the review pass, plus the loss and footprint tables.
-              4. Pictures: EMF and WMF to PNG through LibreOffice, TIFF to PNG through
-                 magick, the naming, the media list's converted entries, and the Markdown
-                 link rewrite, with their stand-in and integration tests (behaviors 5, 6,
-                 11's picture part). Checkpoint as slice 3, without the tables.
-              5. The vision tier: office's own router client, one request per picture
-                 handed onward, completion asserted, time and image tokens recorded, run
-                 against gb10-2 (behavior 12). Checkpoint as slice 4, plus the recorded
-                 lines.
-              6. Findings and release preparation: the findings page with the committed
-                 results it cites, the root's evidence 12 link, README, capability map,
-                 STANDARDS, and the CHANGELOG v0.3.0 entry with its known limits
-                 (behaviors 13, 14). Checkpoint as slice 4.
+Slices        1. The .pst walking skeleton:
+                 - sniffing, refusals, the store, folder and message lines with the
+                   common and threading fields and the plain-text body;
+                 - code pages, the skip-and-panic policy, and exit codes 0, 2, 3, 4;
+                 - the public .pst fixtures with their sources and the Tika threading
+                   truth.
+                 Behaviors 1-5, 9, and 11's public .pst part. Checkpoint: source files
+                 lowest dependency first, after a standards-review pass.
+              2. Generated fixtures: the .eml sources, the fixtures mise environment,
+                 the C# generator, the committed .pst and .msg with their manifest, and
+                 the .pst tests against the .eml truth (behavior 11's generated part).
+                 Checkpoint: the manifest, plus the slice 1 checkpoint without the
+                 review pass.
+              3. Attachments in a .pst: --attachments, SHA-256 naming, the attachment
+                 record, exit 1, by-reference and afStorage handling, and the
+                 method-5 listing with its warning (behaviors 7, and 8's .pst part).
+                 Checkpoint as slice 2.
+              4. Bodies: HTML by code page, RTF decompressed, HTML from RTF, and the
+                 Markdown body through htmd (behavior 6). Checkpoint as slice 2.
+              5. .msg: the MS-OXMSG reader over cfb, the shared mapping, nested
+                 embedded messages, and the public and generated .msg fixtures
+                 (behaviors 8's .msg part, 10, and 11's .msg part). Checkpoint as
+                 slice 2.
+              6. CI and release: both workflows, the Action-pin currency scan, and
+                 the bare --version (behavior 14). Checkpoint: the PR's CI run on both
+                 runners.
+              7. Finding and release preparation: the generator's scale mode, the
+                 truth scoring, time and peak memory on plaso's store and the scale
+                 store, the findings page, README, capability map, CHANGELOG v0.1.0,
+                 and the version set to 0.1.0 (behaviors 12, 13, 15). Checkpoint: the
+                 tables, plus the slice 2 checkpoint.
               Every slice: the check passes.
 
-Out of scope  inference in released code: vision stays test code in the integration tier,
-              and the layer above owns requests, retries, and any digest. Converting
-              pictures vision already decodes, JPEG included. A document model shared with
-              PDF pages. Building or publishing a LibreOffice or office image (an escalation
-              if both images fail). The container's peak memory. Any change to office
-              itself. Mail stores and .msg (task pst). Hand-scored descriptions of pictures,
-              and a final step over Markdown plus descriptions. A vision tier in CI, and an
-              arm64 CI runner. The root's consumer check, since the root has no consumer of
-              processing yet.
+Out of scope  Thread grouping and attachment routing (processing's email task).
+              Class-specific fields. Writing or modifying stores. .ost. Inference.
+              A baseline against other readers. Any change to outlook-pst, cfb or the
+              generator libraries, or reporting to them. Committing the scale store or
+              plaso's store. Processing's adapter. A tested ANSI store.
 
-Door          one-way for the release: tag v0.3.0 makes the office package's API, the
-              picture standard, the converted-picture naming, and the default LibreOffice
-              image public. Two-way otherwise: additive to v0.2.0, with mise and fixture
-              changes that can be reverted.
+Door          One-way for the release: tag v0.1.0 makes these public:
+              - the CLI contract: arguments, exit codes, the warning format;
+              - schema "1"'s JSON Lines;
+              - attachment naming;
+              - the release asset names.
+              Two-way otherwise: a new repository's code, fixtures and workflows, all
+              revertible before the tag.
 
-Release       spike-ai-pipeline-processing v0.3.0
+Release       spike-ai-pipeline-mail v0.1.0
 ```
 
+The brief's planner-filled choices, approved with it: plaso's 59 MB store is fetched and
+SHA-256-checked by the findings run, never committed; the Markdown body escapes
+Markdown-significant characters when rendered from plain text; the flag is `--attachments`; an
+attachment's file name keeps the stored extension only when short and alphanumeric; the .ost
+refusal is tested on a header built in the test.
+
+## Progress
+
+slices 0/7 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1311,6 +1334,7 @@ Release       spike-ai-pipeline-processing v0.3.0
 - pst (round 2): .pst through Microsoft's outlook-pst 1.2.0 (MIT) in a CLI of the spike's own;
   .msg in scope, through msg_parser 0.3.6 (MIT) in the same CLI, one message model. Rejected:
   MsgReader (a second CLI and language, NativeAOT unproven), extract-msg (Python, GPL).
+  (msg_parser superseded by mail-cli round 1: cfb and the CLI's own MS-OXMSG reader.)
 - pst (round 2): processing's package is `email`; it names each attachment's route (PDF to
   document, OOXML and legacy office to office, pictures to vision, embedded mail nested, else
   unrouted) and the caller runs the stage, proven in the integration tier.
@@ -1324,6 +1348,22 @@ Release       spike-ai-pipeline-processing v0.3.0
 - plan (mail layer): the CLI writes the folder tree, each message in its stored folder, and
   threading fields as stored, grouping nothing; processing's email builds threads across folders.
 - plan (mail layer): evidence 16, mail stores, in the root's context/README.md.
+- mail-cli (round 1): .msg is read through cfb by the CLI's own MS-OXMSG reader, sharing one MAPI-property mapping with .pst. Rejected: msg_parser 0.3.6 (no embedded messages, no In-Reply-To/References/conversation fields, drops non-UTF-8 ANSI); an upstream fix. Supersedes pst round 2's msg_parser line.
+- mail-cli (round 1): v0.1.0 ships with .pst embedded messages as a known limit, listed with metadata and no content; method-5 attachments in a .pst are never opened (outlook-pst 1.2.0 fails or deadlocks; PR #65 unmerged). Rejected: holding the release.
+- mail-cli (round 1): stdout is JSON Lines, schema "1": store line, folder lines depth-first before their messages, message lines, skipped lines. Rejected: one JSON document per input.
+- mail-cli (round 1): an unreadable folder, message or attachment is skipped with a warning and a skipped line, panics caught per record, exit 0; exit 3 for an unreadable header or root. Rejected: failing the whole store.
+- mail-cli (round 1, with round 2 Q1): HTML recovered from RTF (MS-OXRTFEX) is a derived body, the CLI's own code over compressed-rtf. Rejected: stored bodies alone.
+- mail-cli (round 1): every item class is emitted with the common fields only. Rejected: mail classes only.
+- mail-cli (round 1): .pst threading truth from Tika's testPST.pst and testPST_variousBodyTypes.pst (Apache-2.0); PST Builder covers the rest. Rejected: extending PST Builder upstream; dropping generated .pst.
+- mail-cli (round 1): ANSI stores are read as an untested known limit. Rejected: refusing them.
+- mail-cli (round 1): password-protected stores are read like any store. Rejected: refusing them.
+- mail-cli (round 1): arguments parsed by hand on std. Rejected: lexopt; clap.
+- mail-cli (round 1): evidence 16 measures the CLI alone. Rejected: a readpst/pffexport baseline.
+- mail-cli (round 1): fixtures generated by PST Builder, MsgKit and a small C# program in a separate mise environment pinning .NET 10, never run by the check; outputs committed with SHA-256s. Rejected: a .NET SDK container.
+- mail-cli (round 2): every message carries a derived Markdown body rendered by htmd (Apache-2.0) beside the stored bodies and the HTML from RTF. Rejected: no Markdown; Markdown in place of HTML (loses cid: links to inline pictures).
+- mail-cli (round 2): code pages decoded by codepage-strings 1.0.2, a finished wrapper over maintained codepage, encoding_rs and oem_cp (it meets the maintained-dependency rule through them). Rejected: encoding_rs with codepage directly.
+- mail-cli (round 2): evidence 16 reports time and peak memory on plaso's 59 MB store and a ~50k-message, ~2 GB store PST Builder generates from a seed, never committed. Rejected: plaso's store alone.
+- mail-cli (round 2): release tags v0.1.0 in spike-ai-pipeline-mail; --version prints bare "0.1.0", checked against the tag, as office does.
 
 ## Pending edits
 
@@ -1492,3 +1532,5 @@ Release       spike-ai-pipeline-processing v0.3.0
   default position, so the blue square covers the red; say so, or place them apart. office's
   README should state the limit processing now records: pictures are listed with no layout, so a
   covered, off-slide, or cropped-away picture is still a media block.
+- coordinator · roadmap, the `mail-cli` task's summary: ".msg messages through msg_parser" → "through the CLI's own MS-OXMSG reader over cfb"; "both MIT" → "outlook-pst and cfb, both MIT"; add the .pst embedded-message known limit; add the derived Markdown body (htmd) beside stored bodies and HTML from RTF; output is JSON Lines, schema "1".
+- coordinator · context/ai-strategy.md, spike-ai-pipeline-mail bullet: msg_parser → its own reader over cfb; add the .pst embedded-message limit beside the .ost limit.
