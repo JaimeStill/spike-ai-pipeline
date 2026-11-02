@@ -226,7 +226,7 @@ refusal is tested on a header built in the test.
 
 ## Progress
 
-slices 0/7 committed · standards — · spec — · editor —
+slices 1/7 committed (57bebc0) · standards — · spec — · editor —
 
 ## Decisions
 
