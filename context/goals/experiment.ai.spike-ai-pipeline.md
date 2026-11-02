@@ -205,7 +205,7 @@ Release       spike-ai-pipeline-processing v0.3.0
 
 ## Progress
 
-slices 5/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 170f5df) · standards mid-pass c08efa2 · spec — · editor —
+slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 170f5df, 6 9bf84f4 4e85221 5f0f05f + root 1e2cf30) · standards mid-pass c08efa2 · spec — · editor —
 
 ## Decisions
 
