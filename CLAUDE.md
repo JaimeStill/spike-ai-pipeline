@@ -1,7 +1,7 @@
 # spike-ai-pipeline
 
 A spike for the Standards Lab reference architecture: the root of spike-ai-pipeline, whose layers
-live in spike-ai-pipeline-client, -processing, and -office beside it in `~/experiments/`.
+live in spike-ai-pipeline-client, -processing, -office, and -mail beside it in `~/experiments/`.
 `README.md` is the front page; the repository is managed with the marathon workflow, so start
 from `context/README.md`.
 

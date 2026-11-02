@@ -54,6 +54,12 @@ stage by stage in real time?
 14. One tool run through each runner, exec and container, under the same tool contract.
 15. Capstone: the browser's consumption of the event sequence, NATS over WebSocket against a
     backend relay, compared on latency, ordering, auth, ports, and native-tier use.
+16. Mail stores: Outlook .pst stores and .msg messages read by the spike's mail CLI over
+    Microsoft's outlook-pst and msg_parser into folders, messages (headers, bodies, and threading
+    fields), and attachments, each attachment routed to the stage its format takes; with the
+    fields recovered per kind against hand truth from generated and public fixtures, the threads
+    rebuilt, and each store's time. Processing's email finding and the mail CLI's finding record
+    it.
 
 ## Gates
 
