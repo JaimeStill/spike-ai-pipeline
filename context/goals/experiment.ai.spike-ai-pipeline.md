@@ -16,9 +16,10 @@
 8. [x] documents
 9. [x] office-cli
 10. [x] office
-11. [ ] pst
-12. [ ] audio
-13. [ ] streams
+11. [ ] mail-cli
+12. [ ] email
+13. [ ] audio
+14. [ ] streams
 
 ## Task brief · experiment.ai.spike-ai-pipeline · office
 
@@ -212,7 +213,7 @@ Release       spike-ai-pipeline-processing v0.3.0
   hermetic check, currency, integration against `SPIKE_ROUTER_URL`, gb10-2's router by default).
 - setup: -office pins .NET 10 in mise; its check runs format, build and xUnit v3 tests with
   warnings as errors, and a NativeAOT publish; releases attach linux-x64 and linux-arm64 binaries.
-- setup: all four Apache-2.0. The layers tag plain vX.Y.Z with a CHANGELOG and get CI (check on
+- setup: all five Apache-2.0. The layers tag plain vX.Y.Z with a CHANGELOG and get CI (check on
   pull requests and main, tag-triggered release) in their first task; integration stays local.
   The root has no CI until the capstone. Consumers take layers by tag, never a replace directive.
 - setup: references are the coordinator's keys: tau-protocol, tau-format, tau-provider,
@@ -1298,6 +1299,31 @@ Release       spike-ai-pipeline-processing v0.3.0
   cropped-away picture is still handed onward. Recorded as a known limit (README, CHANGELOG,
   findings), found by the architect in slide-objects' slide 3 (a red square under a blue one).
   Rejected: detecting overlap in processing (needs positions in office's model, a contract change).
+- setup: five repositories, superseding four: -mail (Rust mail CLI) joins the layers; task pst
+  splits into mail-cli (tags mail v0.1.0) and email (tags processing v0.4.0), before audio.
+- setup: -mail pins Rust 1.99.1 in mise (minimal profile, clippy, rustfmt, x86_64 and aarch64
+  musl targets); its check runs shellcheck, cargo fmt --check, clippy -D warnings, cargo test
+  --locked, and a static musl release build; no cargo-deny. Currency: `cargo update --dry-run
+  --verbose` plus mise tools and Action pins. Release workflow hand-written in office's shape.
+- pst (round 1): readpst denied: last release 2021. Rejected: libpff/pffexport (alpha by its
+  README, undocumented text layout, releases two to three years apart), go-pst (no release since
+  2023), Aspose.Email and Independentsoft (paid).
+- pst (round 2): .pst through Microsoft's outlook-pst 1.2.0 (MIT) in a CLI of the spike's own;
+  .msg in scope, through msg_parser 0.3.6 (MIT) in the same CLI, one message model. Rejected:
+  MsgReader (a second CLI and language, NativeAOT unproven), extract-msg (Python, GPL).
+- pst (round 2): processing's package is `email`; it names each attachment's route (PDF to
+  document, OOXML and legacy office to office, pictures to vision, embedded mail nested, else
+  unrouted) and the caller runs the stage, proven in the integration tier.
+- pst (round 2): fixtures are public (libyal outlook.pst, java-libpst stores, Apache POI and
+  MsgReader .msg files) plus .eml sources generated on Linux into .pst (PST Builder) and .msg
+  (MsgKit), SHA-256s recorded. Rejected: Purview export (needs M365 E3/E5); no Windows.
+- plan (mail layer): .ost is a known limit, refused with a reason: outlook-pst reads no .ost
+  (client signature "SO"); an .ost is a server mailbox's cache, exportable as .pst.
+- plan (mail layer): static musl binaries; processing runs the CLI from a mise github pin through
+  the exec runner, as office.
+- plan (mail layer): the CLI writes the folder tree, each message in its stored folder, and
+  threading fields as stored, grouping nothing; processing's email builds threads across folders.
+- plan (mail layer): evidence 16, mail stores, in the root's context/README.md.
 
 ## Pending edits
 

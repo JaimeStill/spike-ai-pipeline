@@ -26,6 +26,11 @@ each released by tag:
   Markdown, with chart data and embedded media in place of page images. It is built for
   processing to run as a system tool, which processing's `office` package does. Its README gives
   the CLI contract.
+- [spike-ai-pipeline-mail](https://github.com/JaimeStill/spike-ai-pipeline-mail): the mail CLI, a
+  static Rust binary that reads Outlook .pst stores, through Microsoft's outlook-pst, and .msg
+  messages, through msg_parser, into a JSON model of folders, messages with their threading
+  fields, and attachments. Processing's `email` package runs it as a system tool, builds the
+  threads, and routes each attachment to its stage. Outlook .ost files are refused.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
