@@ -46,7 +46,9 @@ stage by stage in real time?
     LibreOffice in a container, with what the round trip loses and the container's footprint.
     Office's
     [office-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-office/blob/main/docs/findings/office-cli.md)
-    records the baseline.
+    records the baseline, and processing's
+    [office finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/office.md)
+    records the legacy conversion's loss and footprint and the vision runs over the pictures.
 13. Live media: a live or real-time-paced audio and video source processed as it arrives, with
     per-window latency, as an event stream with cancellation.
 14. One tool run through each runner, exec and container, under the same tool contract.
