@@ -205,7 +205,7 @@ Release       spike-ai-pipeline-processing v0.3.0
 
 ## Progress
 
-slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 170f5df, 6 9bf84f4 4e85221 5f0f05f + root 1e2cf30) · standards c08efa2 a483e0d a2dbe7d · spec no gaps · editor —
+slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 170f5df, 6 9bf84f4 4e85221 5f0f05f + root 1e2cf30) · standards c08efa2 a483e0d a2dbe7d · spec no gaps · editor done
 
 ## Decisions
 
@@ -1275,6 +1275,27 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
 - office (escalation, slice 4): the scale is a per-request value, 3 when unset, since vision's
   cost follows area (STANDARDS.md: a tool's options are per-request values). Rejected: a fixed
   scale.
+- office: a conversion makes a fresh media directory and removes everything it made when it
+  fails; content types come from a fixed extension table; an unknown inline kind is kept as an
+  unknown block is; office's warnings and messages lose office's prefix and the spooled path.
+- office: LibreOfficeMinimum is 24.2, Ubuntu 24.04 LTS's release; only 26.8.1.1, the default
+  image's, is tested.
+- office: soffice's stderr is never a Result warning, and a LibreOffice failure has no sentinel
+  error; it carries soffice's message.
+- office: soffice is given an explicit export filter, so a template (.dot, .xlt, .pot) exports
+  as a document; a legacy file is spooled with its extension.
+- office: the generated legacy set is made by generate.sh in the pinned image and isn't
+  byte-reproducible, since LibreOffice stores the save time; MANIFEST records the committed sums.
+- office: the metafile page is A4 through an en-GB profile, at most MaxMetafileScale 8; a blank
+  metafile trims to 1x1 and passes; a multi-image TIFF converts frame 0; other kinds (SVG, ICO,
+  WDP) are handed on as stored; converted PNGs are byte-reproducible (magick -define
+  png:exclude-chunks=date,time).
+- office: the vision tier dedupes by office's stored name and sends one request at a time, at
+  temperature 0, output capped at 512 tokens.
+- office: the TIFF fixture is built from POI's testtiff.tif, since no OOXML fixture of office's or
+  POI's holds a TIFF office extracts.
+- office (standards review): TestLibreOfficeImage is removed: it asserted a constant against
+  itself.
 
 ## Pending edits
 
@@ -1346,7 +1367,7 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.2.0 (this replaces the bullet's v0.1.0 draft, which was never applied):
+  v0.3.0 (this replaces the bullet's v0.1.0 and v0.2.0 drafts, which were never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
@@ -1360,7 +1381,10 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   >   pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG and
   >   reads text layers; ImageMagick corrects page images, lists its corrections as a catalog for a
   >   prompt, and assesses a page for the defects they fix; and a page stream yields the prepared
-  >   pages in order. ffmpeg and ffprobe take audio and video, live sources included.
+  >   pages in order. Its `office` package runs the spike's Open XML CLI over docx, xlsx, and
+  >   pptx, converts legacy .doc, .xls, and .ppt to OOXML through LibreOffice in a digest-pinned
+  >   container, and converts EMF, WMF, and TIFF pictures to PNG; no stage re-encodes a picture
+  >   lossily. ffmpeg and ffprobe take audio and video, live sources included.
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -1403,8 +1427,9 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   sets ub = 1120, since llama.cpp caps a non-causal image's tokens at n_ubatch (default 512)
   where the model allows 1120 (+800 MiB). The Framework's set A likely has the same 512 cap.
   gb10-2's store holds set A alone (embeddinggemma-2 and an NVFP4 Gemma were removed).
-- coordinator · roadmap, the `office` task's summary, rewritten to name office's released contract
-  and the vision integration tier (office-cli, architect: office itself runs no inference):
+- coordinator · roadmap, the `office` task's summary, rewritten to name office's released contract,
+  the picture conversions, and the vision integration tier (office-cli, architect: office itself
+  runs no inference):
 
   ```
   The adapter over the Open XML CLI at office v0.1.0, by its release assets (a tar.gz per
@@ -1412,9 +1437,21 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   schema "1", on stdout; embedded media through --media, named by SHA-256; exit codes 0
   converted, 1 media not written, 2 usage, 3 refused, 4 failed; warnings on stderr. Legacy .doc,
   .xls, and .ppt converted to OOXML by LibreOffice headless on the container runner, since office
-  refuses them. An integration tier sends office's extracted media through vision on gb10-2 with
-  processing's test-only vision harness. Tags processing v0.3.0. Evidence 12.
+  refuses them. EMF and WMF pictures converted to PNG through LibreOffice and TIFF through
+  magick; no stage re-encodes a picture lossily. An integration tier measures the legacy round
+  trip's loss and the container's footprint, and sends each distinct picture through vision on
+  gb10-2 with its own test-only router client. Tags processing v0.3.0. Evidence 12.
   ```
+- coordinator · roadmap, the `office` task (optional): add `proof = "The check passes, processing
+  v0.3.0 is released, and docs/findings/office.md records the legacy round trip's loss and
+  footprint and the vision runs over office's pictures."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-office` bullet: the sentence
+  "Legacy .doc, .xls, and .ppt are converted to OOXML first by LibreOffice in a container" says
+  office refuses them and processing's `office` package converts them to OOXML through
+  LibreOffice in a container before running office.
+- coordinator · context/system-tools.md, "First case" (optional): "LibreOffice in a container for
+  legacy office formats" reads "LibreOffice in a container for legacy office formats and EMF and
+  WMF pictures".
 - coordinator · roadmap, the `office-cli` task (optional): add `proof = "The check passes on
   ubuntu-24.04 and ubuntu-24.04-arm, office v0.1.0 is released with both archives and SHA256SUMS,
   and docs/findings/office-cli.md records the baseline against markitdown and xberg."`
