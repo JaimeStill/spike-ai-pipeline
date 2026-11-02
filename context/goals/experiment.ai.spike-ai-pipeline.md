@@ -1296,6 +1296,11 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   POI's holds a TIFF office extracts.
 - office (standards review): TestLibreOfficeImage is removed: it asserted a constant against
   itself.
+- office (architect, brief redirect): pictures are listed and sent to vision as the document holds
+  them, with no layout, since office's schema "1" has no position: a covered, off-slide, or
+  cropped-away picture is still handed onward. Recorded as a known limit (README, CHANGELOG,
+  findings), found by the architect in slide-objects' slide 3 (a red square under a blue one).
+  Rejected: detecting overlap in processing (needs positions in office's model, a contract change).
 
 ## Pending edits
 
@@ -1459,3 +1464,8 @@ slices 6/6 committed (1 9e7a4ef, 2 9c6bb1f, 3 557dd0c, 4 a4c2bc0 + 4e1d58b, 5 17
   its first sentence: "Its JSON model is a versioned output contract (schema `1` at v0.1.0). Its
   Markdown is the document's text, complete without inference, and its media blocks are the only
   content a higher layer may send to vision; it runs no inference itself."
+- roadmap note · spike-ai-pipeline-office (its next task): fixtures/README.md calls
+  slide-objects' pictures "beside another", but generate.py places both of slide 3's at one
+  default position, so the blue square covers the red; say so, or place them apart. office's
+  README should state the limit processing now records: pictures are listed with no layout, so a
+  covered, off-slide, or cropped-away picture is still a media block.
