@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** office
+- **Branch:** office
 
 ## Tasks
 
@@ -20,202 +20,192 @@
 12. [ ] audio
 13. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · office-cli
+## Task brief · experiment.ai.spike-ai-pipeline · office
 
 ```
-Problem       The office layer is a scaffold that answers only --version, so the spike has no
-              way to read docx, xlsx, or pptx. Evidence 12 asks for the Open XML CLI's
-              structure fidelity, memory, cold start, and binary size against markitdown and
-              xberg on fixed files, with chart data and embedded media in place of page
-              images. The later `office` task's processing adapter needs a released binary
-              with a versioned output contract. Processing has no document model to match:
-              the documents task released page images only. A NativeAOT publish on Open XML
-              SDK 3.5.1 builds with no warnings at 28.5 MB, and it read all three formats in
-              about 15 ms and 42 MB peak. GitHub's hosted arm64 runners are free on this
-              public repository. This task adds the extraction, its Markdown rendering,
-              committed fixtures with exact ground truth, CI on both architectures, a release
-              that attaches both binaries, and the baseline. It tags office v0.1.0.
+Problem       Processing reads PDFs but no office documents. office v0.1.0 is released: a
+              NativeAOT CLI with a tar.gz per linux-x64 and linux-arm64 plus SHA256SUMS. It
+              writes a JSON model (schema "1") or Markdown to stdout, writes media named by
+              SHA-256 through --media, and exits 0 converted, 1 media not written, 2 usage,
+              3 refused, or 4 failed, with warnings on stderr. Nothing in processing runs it.
+              office refuses legacy .doc, .xls and .ppt, and leaves converting them to the
+              caller. It writes media as stored, so EMF, WMF and TIFF reach a caller that
+              llama.cpp's vision can't decode; these are 10 of the 44 media parts in
+              office's fixtures. Evidence 12 still asks for legacy files converted through
+              LibreOffice in a container, with what the round trip loses and the
+              container's footprint. The office-cli task moved vision over office's media
+              into this task. This task adds the adapter, the legacy and picture
+              conversions through LibreOffice on the container runner, their measurements,
+              and the vision tier against gb10-2. It tags processing v0.3.0, additive to
+              v0.2.0.
 
 Behaviors
-  1.  The CLI is one NativeAOT binary named spike-ai-pipeline-office. It builds on the
-      .NET 10 base library, the Open XML SDK, and System.CommandLine, and on nothing else;
-      Markdig is a test-only dependency. The publish for linux-x64 and for linux-arm64
-      gives no AOT or trim warning, and any suppression carries a comment saying why it is
-      safe. --version prints the version from the assembly.
-  2.  The CLI takes one input path, --format json|markdown (json when omitted), and
-      --media <dir>. It writes the chosen rendering to stdout and nothing else there.
-      Usage errors print usage to stderr and exit 2. Each refusal happens before any
-      output is written, with a message on stderr and a nonzero exit: a missing file, a
-      format other than docx, xlsx, or pptx, an encrypted package, or a malformed package.
-      With --media, every embedded picture is written to that directory, as stored,
-      once per distinct content, named by the SHA-256 of its bytes plus its stored
-      extension. Every media block that uses it points at that one file. Without
-      --media, nothing is written to disk and the names still appear in the model. A
-      linked (external) picture gets a media block with its target and no file; office
-      never fetches it.
-  3.  The JSON model is one tree for all three formats, and the spike owns its schema. A
-      document records its source format and holds ordered blocks: headings with their
-      level, paragraphs, nested ordered and unordered lists, and tables of rows and
-      cells. A chart block holds its type, title, and series (name, categories, values).
-      A media block holds its name relative to the media directory, its content type,
-      its alternative text, its source part path, and where it sits (section, sheet, or
-      slide). A sheet block and a slide block hold their own blocks.
-      The split follows processing's text-first flow: everything but media blocks is the
-      document's text, complete without any inference, and media blocks are the only
-      content a higher layer may send to vision. A chart with its data in the package
-      comes out as data, never as an image. The
-      model is serialized by the base library's source-generated JSON. The schema is
-      office's output contract: it is versioned with office's tags, and every change to
-      it is a CHANGELOG entry.
-  4.  docx body: headings, paragraphs, lists, tables, charts, and media come out in
-      document order. Tracked changes are read in their accepted state: insertions and a
-      move's destination are kept; deletions and a move's source are dropped; a paragraph
-      whose paragraph mark was deleted joins the next one. No deleted text appears in any
-      output, and moved text appears once.
-  5.  docx headers and footers are kept for each section, with their kind (default,
-      first, or even). A first-page variant counts only when the section asks for a
-      distinct first page, and an even-page variant only when the document turns on
-      separate even and odd headers. A section without its own header or footer inherits
-      the previous section's. Their content is the same blocks as the body.
-  6.  docx footnotes and endnotes: each reference marks its place in the text, and each
-      note holds its blocks. Word's separator notes are skipped.
-  7.  docx comments: each comment holds its text, author, the anchored range (the
-      commented text, located in the body), its replies in order, and its resolved
-      state.
-  8.  xlsx: sheets come out in workbook order, each as a table of cells. A cell holds a
-      typed value (number, text, boolean, or error); a number with a date format becomes
-      ISO 8601, and no other number format is applied. A formula cell holds its cached
-      value and its formula text; with no cached value, the value is null and the formula
-      is still given. A cell that is part of a shared formula, other than the anchor cell
-      holding the text, carries the anchor cell's reference in place of formula text.
-      Nothing is evaluated. Charts and media on a sheet go with that sheet.
-  9.  pptx: slides come out in presentation order, each with its blocks (text, lists,
-      tables, charts, media) and its notes.
-  10. The Markdown rendering is the same model, in this form:
-      - headings as #, lists as nested lists, tables as GFM tables
-      - a chart as its title followed by a table of its series
-      - media as image links relative to the media directory
-      - each sheet and each slide under its own heading, a slide's notes after its
-        content
-      - each distinct header first and each distinct footer last, once each
-      - footnotes and endnotes as GFM footnotes ([^n])
-      - comments as footnote-style references ([^cN] at the end of the commented text),
-        their definitions after the notes, giving the author, the resolved state, and
-        the replies
-  11. The fixtures are committed and never generated in the check, in two sets:
-      - Generated: a committed Python generator (python-docx, openpyxl, python-pptx, all
-        pinned) writes each file from committed sources, and each file is then re-saved
-        by LibreOffice headless. The generator writes each file's element-level ground
-        truth, covering every behavior above.
-      - Real-world: about a dozen files from the permissive corpora (the Open XML SDK's
-        test assets, Apache POI's test data, Docling's tests, and ClosedXML's tests),
-        with hand-written element-level ground truth. They include a Word-authored docx
-        with a chart, since python-docx writes none.
-      A sources manifest lists, for each real-world file, its repository, commit, path,
-      license, and SHA-256, and the license notices travel with the files; no GPL file
-      is committed. The fixture README gives the regenerating commands, the LibreOffice
-      version, and each file's SHA-256. The pool is these two sets, and nothing beyond
-      them runs, locally or in CI.
-  12. The baseline tier: `mise run baseline` runs on the laptop, never in CI, over the
-      pool only. It runs office, markitdown, and xberg, the last two pinned in mise and
-      covered by currency.
-      - Structure fidelity: each tool's Markdown is parsed by Markdig and compared with
-        the ground truth element by element: heading levels, list items, table cells,
-        sheet names, slide order and notes, chart values, media references, headers and
-        footers, notes, and comments. The results are one row per element kind and tool.
-      - Memory and time: peak resident memory per file is taken from the finished child
-        process's own rusage, or from a cgroup's peak memory. Time per file and cold
-        start are measured over repeated runs, giving the first run, the median, and the
-        spread.
-      - Footprint and license: office's binary size per architecture, markitdown's
-        installed footprint, xberg's binary size, and each tool's license.
-      - Output: each run's result JSON is committed beside the findings page, one
-        directory per run.
-  13. A findings page in office holds the fidelity table, memory, time, cold start,
-      footprint, and licenses. It explains the rows a baseline tool can't score, such as
-      comments, which neither renders in Markdown, and headers and footers, which
-      markitdown doesn't read. The root's evidence 12 links the page; that one line
-      lands with the goal record's commit in the root.
-  14. CI:
-      - The check runs on every pull request into main and every push to it, on the
-        ubuntu-24.04 and ubuntu-24.04-arm runners, through mise, the same check a
-        developer runs.
-      - office's marathon config makes the merge wait on the pull request's checks.
-      - A ruleset on main requires a pull request and forbids deleting or force-pushing
-        the branch.
-      - The currency script also reports GitHub Action pins that trail their latest
-        release.
-  15. Release: a pushed tag vX.Y.Z creates the GitHub release from the tag's CHANGELOG
-      section. Each runner builds its architecture's binary natively and attaches it as a
-      tar.gz holding the binary and LICENSE, named by binary, tag, and runtime identifier.
-      A SHA256SUMS file covers both archives, and each binary runs its --version before it
-      is attached. Runs for one tag are serialized. The tag is pushed only after main's
-      CI passes.
-  16. Office's README, its capability map, and the CHANGELOG (Keep a Changelog, with a
-      v0.1.0 entry) describe the CLI surface, the model, the Markdown form, the release
-      assets, and these known limits:
-      - formulas are not evaluated; number formats other than dates are not applied
-      - tracked changes are read accepted only
-      - no page images
-      - legacy .doc, .xls, and .ppt are not read
-      - content outside the behaviors above (for example equations, text boxes, SmartArt,
-        and embedded OLE objects) is not extracted
+  1.  A new package, office, prepares office documents for a model. It is built on Linux,
+      the standard library and processing's tool contract, and nothing else; the client
+      remains a test-only requirement. Every program it runs is a Tool the caller built.
+      It declares office's spec: the program spike-ai-pipeline-office, its --version
+      output, and a minimum of 0.1.0. Its constructor refuses an office Tool older than
+      that minimum, and a missing or outdated office fails at construction.
+  2.  A conversion reads a document from a reader and spools it into the working
+      directory the caller's request names. It runs office once, with the media
+      directory in the caller's working directory, and returns one of two results:
+      - JSON (the default): the model decoded into typed Go values that mirror schema
+        "1", through the standard library's encoding/json/v2. A document whose schema
+        isn't "1" is an error naming the schema it found. Properties schema "1" leaves
+        out mean none, and an array keeps its nulls in place. A block kind the adapter
+        doesn't know is kept with its type and its raw JSON, never an error, since
+        office's model grows by adding kinds.
+      - Markdown: office's Markdown text, unchanged except for the link rewriting in
+        behavior 6.
+      A conversion that has finished removes the spooled document; the media and any
+      converted pictures stay, since the caller owns them.
+  3.  office's outcomes map to errors a caller can tell apart: exit 3 is a refusal that
+      carries office's reason; exit 1 is media not written; exit 2 is a usage error (a
+      fault in the adapter); exit 4 is a failure inside office. Each matches its own
+      sentinel through errors.Is. Each office warning line on stderr becomes an entry in
+      the result's warnings, and a conversion with warnings still succeeds. A cancelled
+      conversion returns an error matching the context's, as every Tool run does.
+  4.  Both results carry the media list. It has one entry per distinct file in the media
+      directory, giving office's stored name, its content type, the file handed onward,
+      and whether that file was converted. A linked picture has no file and is never
+      fetched.
+  5.  Pictures follow one standard, and no processing stage re-encodes a picture
+      lossily. Pictures vision decodes (PNG, JPEG, GIF, BMP) are handed on exactly as
+      stored. EMF and WMF are converted once to PNG through LibreOffice, and TIFF once to
+      PNG through magick. A converted picture is named by its original's SHA-256 with
+      .png, and the original stays beside it. When a needed converter wasn't given to
+      the adapter, the picture is listed with no file handed onward and the conversion
+      still succeeds; a failed picture conversion fails the conversion.
+  6.  In a Markdown result, each link to a converted picture is rewritten to the PNG
+      handed onward. The rewrite swaps the exact <sha256>.<ext> name the media list
+      gives, and parses no Markdown. Links to pictures handed on as stored are left as
+      office wrote them.
+  7.  A legacy document is one with the OLE2 compound-file signature whose request file
+      name has a legacy extension: .doc and .dot become docx, .xls and .xlt become xlsx,
+      and .ppt, .pps and .pot become pptx. Given a LibreOffice converter, the adapter
+      converts it to that OOXML format in the request's working directory, runs office on
+      the result, and the result records that it was converted and from which format.
+      Without a converter, a legacy document is refused before any program runs, with an
+      error saying so. Any other OLE2 file, such as an encrypted OOXML package, goes to
+      office, which refuses it as office does.
+  8.  The LibreOffice converter runs soffice headless through the container runner. The
+      package declares soffice's spec, with its version pattern and minimum, and exports
+      a default image a caller may replace: gotenberg/gotenberg:8.39.0-libreoffice,
+      pinned by digest. A run keeps the runner's full lockdown (no network, the caller's
+      uid:gid, every capability dropped), and soffice's user profile lives inside the
+      mounted working directory. The default image's pin is a Go literal that currency
+      scans.
+  9.  office is pinned at 0.1.0 in processing's mise tools from its GitHub release,
+      checked against the release's digest, and currency reports a newer office. The
+      hermetic check tests the adapter two ways:
+      - a stand-in office (the test binary re-run under office's name) for exits 1 to 4,
+        stderr warnings, the arguments, and the working directory;
+      - the real pinned binary over processing's OOXML fixtures, decoding every schema
+        "1" block kind, with the media list and the Markdown names agreeing.
+      Stand-ins cover LibreOffice's and magick's arguments, the rewrite, and the media
+      list in the check. The real LibreOffice and magick run in the integration tier.
+  10. Fixtures are committed and never generated in the check:
+      - OOXML: a handful of office v0.1.0's fixtures copied byte for byte, covering
+        docx, xlsx and pptx, charts, and every media kind (PNG, JPEG, EMF, WMF), with a
+        sources file naming office's tag and each file's SHA-256, and their license
+        notices.
+      - Legacy, generated: office's generated OOXML fixtures saved as .doc, .xls and
+        .ppt by LibreOffice, from a committed script that records LibreOffice's version
+        and each file's SHA-256.
+      - Legacy, real: about three Office-written files from Apache POI's test data
+        (Apache-2.0), one per format, each with a hand-written truth and a sources entry
+        giving the repository, commit, path, license and SHA-256.
+  11. The integration tier converts every legacy fixture through the default image, then
+      runs office on the result:
+      - Loss for a generated file is the difference between office's model of the OOXML
+        original and of the round-tripped file. Loss for a real file is measured against
+        its hand truth. Both are recorded per element kind.
+      - Footprint is the image's compressed and on-disk size, and each conversion's wall
+        time on the first run and on a repeat. No peak memory is measured.
+      - Every EMF, WMF and TIFF picture in the fixtures converts to a PNG that decodes.
+      The tier asserts that each conversion succeeds and that the result decodes; loss
+      and time are recorded, not asserted.
+  12. The vision tier, in the integration tier: each distinct picture handed onward from
+      the OOXML and legacy fixtures goes in one request to Gemma 4 26B-A4B on the router
+      SPIKE_ROUTER_URL names. The tier uses its own small router client, asserts only
+      completion, and records each picture's time and image tokens. Charts are data and
+      never sent. There is no stand-in tier for these tests.
+  13. A findings page in processing records evidence 12's legacy answer and the vision
+      runs: the round-trip loss per element kind and per format, the container's
+      footprint, and each picture's time and image tokens. The root's evidence 12 links
+      the page; that line lands with the goal record's commit in the root.
+  14. Processing's README, its capability map, its STANDARDS (adding the rule that no
+      stage re-encodes a picture lossily), and its CHANGELOG (a v0.3.0 entry) describe the
+      office package, the picture standard, the legacy conversion, the default image, and
+      the host prerequisites: office through mise, docker, and magick for TIFF. Known
+      limits:
+      - EMF and WMF without the LibreOffice converter, and TIFF without magick, have no
+        picture handed onward.
+      - A legacy file is recognized only by its signature and a legacy extension.
+      - Legacy conversion inherits LibreOffice's losses, which the findings page
+        records.
+      - The adapter evaluates nothing office doesn't.
 
-Test seams    The converter's entry point (a document in, the model out) and the Markdown
-              renderer over the model, exercised in process against the fixtures and their
-              ground truth. The CLI's process contract (arguments, stdout, stderr, exit
-              code, the media directory) runs on the published NativeAOT binary inside the
-              check. The baseline tier runs the three tools as processes over the pool.
+Test seams    The office package's constructor and its conversion call, a document in and a
+              typed model or Markdown with its media list out, over Tools from the exec
+              runner (the stand-in or the real pinned office) in the check. The same call
+              through the container runner's LibreOffice and the router in the integration
+              tier.
 
-Slices        1. The model and the docx body: the CLI surface and refusals, the binary's
-                 name, the one-tree model and its JSON, the docx body with accepted
-                 tracked changes, the Markdown renderer for those blocks, and the
-                 generator with its first docx fixtures and ground truth. Checkpoint:
-                 source files the slice changed, lowest dependency first, each with what
-                 to look for, after a standards-review pass.
-              2. docx layers: headers and footers per section and kind, footnotes and
-                 endnotes, comments with anchors, replies, and resolved state, and docx
-                 charts and media through --media, with their Markdown forms and
-                 fixtures. Checkpoint as slice 1, without the review pass.
-              3. xlsx: sheets, typed cells, ISO dates, cached values and formula text,
-                 shared formulas, and sheet charts and media, with fixtures. Checkpoint
-                 as slice 2.
-              4. pptx: slides in order, notes, tables, charts, and media, with fixtures.
-                 Checkpoint as slice 2.
-              5. The real-world set: about a dozen files, the sources manifest, the
-                 notices, and hand-written ground truth, all passing in the check.
-                 Checkpoint as slice 2, plus the manifest for the architect to confirm the
-                 files.
-              6. CI and release: the check on both runners, the merge waiting on checks,
-                 the ruleset on main (applied by the session through `gh api`), Action-pin
-                 currency, and the release workflow building both archives and SHA256SUMS.
-                 Checkpoint as slice 2.
-              7. The baseline: markitdown and xberg pinned in mise, `mise run baseline`,
-                 the scorer, the measures, the committed results, the findings page, and
-                 the root's evidence 12 link. Checkpoint as slice 2 if the slice changed
-                 source, plus the fidelity table.
-              8. Release preparation: CHANGELOG v0.1.0 with the known limits, the README,
-                 the capability map, and the version. Checkpoint as slice 2.
-              Every slice: check passes.
+Slices        1. Upgrade: jdx/mise-action v5.2.4 -> v5.2.5 and linuxserver/ffmpeg
+                 9.0.2-cli-ls87 -> 9.0.2-cli-ls88, pinned by digest. Done when currency
+                 exits 0 and the check passes. Checkpoint: the diff.
+              2. The adapter over OOXML: the office package, office's spec and
+                 constructor, the schema "1" types, the JSON and Markdown results, the
+                 exit-code errors and warnings, and the media list with every picture
+                 handed on as stored. office pinned in mise; the copied OOXML fixtures;
+                 the stand-in and the real-binary tests in the check (behaviors 1 to 4, 9,
+                 and 10's OOXML). Checkpoint: source files the slice changed, lowest
+                 dependency first, each with what to look for, after a standards-review
+                 pass.
+              3. LibreOffice and legacy documents: soffice's spec, the default gotenberg
+                 image by digest, the locked-down run with its profile in the working
+                 directory, legacy detection and conversion, the legacy fixtures, and the
+                 integration tier's conversions, loss, and footprint (behaviors 7, 8, 10's
+                 legacy sets, 11's legacy parts). If soffice won't run locked down in
+                 gotenberg's image, the linuxserver image is tried next. Building our own
+                 image is an escalation, not planned work. Checkpoint as slice 2, without
+                 the review pass, plus the loss and footprint tables.
+              4. Pictures: EMF and WMF to PNG through LibreOffice, TIFF to PNG through
+                 magick, the naming, the media list's converted entries, and the Markdown
+                 link rewrite, with their stand-in and integration tests (behaviors 5, 6,
+                 11's picture part). Checkpoint as slice 3, without the tables.
+              5. The vision tier: office's own router client, one request per picture
+                 handed onward, completion asserted, time and image tokens recorded, run
+                 against gb10-2 (behavior 12). Checkpoint as slice 4, plus the recorded
+                 lines.
+              6. Findings and release preparation: the findings page with the committed
+                 results it cites, the root's evidence 12 link, README, capability map,
+                 STANDARDS, and the CHANGELOG v0.3.0 entry with its known limits
+                 (behaviors 13, 14). Checkpoint as slice 4.
+              Every slice: the check passes.
 
-Out of scope  any inference, in the CLI or its tests: office prepares content and never calls
-              a model; vision over extracted media, summaries, and embeddings belong to the
-              higher layers. Converting media to vision-ready formats (EMF, WMF, TIFF are
-              written as stored). Processing's adapter, legacy conversion through LibreOffice,
-              and the integration tier that sends office's media through vision on gb10-2
-              (the `office` task, by processing's precedent); page images or any render path; formula evaluation; number formats
-              other than dates; tracked changes as stored; Docling's schema; corpora or
-              sweeps beyond the committed pool; a CI job for the baseline tier; macro-enabled
-              and template variants as distinct inputs; the root's consumer check (office
-              ships a binary, not a Go module).
+Out of scope  inference in released code: vision stays test code in the integration tier,
+              and the layer above owns requests, retries, and any digest. Converting
+              pictures vision already decodes, JPEG included. A document model shared with
+              PDF pages. Building or publishing a LibreOffice or office image (an escalation
+              if both images fail). The container's peak memory. Any change to office
+              itself. Mail stores and .msg (task pst). Hand-scored descriptions of pictures,
+              and a final step over Markdown plus descriptions. A vision tier in CI, and an
+              arm64 CI runner. The root's consumer check, since the root has no consumer of
+              processing yet.
 
-Door          one-way for the release: tag v0.1.0 and its assets make the binary's name, the
-              asset naming, the CLI surface, and the JSON and Markdown contract public.
-              Two-way otherwise: a new, unreleased CLI, plus repository settings (the
-              ruleset and the merge wait), which can be changed back.
+Door          one-way for the release: tag v0.3.0 makes the office package's API, the
+              picture standard, the converted-picture naming, and the default LibreOffice
+              image public. Two-way otherwise: additive to v0.2.0, with mise and fixture
+              changes that can be reverted.
 
-Release       spike-ai-pipeline-office v0.1.0
+Release       spike-ai-pipeline-processing v0.3.0
 ```
+
+## Progress
+
+slices 0/6 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1212,6 +1202,69 @@ Release       spike-ai-pipeline-office v0.1.0
   and ubuntu-24.04-arm; the release went draft → three assets (both tar.gz and SHA256SUMS,
   `sha256sum -c` OK, each holding the binary and LICENSE) → published; the linux-x64 binary
   prints 0.1.0. The linux-arm64 binary is 30,402,544 bytes, from pull request 1's CI run.
+- office (round 1): processing gets office's binary from a mise pin,
+  github:JaimeStill/spike-ai-pipeline-office 0.1.0 (checked against the release's digest), run
+  through the exec runner. Rejected: a container image built from the release asset (it would
+  need building and publishing, which documents rejected); Go code that downloads the asset
+  and checks it.
+- office (round 1, architect: "what about when it is emitted as markdown?"): office's JSON is
+  decoded into typed Go values mirroring schema "1", with encoding/json/v2, and any other schema
+  is refused. Markdown is plain text, since the structs type only the JSON. Its picture links
+  name the media block's `name`, so the media list ties the two together. Rejected: raw JSON
+  with only the media typed; a document model shared with PDF pages.
+- office (round 1): the adapter offers both renderings, JSON and Markdown, one office run each.
+  Rejected: JSON alone, with Markdown rebuilt in Go.
+- office (round 1): the adapter is its own package, office, split from document for growth (the
+  schema "1" types, legacy conversion, pst's attachments to come). Rejected: inside document.
+- office (round 1): one conversion call handles legacy files when the adapter is built with an
+  optional LibreOffice converter, as Preparer's Corrector is optional, and refuses them without
+  one. Rejected: a separate converter the caller runs first.
+- office (round 1, architect: "let's give these a try and if we run into any hurdles, we may have
+  to explore building our own"): LibreOffice runs in gotenberg/gotenberg:8.39.0-libreoffice
+  first, with linuxserver/libreoffice:25.8.7.3-r0-ls8 as the fallback. Building our own image is
+  an escalation, not planned work. Rejected: building an image now.
+- office (round 1, architect: "should we settle on a single standard for ALL images?", taken up
+  in round 2): pictures vision can't decode are converted to PNG, EMF and WMF through
+  LibreOffice and TIFF through magick. Rejected: leaving them out of vision as a known limit.
+- office (round 1): the vision tier sends each distinct picture once to Gemma 4 26B-A4B on
+  gb10-2, asserting completion and recording time and image tokens; charts are never sent.
+  Rejected: scoring replies against hand-written descriptions; a final step over the Markdown.
+- office (round 1): processing's OOXML fixtures are a handful of office v0.1.0's files, copied
+  byte for byte with a sources file and license notices. Rejected: generating processing's
+  own; reading office's repository at test time.
+- office (round 1): legacy fixtures come from both sources: office's generated OOXML saved as
+  legacy files by LibreOffice, with loss measured as the difference between models; and about
+  three Office-written Apache POI files, one per format, against hand truth. Rejected: either
+  source alone.
+- office (round 1): the container's footprint for evidence 12 is the image's compressed and
+  on-disk size, plus each conversion's wall time on the first run and on a repeat. Rejected:
+  peak memory from the container's cgroup.
+- office (round 2): one picture standard: pictures vision decodes (PNG, JPEG, GIF, BMP) are
+  handed on as stored, only EMF, WMF and TIFF are converted to PNG, originals are kept, and no
+  stage ever re-encodes a picture lossily. Measured: a JPEG decoded to PNG is pixel-identical
+  (AE 0) and 4.9 to 8.6 times larger on photos, at the same token cost. Rejected: PNG for every
+  picture with the original kept; PNG for every picture with the original dropped.
+- office (round 2): a converted picture is named by its original's SHA-256 with .png. Rejected:
+  the SHA-256 of the PNG's own bytes, which changes whenever the converter's version does.
+- office (round 2): the adapter rewrites each Markdown link to a converted picture, swapping the
+  exact <sha256>.<ext> name, and both results carry the media list (stored name, file handed
+  onward, content type). Rejected: Markdown as office wrote it, with a map alone.
+- office (round 2, after the architect asked how documents tested inference): the vision tests
+  are office's own small integration test, with its own copy of the router client. Each picture
+  is one request to Gemma 4 26B-A4B, asserting completion and recording time and image tokens,
+  with no stand-in tier. Rejected: a shared test package under the integration tag; moving
+  document's harness into one.
+- office (round 2): the hermetic check runs a stand-in office for exits 1 to 4 and the warnings,
+  and the real mise-pinned binary over the OOXML fixtures. Rejected: the stand-in alone with the
+  real binary only in the integration tier, as document does for gs and magick; the real binary
+  alone.
+- office (round 2): processing ships the LibreOffice image as a default, pinned by digest, that a
+  caller may replace, beside soffice's spec. Rejected: the spec alone, with each caller
+  supplying the pin.
+- office (brief): a legacy file is one with the OLE2 signature and a legacy extension in the
+  request's file name (.doc and .dot to docx, .xls and .xlt to xlsx, .ppt, .pps and .pot to
+  pptx). Any other OLE2 file, such as an encrypted OOXML package, goes to office to be refused.
+  Rejected: reading the compound file's stream names in Go.
 
 ## Pending edits
 
@@ -1359,5 +1412,3 @@ Release       spike-ai-pipeline-office v0.1.0
   its first sentence: "Its JSON model is a versioned output contract (schema `1` at v0.1.0). Its
   Markdown is the document's text, complete without inference, and its media blocks are the only
   content a higher layer may send to vision; it runs no inference itself."
-- (applied) coordinator · roadmap: task `pst` inserted after `office`, audio and streams moved to
-  processing v0.5.0 and v0.6.0 (standards-lab pull request 111); remove at the next plan or start.
