@@ -226,7 +226,7 @@ refusal is tested on a header built in the test.
 
 ## Progress
 
-slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e137c, a44854a, 4b1b4d8; checkpoint review fee9a51, 6fb3d18) · standards — · spec — · editor —
+slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e137c, a44854a, 4b1b4d8; checkpoint review fee9a51, 6fb3d18) · standards done (3853a8e, 98895b3, 7317518) · spec — · editor —
 
 ## Decisions
 
