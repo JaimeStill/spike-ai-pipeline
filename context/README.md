@@ -60,8 +60,10 @@ stage by stage in real time?
     routed to the stage its format takes; with the fields recovered per kind against hand truth
     from generated and public fixtures, the threads rebuilt, and each store's time. Mail's
     [mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md)
-    records the fields recovered per kind and each store's time and peak memory. Processing's
-    email finding, planned, will record the threads and the attachment routes.
+    records the fields recovered per kind and each store's time and peak memory, and processing's
+    [email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md)
+    records the threads rebuilt across folders, each attachment's route proven against its real
+    stage, and the adapter's time and peak memory.
 
 ## Gates
 
