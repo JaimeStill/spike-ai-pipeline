@@ -19,8 +19,9 @@ each released by tag:
   client.
 - [spike-ai-pipeline-processing](https://github.com/JaimeStill/spike-ai-pipeline-processing): the
   processing layer and its system-tool adapters. It prepares content for a model before inference,
-  such as a PDF's pages as corrected images, regions, and text layers, or an office document's
-  model or Markdown with its pictures; a layer above runs the inference.
+  such as a PDF's pages as corrected images, regions, and text layers, an office document's
+  model or Markdown with its pictures, or a mail store's records, threads, and attachment routes;
+  a layer above runs the inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
   CLI, a NativeAOT binary that turns docx, xlsx, and pptx files into a JSON document model and
   Markdown, with chart data and embedded media in place of page images. It is built for
@@ -30,8 +31,7 @@ each released by tag:
   static Rust binary that reads Outlook .pst stores, through Microsoft's outlook-pst, and .msg
   messages, through its own MS-OXMSG reader, into JSON Lines of folders, messages with their
   threading fields, and attachments. Outlook .ost files are refused. Processing's `email`
-  package, planned, will run it as a system tool, build the threads, and route each attachment
-  to its stage.
+  package runs it as a system tool, builds the threads, and names each attachment's stage.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
