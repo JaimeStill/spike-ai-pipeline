@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** email
-- **Branch:** email
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -17,7 +17,7 @@
 9. [x] office-cli
 10. [x] office
 11. [x] mail-cli
-12. [ ] email
+12. [x] email
 13. [ ] audio
 14. [ ] streams
 
@@ -204,10 +204,6 @@ The brief's planner-filled choices, approved with it: the built .msg's legacy at
 processing's committed legacy xls files; its TIFF and EMF are taken byte for byte from the committed
 office fixtures that hold them, with their sources recorded; a read without an attachments directory
 names every by-value attachment unrouted, since no content was written to sniff.
-
-## Progress
-
-slices 10/10 committed · standards done · spec done · editor done
 
 ## Decisions
 
