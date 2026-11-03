@@ -18,8 +18,12 @@
 10. [x] office
 11. [x] mail-cli
 12. [x] email
-13. [ ] audio
-14. [ ] streams
+13. [ ] mail-mime
+14. [ ] email-mime
+15. [ ] gb10-2-align
+16. [ ] audio
+17. [ ] streams
+18. [ ] formats
 
 ## Task brief · experiment.ai.spike-ai-pipeline · email
 
@@ -1412,6 +1416,29 @@ names every by-value attachment unrouted, since no content was written to sniff.
   host-update needs the architect's root steps; the router, llama.cpp b11669 serving set A, was
   untouched.
 
+- plan (2026-11-03): .eml and mbox are read by the mail CLI (mail-mime, mail v0.2.0) through Stalwart's mail-parser 1.0.1, then
+  taken by processing (email-mime, processing v0.5.0); audio re-tags v0.6.0 and streams v0.7.0. Rejected: mailparse 0.18 (no mbox,
+  no nested parse); mbox-reader (unmaintained); Go in processing (few encoded-word charsets, no mbox, duplicated naming and Markdown).
+- plan (2026-11-03, q1): gb10-2-align runs after email-mime and before audio, so audio measures ASR on b12063. Its target is b12063,
+  gb10-1's adopted pin, not currency's b11960.
+- plan (2026-11-03, q2, q3): spike-scanned-documents runs on gb10-2 once this spike returns to `planned`, first among experiment.ai's
+  planned spikes.
+- plan (2026-11-03, q4): task formats (ODF/RTF, HEIC/WebP/AVIF, multi-page TIFF, encrypted PDFs, PDF forms and embedded files, zip
+  recursion) after streams, processing v0.8.0, no new evidence item.
+- plan (2026-11-03, q5): web content (HTML, MHTML, WARC, EPUB) waits as a roadmap comment until the capstone needs it.
+- plan (2026-11-03, q6): ai-strategy.md's mail bullet applied in the plan pull request, extended for .eml and mbox.
+- plan (2026-11-03, q7, q8): an mbox has no folder line; each message's id is its 1-based ordinal in the file. Rejected: an invented
+  folder; the byte offset.
+- plan (2026-11-03, q9): an .eml is accepted by an RFC 5322 header-shape check (first line a field, a From or Date field), else exit 3;
+  email-mime's nested-.eml route uses the same rule. Rejected: anything mail-parser parses.
+- plan (2026-11-03, q10): MIME parts labelled US-ASCII or ISO-8859-1 decode as WHATWG windows-1252; .pst and .msg code pages keep
+  mail's U+FFFD-plus-warning rule.
+- plan (2026-11-03, q11, q12): Thread-Index and Thread-Topic fill conversation_index and conversation_topic, with a generated fixture
+  carrying both; Importance, X-Priority, and Sensitivity fill importance and sensitivity.
+- plan (2026-11-03, q13): the schema stays "1", additive. Rejected: "2".
+- plan (2026-11-03, q14): mail-mime's fixtures are mail's 8 generated .eml with truth.json, a generated mboxrd from them, and mime4j's
+  mbox.rlug. Rejected: CPython's test_email data (real names, truth still to write).
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -1579,58 +1606,15 @@ names every by-value attachment unrouted, since no content was written to sniff.
   default position, so the blue square covers the red; say so, or place them apart. office's
   README should state the limit processing now records: pictures are listed with no layout, so a
   covered, off-slide, or cropped-away picture is still a media block.
-- coordinator · roadmap, the `mail-cli` task's summary, rewritten to what the task built:
-
-  ```
-  Outlook .pst stores ([MS-PST]) through Microsoft's outlook-pst, and .msg messages through the
-  CLI's own MS-OXMSG reader over cfb, both MIT, to JSON Lines of schema "1": the folder tree, each
-  message in the folder it is stored in, with headers, bodies, and threading fields (Message-ID,
-  In-Reply-To, References, conversation topic and index) as stored and no thread grouping. Bodies
-  as stored (text, HTML, RTF decompressed), plus derived ones: HTML recovered from RTF
-  (MS-OXRTFEX) and Markdown through htmd. Attachments written out by SHA-256; embedded messages
-  nested in a .msg, and in a .pst listed without content, a known limit (outlook-pst 1.2.0 can't
-  read them). .ost is refused with a reason, a known limit. Static musl binaries for linux-x64
-  and linux-arm64; CI and release; fixtures public and generated on Linux from .eml sources.
-  Tags mail v0.1.0. Evidence 16.
-  ```
 - coordinator · roadmap, the `mail-cli` task (optional): add `proof = "The check passes on
   ubuntu-24.04 and ubuntu-24.04-arm, mail v0.1.0 is released with both archives and SHA256SUMS,
   and docs/findings/mail-cli.md records the fields recovered per kind and each store's time and
   peak memory."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-mail` bullet, its first sentence
-  rewritten and the limits sentence extended:
-
-  > - **`spike-ai-pipeline-mail`** is a command-line tool in Rust, published as static musl
-  >   binaries, that reads Outlook .pst stores through Microsoft's outlook-pst and .msg messages
-  >   through its own MS-OXMSG reader over cfb into JSON Lines of one schema: folders, messages
-  >   with their threading fields as stored, their bodies as stored plus HTML recovered from RTF
-  >   and a Markdown body, and attachments. Processing builds the threads and routes each
-  >   attachment to its stage. readpst (last released 2021) and libpff (alpha) were denied, no
-  >   maintained Go or .NET .pst reader exists, and msg_parser reads no embedded messages or
-  >   threading fields beyond Message-ID. Two limits are known: .ost, which outlook-pst doesn't
-  >   read, is refused, and embedded messages in a .pst are listed without content, since
-  >   outlook-pst 1.2.0 can't read them. Its
-  >   [mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md)
-  >   records the fields it recovers per kind and its time and memory per store (evidence 16).
 - roadmap note · spike-ai-pipeline-mail (its next task): the static musl release binary takes 2.0
   to 2.3 times a glibc build's time on large stores (13.27 s against 6.51 s on the 2.1 GB scale
   store), and its system time (3.2 s against 0.7 s) points at musl's allocator
   (docs/findings/mail-cli.md, "The release binary against a glibc build"); measure a replacement
   allocator if processing's email runs find the time matters.
-- coordinator · roadmap, the `email` task's summary, rewritten to what the task built:
-
-  ```
-  Package `email`: the adapter over the mail CLI at v0.1.0, pinned from its release through mise
-  and run by the exec runner, streaming schema "1" records from a pipe as typed Go values, with
-  mail's warnings and exit codes as errors. Threads rebuilt across folders by RFC 5256's
-  REFERENCES algorithm, with a message that names no parent taking its conversation index's
-  parent. Each attachment's route named by its content's signature (PDF to document, OOXML and
-  legacy office to office, PNG, JPEG, GIF, and BMP to vision, TIFF, EMF, and WMF to vision through
-  office's ConvertPicture, now exported, embedded and by-value .msg nested, anything else
-  unrouted) for the caller to run, proven against the real stages in the integration tier. A
-  findings tier scores threads and routes over mail's fixtures and times the adapter on plaso's
-  store and a 2.1 GB generated store. Tags processing v0.4.0. Evidence 16.
-  ```
 - coordinator · roadmap, the `email` task (optional): add `proof = "The check passes, processing
   v0.4.0 is released, and docs/findings/email.md records the threads and routes against hand
   truth, each route carried to its real stage, and the adapter's time and peak memory beside
