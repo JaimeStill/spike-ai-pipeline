@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** mail-cli
-- **Branch:** mail-cli
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -16,7 +16,7 @@
 8. [x] documents
 9. [x] office-cli
 10. [x] office
-11. [ ] mail-cli
+11. [x] mail-cli
 12. [ ] email
 13. [ ] audio
 14. [ ] streams
@@ -223,10 +223,6 @@ SHA-256-checked by the findings run, never committed; the Markdown body escapes
 Markdown-significant characters when rendered from plain text; the flag is `--attachments`; an
 attachment's file name keeps the stored extension only when short and alphanumeric; the .ost
 refusal is tested on a header built in the test.
-
-## Progress
-
-slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e137c, a44854a, 4b1b4d8; checkpoint review fee9a51, 6fb3d18) · standards done (3853a8e, 98895b3, 7317518) · spec done, 2 rounds (88bbef6, 4915892, 32e5aa9, 9603568) · editor done
 
 ## Decisions
 
