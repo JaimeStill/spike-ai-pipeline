@@ -54,8 +54,9 @@ stage by stage in real time?
 14. One tool run through each runner, exec and container, under the same tool contract.
 15. Capstone: the browser's consumption of the event sequence, NATS over WebSocket against a
     backend relay, compared on latency, ordering, auth, ports, and native-tier use.
-16. Mail stores: Outlook .pst stores and .msg messages read by the spike's mail CLI, .pst
-    through Microsoft's outlook-pst and .msg through the CLI's own MS-OXMSG reader over cfb, into
+16. Mail stores and messages: Outlook .pst stores, .msg messages, .eml messages, and mbox files
+    read by the spike's mail CLI, .pst through Microsoft's outlook-pst, .msg through the CLI's own
+    MS-OXMSG reader over cfb, and .eml and mbox through Stalwart's mail-parser, into
     folders, messages (headers, bodies, and threading fields), and attachments, each attachment
     routed to the stage its format takes; with the fields recovered per kind against hand truth
     from generated and public fixtures, the threads rebuilt, and each store's time. Mail's
