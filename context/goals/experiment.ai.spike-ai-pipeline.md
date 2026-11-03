@@ -226,7 +226,7 @@ refusal is tested on a header built in the test.
 
 ## Progress
 
-slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e137c, a44854a, 4b1b4d8; checkpoint review fee9a51, 6fb3d18) · standards done (3853a8e, 98895b3, 7317518) · spec done, 2 rounds (88bbef6, 4915892, 32e5aa9, 9603568) · editor —
+slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e137c, a44854a, 4b1b4d8; checkpoint review fee9a51, 6fb3d18) · standards done (3853a8e, 98895b3, 7317518) · spec done, 2 rounds (88bbef6, 4915892, 32e5aa9, 9603568) · editor done
 
 ## Decisions
 
@@ -1364,6 +1364,31 @@ slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e1
 - mail-cli (round 2): code pages decoded by codepage-strings 1.0.2, a finished wrapper over maintained codepage, encoding_rs and oem_cp (it meets the maintained-dependency rule through them). Rejected: encoding_rs with codepage directly.
 - mail-cli (round 2): evidence 16 reports time and peak memory on plaso's 59 MB store and a ~50k-message, ~2 GB store PST Builder generates from a seed, never committed. Rejected: plaso's store alone.
 - mail-cli (round 2): release tags v0.1.0 in spike-ai-pipeline-mail; --version prints bare "0.1.0", checked against the tag, as office does.
+- mail-cli: an HTML body's code page is PidTagInternetCodepage, else the charset its `<meta>` declares in its first 1024 bytes, else UTF-8 when the bytes are valid UTF-8, else the message's code page, then the store's; PidTagBodyHtml in PT_STRING8 is decoded the same way. A `<meta>` label resolves through encoding_rs's WHATWG labels and codepage's map, both now direct dependencies.
+- mail-cli: US-ASCII (20127), which codepage-strings doesn't know and libyal's store names for its HTML, is decoded by the CLI itself; a byte past 0x7F becomes U+FFFD with a lossy-decoding warning.
+- mail-cli: a .pst's store code page is PidTagMessageCodepage, else PidTagCodePageId, else Windows-1252; a message's PT_STRING8 uses its own PidTagMessageCodepage, else the store's.
+- mail-cli: a .msg's PT_STRING8 is decoded by the message's code page, else its locale's ANSI code page (PidTagMessageLocaleId), else the internet code page unless it is a Unicode encoding, else the parent message's, else 1252, as POI's guess7BitEncoding orders it. Rejected: the internet code page second (slice 5), which decoded POI's 1252 strings under a UTF-8 internet code page to U+FFFD.
+- mail-cli: HTML from RTF follows MS-OXRTFEX 2.2.3 and skips `\*\mhtmltag` (2.1.3.1.5), since the `\*\htmltag` beside it keeps the original tag with its `cid:` reference; per-font code pages are not tracked.
+- mail-cli: the Markdown body (htmd 0.5.6) skips head, style and script; keeps `cid:` image sources; sets plain text as HTML paragraphs so htmd escapes it, then escapes what htmd leaves (|, ~, &, a leading "N)", a line-leading -=+#>*).
+- mail-cli: outlook-pst =1.2.0, codepage-strings =1.0.2 and compressed-rtf =1.0.1 are pinned exactly, since the CLI works around faults of those releases (Cargo.toml names where); compressed-rtf's header sizes are checked before it slices by them.
+- mail-cli: codepage-strings 1.0.2 is kept as round 2 decided, though the standards review flagged its last release (2022).
+- mail-cli: sha2 0.11.1 (RustCrypto) hashes attachment content.
+- mail-cli: schema "1"'s shapes: every line's kind is its `line` field; stored bodies sit at `body`'s top level and the CLI's own under `body.derived`; an embedded .msg message is the attachment record's `message`, with no `line`, file or size; attach methods are written by snake_case name (by_value … by_web_reference, none), an unknown one left out with a warning.
+- mail-cli: an attachment's stored extension is PidTagAttachExtension, else the filename's, kept when 1 to 8 ASCII letters and digits, in its stored case; inline is ATT_MHTML_REF; size is the content's byte count, not PidTagAttachSize.
+- mail-cli: times are written to the second; a folder's path is an array of display names from the IPM subtree's root; importance and sensitivity are words; the subject's U+0001 prefix marker is dropped; --attachments naming an existing non-directory is a usage error; arguments are read as OsString, so a non-UTF-8 path keeps the exit contract.
+- mail-cli: unreadable folder tables give skipped lines of kind "contents" and "hierarchy", detected only when PidTagContentCount is above 0 or PidTagSubfolders is true, since outlook-pst 1.2.0 returns an unreadable table as none; PidTagAssociatedContentCount is not consulted (the CLI never reads the FAI table).
+- mail-cli: after a caught reader panic the CLI reopens the store (and reopens an open message before its next attachment), since the panic poisons outlook-pst's file mutex; a .msg reopens its file the same way.
+- mail-cli: .msg nesting is capped at 16 embedded messages; one deeper is listed without its message, with a warning.
+- mail-cli: in a .msg, afStorage is written as its storage copied into a compound file of its own; an empty stream is read from its directory entry alone (cfb 0.16.0 can't read one at sector 0xFFFFFFFF, which OpenMcdf writes); named properties are read and warned about but unused.
+- mail-cli: four Apache POI .msg fixtures (apache/poi 81ab5262) plus poi-truth.json (31 checks from POI's HSMF tests) cover behavior 11's POI part; Tika's .msg truth is Tika's own OutlookParserTest assertions, not values read from the CLI.
+- mail-cli: an Exchange address is written as stored (PidTagEmailAddress), its SMTP address not at all; Tika's testMSG_chinese.msg To address scores a mismatch, recorded as a known limit.
+- mail-cli: the generated fixtures are not byte-stable (PST Builder's random UIDs and search keys; MsgKit's random keys and conversion time), recorded in the manifest; their content is checked by the truth tests and goldens.
+- mail-cli: the generator pins .NET SDK 10.0.402 (mise.fixtures.toml, global.json with rollForward disabled) and MimeKit 4.18.2 over the resolved 4.18.1, whose System.Security.Cryptography.Pkcs advisories fail the restore; currency scans the fixtures environment and the NuGet packages.
+- mail-cli: the scale mode writes its own MIME from one seeded System.Random and pins the content SHA-256, not the .pst's bytes; its folders omit "Deleted Items", which PST Builder makes itself.
+- mail-cli: peak memory is measured by office's rusage.c (wait4's ru_maxrss); a glibc build is timed beside the released musl binary, never released.
+- mail-cli: the findings run v0.1.0 was recorded again at 32e5aa9, for the binary to be tagged, after the POI group was added; plaso's commit is pinned once, in scripts/findings.sh.
+- mail-cli (standards review): Actions are pinned by exact release tag, as the sibling layers pin them, replacing slice 6's SHA pins. SHA pinning would be a workspace-wide change to rolling-currency.md, not made here.
+- mail-cli: the release's build, version gate and pack live in scripts/release-pack.sh, so they run locally under shellcheck; the assets are spike-ai-pipeline-mail-<tag>-linux-x64.tar.gz and -linux-arm64.tar.gz (binary and LICENSE) and SHA256SUMS; actionlint is not added to the check.
 
 ## Pending edits
 
@@ -1532,5 +1557,41 @@ slices 7/7 committed (57bebc0, 52b0493, 7140b50, 6f9ddd2, e8e53da, b8f5d54, 28e1
   default position, so the blue square covers the red; say so, or place them apart. office's
   README should state the limit processing now records: pictures are listed with no layout, so a
   covered, off-slide, or cropped-away picture is still a media block.
-- coordinator · roadmap, the `mail-cli` task's summary: ".msg messages through msg_parser" → "through the CLI's own MS-OXMSG reader over cfb"; "both MIT" → "outlook-pst and cfb, both MIT"; add the .pst embedded-message known limit; add the derived Markdown body (htmd) beside stored bodies and HTML from RTF; output is JSON Lines, schema "1".
-- coordinator · context/ai-strategy.md, spike-ai-pipeline-mail bullet: msg_parser → its own reader over cfb; add the .pst embedded-message limit beside the .ost limit.
+- coordinator · roadmap, the `mail-cli` task's summary, rewritten to what the task built:
+
+  ```
+  Outlook .pst stores ([MS-PST]) through Microsoft's outlook-pst, and .msg messages through the
+  CLI's own MS-OXMSG reader over cfb, both MIT, to JSON Lines of schema "1": the folder tree, each
+  message in the folder it is stored in, with headers, bodies, and threading fields (Message-ID,
+  In-Reply-To, References, conversation topic and index) as stored and no thread grouping. Bodies
+  as stored (text, HTML, RTF decompressed), plus derived ones: HTML recovered from RTF
+  (MS-OXRTFEX) and Markdown through htmd. Attachments written out by SHA-256; embedded messages
+  nested in a .msg, and in a .pst listed without content, a known limit (outlook-pst 1.2.0 can't
+  read them). .ost is refused with a reason, a known limit. Static musl binaries for linux-x64
+  and linux-arm64; CI and release; fixtures public and generated on Linux from .eml sources.
+  Tags mail v0.1.0. Evidence 16.
+  ```
+- coordinator · roadmap, the `mail-cli` task (optional): add `proof = "The check passes on
+  ubuntu-24.04 and ubuntu-24.04-arm, mail v0.1.0 is released with both archives and SHA256SUMS,
+  and docs/findings/mail-cli.md records the fields recovered per kind and each store's time and
+  peak memory."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-mail` bullet, its first sentence
+  rewritten and the limits sentence extended:
+
+  > - **`spike-ai-pipeline-mail`** is a command-line tool in Rust, published as static musl
+  >   binaries, that reads Outlook .pst stores through Microsoft's outlook-pst and .msg messages
+  >   through its own MS-OXMSG reader over cfb into JSON Lines of one schema: folders, messages
+  >   with their threading fields as stored, their bodies as stored plus HTML recovered from RTF
+  >   and a Markdown body, and attachments. Processing builds the threads and routes each
+  >   attachment to its stage. readpst (last released 2021) and libpff (alpha) were denied, no
+  >   maintained Go or .NET .pst reader exists, and msg_parser reads no embedded messages or
+  >   threading fields beyond Message-ID. Two limits are known: .ost, which outlook-pst doesn't
+  >   read, is refused, and embedded messages in a .pst are listed without content, since
+  >   outlook-pst 1.2.0 can't read them. Its
+  >   [mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md)
+  >   records the fields it recovers per kind and its time and memory per store (evidence 16).
+- roadmap note · spike-ai-pipeline-mail (its next task): the static musl release binary takes 2.0
+  to 2.3 times a glibc build's time on large stores (13.27 s against 6.51 s on the 2.1 GB scale
+  store), and its system time (3.2 s against 0.7 s) points at musl's allocator
+  (docs/findings/mail-cli.md, "The release binary against a glibc build"); measure a replacement
+  allocator if processing's email runs find the time matters.

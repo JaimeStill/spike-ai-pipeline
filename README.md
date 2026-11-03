@@ -28,9 +28,10 @@ each released by tag:
   the CLI contract.
 - [spike-ai-pipeline-mail](https://github.com/JaimeStill/spike-ai-pipeline-mail): the mail CLI, a
   static Rust binary that reads Outlook .pst stores, through Microsoft's outlook-pst, and .msg
-  messages, through msg_parser, into a JSON model of folders, messages with their threading
-  fields, and attachments. Processing's `email` package runs it as a system tool, builds the
-  threads, and routes each attachment to its stage. Outlook .ost files are refused.
+  messages, through its own MS-OXMSG reader, into JSON Lines of folders, messages with their
+  threading fields, and attachments. Outlook .ost files are refused. Processing's `email`
+  package, planned, will run it as a system tool, build the threads, and route each attachment
+  to its stage.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
