@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** email
+- **Branch:** email
 
 ## Tasks
 
@@ -21,208 +21,193 @@
 13. [ ] audio
 14. [ ] streams
 
-## Task brief · experiment.ai.spike-ai-pipeline · mail-cli
+## Task brief · experiment.ai.spike-ai-pipeline · email
 
 ```
-Problem       The spike reads no mail. Evidence 16 asks for Outlook .pst stores and .msg
-              messages read into folders, messages and attachments, with fields
-              recovered per kind against hand truth and each store's time. Processing's
-              email task needs a released CLI to adapt. spike-ai-pipeline-mail is a
-              scaffold that only prints its version. Two readers fall short:
-              - msg_parser 0.3.6 reads no embedded messages and no threading fields
-                beyond Message-ID, and drops ANSI text that isn't UTF-8. .msg is
-                therefore read through cfb by the CLI's own MS-OXMSG reader.
-              - outlook-pst 1.2.0 can't read embedded messages: real stores fail on a
-                missing PidTagAttachMethod, and the spec-shaped path locks a mutex it
-                already holds. The fix is unmerged upstream, so in a .pst they are a
-                known limit.
-              This task builds the CLI over both formats, its fixtures and their
-              generator, CI and release, and the CLI's finding for evidence 16. It
-              tags mail v0.1.0.
+Problem       Processing reads no mail. Evidence 16 asks for threads rebuilt
+              across folders and each attachment routed to the stage its format
+              takes. The mail CLI, v0.1.0, writes the folder tree and the
+              threading fields as stored and groups nothing. Processing has no
+              adapter over it, no thread building and no routing. office's
+              picture conversion is unexported, so a caller has no way to bring
+              a TIFF, EMF or WMF attachment under the picture standard. This
+              task builds package email over the released CLI, the threads, and
+              the routes, and proves each route against its real stage. It tags
+              processing v0.4.0.
 
 Behaviors
-  1.  The binary spike-ai-pipeline-mail takes one input and an optional
-      --attachments <dir>. Its arguments are parsed by hand on the standard
-      library. --version prints the bare version, "0.1.0" at release. A usage error
-      prints usage to stderr and exits 2. The input's format is sniffed from its
-      content, never from its extension: a PST header, or an OLE2 compound file
-      holding an MS-OXMSG message.
-  2.  Refusal exits 3 with one reason line on stderr and nothing on stdout. An input
-      is refused when it is:
-      - missing or unreadable;
-      - neither a .pst nor a .msg;
-      - an .ost (client magic "SO"), with a reason saying it is a server mailbox's
-        cache and can be exported from Outlook as a .pst;
-      - a PST version outlook-pst doesn't read;
-      - a store whose header, root or IPM subtree can't be read.
-      ANSI stores and password-protected stores are read like any other. The store
-      line records which encoding the store uses and whether it has a password.
-  3.  stdout is JSON Lines, schema "1", and nothing else:
-      - one store line first: schema, format (pst or msg) and the source's facts;
-      - for a .pst, one folder line per folder, depth-first, each written before its
-        messages. A folder line gives the folder's id, parent id, path, display name
-        and container class.
-      - one message line per item, naming its folder, in the folder's contents
-        order;
-      - a skipped line wherever a record can't be read.
-      A .msg is a store line plus one message line. Properties with no value are
-      left out, never written as null. The same input always gives byte-identical
-      output.
-  4.  Every item is emitted whatever its message class. A message line carries:
-      - the class, subject, sender and recipients (to, cc and bcc, each with name,
-        address and address type);
-      - the submit, delivery, creation and modification times in ISO 8601 UTC;
-      - importance and sensitivity;
-      - the raw transport headers;
-      - the threading fields as stored: Message-ID, In-Reply-To, References,
-        conversation topic, and conversation index (hex).
-      Nothing is grouped into threads, and no class-specific fields are written.
-  5.  Strings are decoded by their code page through codepage-strings:
-      - PT_UNICODE as UTF-16;
-      - PT_STRING8 by the message's code page, falling back to the store's.
-      A string in a code page that can't be decoded is decoded lossily, with a
-      warning.
-  6.  Bodies:
-      - Stored bodies are written as stored: plain text, HTML (decoded by its
-        internet code page), and RTF decompressed through compressed-rtf.
-      - HTML from RTF: when the RTF carries encapsulated HTML (\fromhtml1,
-        MS-OXRTFEX), the HTML recovered from it is written as a derived body. This
-        is the CLI's own code.
-      - Markdown: every message also carries a derived Markdown body, made by htmd
-        from the stored HTML, else from the HTML recovered from RTF, else from the
-        plain text, with Markdown-significant characters escaped so it reads
-        literally.
-      Derived bodies are marked as derived.
-  7.  An attachment record carries:
-      - its file's name: the lowercase hex SHA-256 of its bytes, plus the stored
-        extension when it is short and alphanumeric;
-      - the filename (long, else short), mime tag, content-id, inline flag, attach
-        method, and size.
-      With --attachments, each distinct content is written once into that
-      directory, created if missing. Each message's files are written before its
-      line. Without the flag, nothing is written to disk. Content that can't be
-      written exits 1. By-reference attachments have no file. afStorage
-      attachments are written as stored.
-  8.  Embedded messages:
-      - In a .msg, an embedded message is a nested message, with every field of
-        behavior 4 and its own attachments, recursively.
-      - In a .pst, the CLI reads the attach method from the attachment table and
-        never opens a method-5 attachment. Each one is listed with its metadata and
-        no content, with a warning naming it.
-  9.  A folder, message or attachment that can't be read inside a readable store is
-      skipped:
-      - a skipped line names its kind, where it is and the reason, and a warning
-        goes to stderr;
-      - a panic inside a reader is caught for that record and treated the same way;
-      - the run still exits 0.
-      Exit 4 is kept for a fault of the CLI's own. Warnings are one line each:
-      "spike-ai-pipeline-mail: warning: <where>: <what>".
-  10. .msg is read by the CLI's own MS-OXMSG reader over cfb. It reads:
-      - the property streams;
-      - the recipient and attachment storages;
-      - named properties;
-      - embedded message storages, whose property header is the embedded form.
-      It produces the same message model as a .pst, through the one mapping from
-      MAPI properties to the model.
-  11. Fixtures are committed and never generated in the check:
-      - Generated: hand-written .eml sources are the truth. They cover folders,
-        bodies, inline and file attachments, and non-ASCII code pages. A small C#
-        program in a separate mise environment (.NET 10, PstBuilder.Eml 1.3.0,
-        MsgKit 3.0.6) turns them into .pst and .msg files, recorded in a manifest
-        with each file's SHA-256 and the tool versions.
-      - Public: Tika's testPST.pst and testPST_variousBodyTypes.pst, with hand
-        truth for the threading fields; libyal's outlook.pst; java-libpst's
-        dist-list.pst and passworded.pst; and a handful of Tika and Apache POI .msg
-        files, including an embedded message and a Chinese ANSI message. Each has a
-        sources entry (repository, commit, path, license, SHA-256) and its license
-        notice.
-      - The .ost refusal is tested on a test-built header, not a committed .ost.
-  12. The generator's scale mode builds a large store (about 50k messages, 2 GB)
-      from a seed on demand. It is never committed.
-  13. The CLI's finding for evidence 16 records:
-      - fields recovered per field kind against the truth, for the generated and
-        public fixtures;
-      - time and peak memory for plaso's 59 MB store (fetched and checked against
-        its SHA-256, never committed) and for the scale store.
+  1.  The mail CLI is pinned from its v0.1.0 release through mise, checked
+      against the release's digest. A Reader is built at the composition root
+      over a mail Tool from a declared Spec, run by the exec runner. A missing
+      CLI, or one older than 0.1.0, fails at construction. The bare
+      --version, "0.1.0", is parsed as office's is.
+  2.  Reading an input, a .pst or a .msg, streams its records as an iterator
+      while the CLI runs:
+      - the store first, then folders, messages and skipped records, in the
+        CLI's order;
+      - each decoded into typed Go values that mirror schema "1": addresses,
+        times, bodies stored and derived, attachment records, and a .msg's
+        nested messages;
+      - a store line of any other schema is refused with an error matching
+        the schema sentinel, naming the schema.
+      Memory follows the record being read, not the store. The CLI's stdout is
+      never buffered whole.
+  3.  The CLI's outcomes are typed:
+      - exit codes 1 to 4 are an exit error carrying the CLI's message, which
+        matches the code's sentinel (not written, usage, refused, failed);
+      - a refusal carries the CLI's reason, the .ost reason included;
+      - each warning line is one of the read's warnings, with the CLI's prefix
+        taken off;
+      - a read with skipped records and warnings succeeds;
+      - a read whose context ends returns an error matching the context's,
+        as every Tool run does.
+  4.  Attachments: when the caller names an attachments directory, which the
+      caller owns, the CLI writes each distinct content there once. Each
+      attachment record names its file by the CLI's SHA-256 name. Without
+      one, nothing is written and nothing is routed by content.
+  5.  Threads are built across every folder of a store from the stored fields
+      alone, by a thread builder fed only the threading keys collected
+      during the read:
+      - RFC 5256's REFERENCES algorithm over Message-ID, In-Reply-To and
+        References, including its base-subject gathering of roots and its
+        rules for duplicate and missing IDs;
+      - a message whose Internet headers name no parent takes as parent the
+        message whose conversation index is its own minus the last 5-byte
+        child block (MS-OXOMSG 2.2.1.3);
+      - each thread is a tree of messages, by store id, with placeholders
+        where a referenced message isn't in the store.
+      The same input always gives the same threads.
+  6.  Each attachment's route is named for the caller to run. The route is
+      decided by the content's signature, never by the stored MIME type
+      alone; the extension decides only within a ZIP or OLE2 container.
+      - PDF: document.
+      - docx, xlsx, pptx (ZIP with an OOXML extension): office.
+      - Legacy .doc, .xls, .ppt and their templates and shows (OLE2 with a
+        legacy extension, office's rule): office.
+      - PNG, JPEG, GIF, BMP: vision, as stored.
+      - TIFF, EMF, WMF: vision, after office's picture conversion.
+      - An embedded message: nested. In a .msg it is the record's nested
+        message. In a .pst it is nested and marked without content (the
+        CLI's known limit).
+      - A by-value .msg file (OLE2 holding an MS-OXMSG message): nested, for
+        the caller to read with the CLI.
+      - Anything else: unrouted. This includes a by-value .eml, by-reference
+        attachments, and content that wasn't written.
+  7.  Package office exports its picture conversion: a TIFF, EMF or WMF in,
+      a PNG out, named by the original's SHA-256 with .png, under the same
+      standard and tools (LibreOffice and magick for EMF and WMF, magick for
+      TIFF). The conversion is never lossy, the original is kept, and the
+      output is byte-reproducible. Convert's own behavior is unchanged.
+  8.  Mail fixtures: mail v0.1.0's committed fixtures are copied into
+      processing's testdata, pinned to the tag by a SHA-256 manifest. A mise
+      task refreshes the copy from the tag and reports any drift. The check
+      never fetches.
+  9.  One small .msg, built once outside the check by mail v0.1.0's
+      generator in its fixtures mode, from .eml sources in processing. It
+      attaches processing's own committed fixtures: a docx, a legacy xls, and
+      a TIFF and an EMF taken byte for byte from the committed office
+      fixtures that hold them. It is committed with its sources, its SHA-256
+      and the tool versions.
+  10. The hermetic check runs:
+      - a stand-in CLI for exits 1 to 4, warnings, skipped records, a foreign
+        schema, and cancellation;
+      - the real pinned CLI over the copied fixtures and the built .msg;
+      - threads against hand truth for Tika's two stores and for the
+        conversation-index links;
+      - routes against hand truth for every attachment the fixtures hold.
+  11. The integration tier carries each routed attachment from the real CLI
+      to its real stage:
+      - PDF through document's Ghostscript;
+      - docx and the legacy xls through office, LibreOffice in its pinned
+        image;
+      - TIFF and EMF through office's picture conversion;
+      - each distinct picture sent once to Gemma 4 26B-A4B on gb10-2 by the
+        package's own test-only router client, asserting completion and
+        recording time and image tokens;
+      - nested .msg messages through the CLI again.
+  12. Processing's email finding records:
+      - threads and routes over every fixture, scored on Tika's stores;
+      - plaso's 59 MB store, fetched and checked by SHA-256 and never
+        committed, with threads and routes counted and not scored;
+      - the adapter's time and peak memory, threads included, on plaso's
+        store and on a scale store whose path the environment names (built
+        by mail's generator, never committed, with no threading fields, so
+        it measures cost only).
       A run keeps its results only when asked to record them.
-  14. CI runs `mise run check` natively on ubuntu-24.04 and ubuntu-24.04-arm on pull
-      requests and main. A pushed v*.*.* tag runs the release:
-      - each architecture builds its static musl binary and refuses to pack it
-        unless --version equals the tag;
-      - each is packed as a tar.gz (binary and LICENSE);
-      - SHA256SUMS is added;
-      - the release is created as a draft, the assets attached, then published.
-      Currency also reports Action pins.
-  15. README (the CLI contract, exit codes, schema "1", known limits), the capability
-      map, and a CHANGELOG v0.1.0 entry describe the CLI. Known limits:
-      - in a .pst, embedded messages are listed without content;
-      - ANSI stores are read but untested;
-      - .ost is refused;
-      - by-reference attachments have no file;
-      - class-specific fields are absent;
-      - a code page that can't be decoded is decoded lossily.
+  13. README, package doc, capability map, STANDARDS (if a judgement call
+      joins), and a CHANGELOG v0.4.0 entry describe the package. The known
+      limits are:
+      - a by-value .eml is unrouted;
+      - .ost is refused by the CLI;
+      - in a .pst, embedded messages are nested without content;
+      - by-reference attachments are unrouted;
+      - the generated stores carry no threading fields, so they thread by
+        subject alone.
 
-Test seams    The built binary: an input file in; stdout's lines, stderr, the exit code
-              and the attachments directory out. This covers the committed fixtures
-              and test-built inputs, with goldens and the truth. The MS-OXRTFEX
-              de-encapsulation and the MS-OXMSG property reader also get
-              crate-internal tests over byte inputs.
+Test seams    Package email's exported API: a Reader over a mail Tool (the
+              stand-in or the real pinned CLI), an input in, the record
+              iterator, threads and routes out. Office's exported picture
+              conversion is its second seam, over its Tools.
 
-Slices        1. The .pst walking skeleton:
-                 - sniffing, refusals, the store, folder and message lines with the
-                   common and threading fields and the plain-text body;
-                 - code pages, the skip-and-panic policy, and exit codes 0, 2, 3, 4;
-                 - the public .pst fixtures with their sources and the Tika threading
-                   truth.
-                 Behaviors 1-5, 9, and 11's public .pst part. Checkpoint: source files
-                 lowest dependency first, after a standards-review pass.
-              2. Generated fixtures: the .eml sources, the fixtures mise environment,
-                 the C# generator, the committed .pst and .msg with their manifest, and
-                 the .pst tests against the .eml truth (behavior 11's generated part).
-                 Checkpoint: the manifest, plus the slice 1 checkpoint without the
-                 review pass.
-              3. Attachments in a .pst: --attachments, SHA-256 naming, the attachment
-                 record, exit 1, by-reference and afStorage handling, and the
-                 method-5 listing with its warning (behaviors 7, and 8's .pst part).
-                 Checkpoint as slice 2.
-              4. Bodies: HTML by code page, RTF decompressed, HTML from RTF, and the
-                 Markdown body through htmd (behavior 6). Checkpoint as slice 2.
-              5. .msg: the MS-OXMSG reader over cfb, the shared mapping, nested
-                 embedded messages, and the public and generated .msg fixtures
-                 (behaviors 8's .msg part, 10, and 11's .msg part). Checkpoint as
-                 slice 2.
-              6. CI and release: both workflows, the Action-pin currency scan, and
-                 the bare --version (behavior 14). Checkpoint: the PR's CI run on both
-                 runners.
-              7. Finding and release preparation: the generator's scale mode, the
-                 truth scoring, time and peak memory on plaso's store and the scale
-                 store, the findings page, README, capability map, CHANGELOG v0.1.0,
-                 and the version set to 0.1.0 (behaviors 12, 13, 15). Checkpoint: the
-                 tables, plus the slice 2 checkpoint.
+Slices        1. Processing's upgrade: jdx/mise-action v5.2.6 and
+                 create-gh-release-action v1.12.0. Done when processing's
+                 currency exits 0 and its check passes.
+              2. The root's upgrade: uv 0.13.7 and huggingface_hub 2.4.0 in
+                 the host environment. llama.cpp stays held at b11669. Done
+                 when the root's currency reports only llama.cpp, held, and
+                 its check passes.
+              3. The walking skeleton: the mise pin, the Spec and version
+                 check, the Reader streaming typed records, the exit errors,
+                 warnings, schema refusal, cancellation, the stand-in, the
+                 fixture copy with its manifest and refresh task, and the
+                 real CLI over the copy (behaviors 1-3, 8, 10's stand-in
+                 part). Checkpoint after a standards-review pass.
+              4. Threads: the key collection, RFC 5256 REFERENCES with
+                 subject gathering, conversation-index linking, and the
+                 Tika thread truth (behavior 5). Checkpoint as slice 3,
+                 without the review pass.
+              5. Routes: the attachments directory, signature sniffing, the
+                 route table, nested and unrouted cases, and route truth over
+                 the copied fixtures (behaviors 4, 6). Checkpoint as slice 4.
+              6. Office's picture conversion exported, and TIFF, EMF and WMF
+                 routed through it (behavior 7). Checkpoint as slice 4.
+              7. The built .msg: its .eml sources, the generator run, the
+                 committed file with its SHA-256, and its routes in the check
+                 (behavior 9). Checkpoint: the manifest, plus slice 4's.
+              8. The integration tier: every route to its real stage, and the
+                 vision runs on gb10-2 (behavior 11). Checkpoint: the
+                 integration run's recorded lines.
+              9. The finding and release preparation: plaso's store, the
+                 scale store's time and memory, the findings page, README,
+                 package doc, capability map, CHANGELOG v0.4.0 (behaviors
+                 12, 13). Checkpoint: the tables, plus slice 4's.
+              10. The root's evidence 16 sentence links processing's email
+                  finding.
               Every slice: the check passes.
 
-Out of scope  Thread grouping and attachment routing (processing's email task).
-              Class-specific fields. Writing or modifying stores. .ost. Inference.
-              A baseline against other readers. Any change to outlook-pst, cfb or the
-              generator libraries, or reporting to them. Committing the scale store or
-              plaso's store. Processing's adapter. A tested ANSI store.
+Out of scope  Reading .eml. Any change to the mail CLI, its fixtures or its
+              generator. Running the stages for the caller. Inference beyond
+              the integration tier's test code. .ost. The llama.cpp upgrade
+              on gb10-2. A JWZ or MIME library. Committing plaso's store or
+              the scale store.
 
-Door          One-way for the release: tag v0.1.0 makes these public:
-              - the CLI contract: arguments, exit codes, the warning format;
-              - schema "1"'s JSON Lines;
-              - attachment naming;
-              - the release asset names.
-              Two-way otherwise: a new repository's code, fixtures and workflows, all
-              revertible before the tag.
+Door          One-way for the release: tag v0.4.0 makes package email's API,
+              the route names, and office's exported picture conversion
+              public. The release is additive only. Two-way otherwise: code,
+              fixtures and docs in processing and one sentence in the root,
+              all revertible before the tag.
 
-Release       spike-ai-pipeline-mail v0.1.0
+Release       spike-ai-pipeline-processing v0.4.0
 ```
 
-The brief's planner-filled choices, approved with it: plaso's 59 MB store is fetched and
-SHA-256-checked by the findings run, never committed; the Markdown body escapes
-Markdown-significant characters when rendered from plain text; the flag is `--attachments`; an
-attachment's file name keeps the stored extension only when short and alphanumeric; the .ost
-refusal is tested on a header built in the test.
+The brief's planner-filled choices, approved with it: the built .msg's legacy attachment is one of
+processing's committed legacy xls files; its TIFF and EMF are taken byte for byte from the committed
+office fixtures that hold them, with their sources recorded; a read without an attachments directory
+names every by-value attachment unrouted, since no content was written to sniff.
+
+## Progress
+
+slices 0/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1385,6 +1370,25 @@ refusal is tested on a header built in the test.
 - mail-cli: the findings run v0.1.0 was recorded again at 32e5aa9, for the binary to be tagged, after the POI group was added; plaso's commit is pinned once, in scripts/findings.sh.
 - mail-cli (standards review): Actions are pinned by exact release tag, as the sibling layers pin them, replacing slice 6's SHA pins. SHA pinning would be a workspace-wide change to rolling-currency.md, not made here.
 - mail-cli: the release's build, version gate and pack live in scripts/release-pack.sh, so they run locally under shellcheck; the assets are spike-ai-pipeline-mail-<tag>-linux-x64.tar.gz and -linux-arm64.tar.gz (binary and LICENSE) and SHA256SUMS; actionlint is not added to the check.
+- email (round 1, q1): llama.cpp held at b11669 on gb10-2, awaiting verify-gb10's dated report on gb10-1. The root's upgrade takes uv 0.13.7
+  and huggingface_hub 2.4.0 only. Rejected: upgrading now, because the Gemma-4 FFN fix would change vision outputs mid-task.
+- email (round 1, q2): threads follow RFC 5256 REFERENCES (the standardized JWZ) with base-subject gathering. A message whose headers name
+  no parent links by its conversation index minus the last 5-byte block (MS-OXOMSG 2.2.1.3). Written on the standard library. Rejected:
+  gatherstars-com/jwz v1.4.0 (unmaintained, no license, TUI dependencies, outside depguard); go-imap v2 (beta, server THREAD only); headers
+  alone; the index and topic alone.
+- email (round 1, q3): the Reader streams records as an iterator while the CLI runs, and threads come from the collected keys alone.
+  Rejected: the whole store in memory.
+- email (round 1, q4): a route is decided by content signature, with the extension deciding only within ZIP or OLE2. Rejected: the stored
+  MIME type and extension.
+- email (round 1, q5): TIFF, EMF and WMF route to vision through office's picture conversion, exported additively in v0.4.0. Rejected:
+  unrouted.
+- email (round 1, q6): a by-value .msg file routes as nested. A by-value .eml is unrouted, a known limit.
+- email (round 2, 7′ b): mail v0.1.0's fixtures are copied into processing's testdata, pinned by a SHA-256 manifest, with a mise refresh
+  task. Plus one .msg built once by mail's generator from processing's .eml sources (a docx, a legacy xls, a TIFF, an EMF). The check
+  stays hermetic. Rejected: mail's fixtures alone; extending mail's fixtures in a mail v0.1.1.
+- email (round 1, q8): the finding scores the fixtures (Tika's truth), counts plaso's store, and measures time and peak memory on plaso's
+  store and the scale store.
+- email (brief): the slice order is processing's upgrade, the root's upgrade, the build, then the root's evidence 16 link.
 
 ## Pending edits
 
