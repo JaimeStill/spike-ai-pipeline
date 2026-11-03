@@ -207,7 +207,7 @@ names every by-value attachment unrouted, since no content was written to sniff.
 
 ## Progress
 
-slices 10/10 committed · standards done · spec done · editor —
+slices 10/10 committed · standards done · spec done · editor done
 
 ## Decisions
 
@@ -1389,6 +1389,32 @@ slices 10/10 committed · standards done · spec done · editor —
 - email (round 1, q8): the finding scores the fixtures (Tika's truth), counts plaso's store, and measures time and peak memory on plaso's
   store and the scale store.
 - email (brief): the slice order is processing's upgrade, the root's upgrade, the build, then the root's evidence 16 link.
+- email: the Stream holds the read's context, as sql.Rows does; Records takes none.
+- email: placeholders follow RFC 5256's pruning: one survives only as a root holding several
+  children, and a message with no references and no index parent is always a root.
+- email: a route is a string type, `email.Route`: document, office, vision, vision-converted,
+  nested, or unrouted. A by-value .msg is decided by its OLE2 signature and .msg extension, without
+  walking its MS-OXMSG streams.
+- email: office.ConvertPicture is a method on *Converter. It identifies the format by signature,
+  copies the picture into Dir, since the container runner mounts only Dir, and fails before
+  anything runs without its tool (ErrNoLibreOffice, ErrNoMagick).
+- email: mail's goldens are copied with its fixtures (4.8 MB), pinned by MANIFEST; `fixtures:mail`
+  refreshes them from the remote tag.
+- email: the built .msg carries five attachments: the four office fixtures and, by value, mail's
+  03-html-inline-image.msg as forwarded.msg, so the nested route's second read runs on real
+  content (spec review round 1 gap).
+- email: Reader.Read returns (*Stream, error) and refuses an invalid request with email.ErrRequest
+  before mail runs.
+- email: the vision tests' router client moved into internal/visiontest, built under the
+  integration tag alone, and document, office, and email share it.
+- email: tool's container leak check filters by the ffmpeg image, since office's and email's
+  LibreOffice containers run in parallel.
+- email: the findings tier has its own build tag, `findings`. A run keeps its results only when
+  EMAIL_FINDINGS_RESULTS names a directory. Peak memory is ru_maxrss, read through a relaunched
+  test binary.
+- email: gb10-2's apt upgrades were pending during the integration and findings runs, since
+  host-update needs the architect's root steps; the router, llama.cpp b11669 serving set A, was
+  untouched.
 
 ## Pending edits
 
@@ -1595,3 +1621,29 @@ slices 10/10 committed · standards done · spec done · editor —
   store), and its system time (3.2 s against 0.7 s) points at musl's allocator
   (docs/findings/mail-cli.md, "The release binary against a glibc build"); measure a replacement
   allocator if processing's email runs find the time matters.
+- coordinator · roadmap, the `email` task's summary, rewritten to what the task built:
+
+  ```
+  Package `email`: the adapter over the mail CLI at v0.1.0, pinned from its release through mise
+  and run by the exec runner, streaming schema "1" records from a pipe as typed Go values, with
+  mail's warnings and exit codes as errors. Threads rebuilt across folders by RFC 5256's
+  REFERENCES algorithm, with a message that names no parent taking its conversation index's
+  parent. Each attachment's route named by its content's signature (PDF to document, OOXML and
+  legacy office to office, PNG, JPEG, GIF, and BMP to vision, TIFF, EMF, and WMF to vision through
+  office's ConvertPicture, now exported, embedded and by-value .msg nested, anything else
+  unrouted) for the caller to run, proven against the real stages in the integration tier. A
+  findings tier scores threads and routes over mail's fixtures and times the adapter on plaso's
+  store and a 2.1 GB generated store. Tags processing v0.4.0. Evidence 16.
+  ```
+- coordinator · roadmap, the `email` task (optional): add `proof = "The check passes, processing
+  v0.4.0 is released, and docs/findings/email.md records the threads and routes against hand
+  truth, each route carried to its real stage, and the adapter's time and peak memory beside
+  mail's."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet: the v0.3.0
+  draft above gains, before its last sentence, "Its `email` package runs the spike's mail CLI over
+  .pst stores and .msg messages, streams their records as typed values, rebuilds threads by RFC
+  5256's REFERENCES algorithm with conversation-index parents, and names each attachment's stage
+  by its content's signature, for the caller to run."
+- coordinator · context/system-tools.md, "First case" (optional): "and the spike's own Open XML
+  CLI, built as a system tool" reads "and the spike's own Open XML and mail CLIs, each built as a
+  system tool".
