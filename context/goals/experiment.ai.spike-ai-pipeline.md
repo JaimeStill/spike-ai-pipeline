@@ -207,7 +207,7 @@ names every by-value attachment unrouted, since no content was written to sniff.
 
 ## Progress
 
-slices 8/10 committed · standards — · spec — · editor —
+slices 10/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
