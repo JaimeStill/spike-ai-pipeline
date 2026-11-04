@@ -28,10 +28,11 @@ each released by tag:
   processing to run as a system tool, which processing's `office` package does. Its README gives
   the CLI contract.
 - [spike-ai-pipeline-mail](https://github.com/JaimeStill/spike-ai-pipeline-mail): the mail CLI, a
-  static Rust binary that reads Outlook .pst stores, through Microsoft's outlook-pst, and .msg
-  messages, through its own MS-OXMSG reader, into JSON Lines of folders, messages with their
-  threading fields, and attachments. Outlook .ost files are refused. Processing's `email`
-  package runs it as a system tool, builds the threads, and names each attachment's stage.
+  static Rust binary that reads Outlook .pst stores, through Microsoft's outlook-pst, .msg
+  messages, through its own MS-OXMSG reader, and .eml messages and mbox files, through Stalwart's
+  mail-parser, into JSON Lines of folders, messages with their threading fields, and attachments.
+  Outlook .ost files are refused. Processing's `email` package runs it as a system tool, builds
+  the threads, and names each attachment's stage.
 - [spike-ai-pipeline-onenote](https://github.com/JaimeStill/spike-ai-pipeline-onenote): the
   OneNote CLI, a static Rust binary that reads OneNote .one sections, .onepkg exports, and
   notebook directories, through onenote_parser, into JSON Lines of sections and pages with their
