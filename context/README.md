@@ -73,7 +73,15 @@ stage by stage in real time?
     text, lists, tables, math, note tags, and a Markdown body), with images, embedded files, and
     ink (its recognized text and its strokes as SVG) routed to the stages their formats take;
     with the fields recovered against hand truth from public and authored fixtures, and each
-    input's time.
+    input's time. OneNote's
+    [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md)
+    records every expected field recovered against the public fixtures' hand-written
+    expectations: 236 of 236 over the committed sections, 138 of 138 over the committed
+    notebooks, and 129 of 129 content fields. Every committed input reads in under 10 ms and
+    4.5 MiB, and the large sections in 1.30 s at 19.5 MiB (11 MB), 0.25 s at 135 MiB (113 MB,
+    desktop format), and 0.24 s at 135 MiB (161 MB, OneDrive format), so onenote_parser issue #48
+    doesn't show at 161 MB. The authored notebook and its hand truth are planned for a later task,
+    `onenote-fixture`, and the routes to real stages for processing's `onenote` task.
 
 ## Gates
 

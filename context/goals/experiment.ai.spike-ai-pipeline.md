@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** brief ready
 - **Task:** onenote-cli
 - **Branch:** onenote-cli
 
@@ -367,7 +367,7 @@ Release       onenote v0.1.0
 
 ## Progress
 
-slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80; 11: 33e738b; 8 dropped) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
+slices 10/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80; 11: 33e738b; 10: c9d83cc, cf4d9c5; 8 dropped) · standards slice-1 pass done, slice-6 pass done, final pass done (03c52cf, 5ebeddd, 1c6dfd2) · spec done (gaps closed in e14fb92) · editor done (981dde2)
 
 ## Decisions
 
@@ -1738,8 +1738,6 @@ slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
 - onenote-cli (round 1, q2 / round 2, q1): the architect authors in OneNote for the web on Linux; no
   Windows. Desktop format rests on the public files with structural checks, no hand truth. Rejected: a
   Windows 11 evaluation VM for a desktop variant and a real .onepkg.
-- onenote-cli (round 2, q3): the web-limited authoring spec, with [try] items the architect reports on;
-  the OneDrive ZIP is delivered as downloaded.
 - onenote-cli (round 2, q3): the approved authoring spec, for OneNote for the web; [try] marks a feature the
   current web help doesn't confirm, which the architect tries and reports. Use only generated pictures and files;
   never paste a whole text container from another section (onenote_parser #39).
@@ -1786,11 +1784,12 @@ slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   can't run remotely; the router was untouched and still serves set A. This task uses no inference.
 - onenote-cli (2026-11-04, build): Schnelle Notizen.one is left out of the MPL set: a third party attached it to
   onenote.rs issue #11 with no licence grant. Ink recognition rests on handwriting_recognition.one.
-- onenote-cli (2026-11-04, build): onenote_parser println!s debug dumps on some malformed sections, so the CLI writes
-  its lines to a dup of stdout and points stdout at /dev/null (libc dup2, one unsafe call).
+- onenote-cli (2026-11-04, build): onenote_parser prints debug dumps to stdout on some malformed sections, so the CLI
+  writes its lines to a duplicate of stdout and points descriptor 1 at /dev/null (libc dup2, one unsafe call).
 - onenote-cli (2026-11-04, build): an encrypted section is refused with the parser's own "Unexpected end of file".
-- onenote-cli (2026-11-04, build): a page's title area is a `title` container first in content, since the parser
-  keeps it apart from contents(); table cells hold outline items, so lists inside a cell survive; tables carry tags.
+- onenote-cli (2026-11-04, build): a page's title area is a `title` container, first in content, since the parser
+  keeps it apart from contents(). A table cell holds outline items, so a list inside a cell survives, and a table
+  carries its tags.
 - onenote-cli (2026-11-04, build): an empty table cell is written `{}`, the one empty object the line rules allow,
   since a cell holds its position in the row.
 - onenote-cli (2026-11-04, build): ink drawings and bounds are in ink units (0.01 mm), page ink at its stroke
@@ -1810,8 +1809,8 @@ slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
 - onenote-cli (2026-11-04, build): a .onetoc2 input is named for its directory, a package for its stem; skipped is
   {"line":"skipped","kind":"section","name","reason"}; no committed notebook lists a section group, so the test
   composes one from committed samples.
-- onenote-cli: held typed-path at 0.12.4: onenote_parser 2.1.0 requires ^0.12.3 and takes its types in its API;
-  0.13.0 (2026-10-20, after the plan's currency run) waits on onenote_parser moving.
+- onenote-cli: typed-path stays at 0.12.4, since onenote_parser 2.1.0 requires ^0.12.3 and takes its types in its
+  API; 0.13.0 (2026-10-20, after the plan's currency run) waits for onenote_parser to move.
 - onenote-cli (2026-11-04, build): Markdown places an ink container by its strokes' bounds (stored offsets are 0,0),
   writes page ink once, drops PageDateTime lines (creation_time holds the time), splits lists with `<!-- -->`, treats
   a CheckBox shape as To Do, escapes mail's htmd rules plus `$`, and keeps OCR text out.
@@ -1829,6 +1828,18 @@ slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   20) scores against the public fixtures' hand-written expectations; "no authored hand truth" is a known limit; a
   later task commits an authored notebook and its truth in a v0.1.x release. Rejected: OneDrive's New menu or a
   mobile app now; holding the task in handoff.
+- onenote-cli (2026-11-04, build): the finding, from run v0.1.0, recovered every expected field: 236 of 236 in
+  sections.json, 138 of 138 in notebooks.json, and 129 of 129 in tests/fixtures/content.json, which gives content
+  fields as JSON pointers, as mail's truth does. Large OneDrive.one is 161 MB, not the brief's 113 MB, and peaks at
+  135 MiB in 0.24 s, as its desktop twin does, so #48 doesn't show on it; #48 stays a known limit.
+- onenote-cli (2026-11-04, build): content.json and the Rust content tests both hold the content values, since the
+  tests also check whole arrays that a pointer list can't express.
+- onenote-cli (2026-11-04, build): a desktop printout image with no stored extension takes its filename's extension,
+  as behavior 12 says, so PNG bytes can be named .pdf. It stays a known limit, since processing routes images by
+  signature. Rejected: sniffing image bytes for the extension in v0.1.0.
+- onenote-cli (2026-11-04, build): `mise run check` runs scripts/notices.sh, which fails when
+  THIRD-PARTY-NOTICES.md misses a crate either musl target links at runtime per Cargo.lock, or names one neither
+  links. The final review had found thiserror's notice missing.
 
 ## Pending edits
 
@@ -2063,18 +2074,32 @@ slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
 - roadmap note · spike-ai-pipeline-mail (its next task): its .claude/marathon.toml still says "No CI runs yet"
   and merges without waiting on checks, though its CI runs; office and onenote chain `gh pr checks --watch`
   before the merge (onenote-cli).
-- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task `onenote-fixture` after `onenote-cli` ("An
-  authored OneNote notebook": a notebook the architect authors in OneNote (web, mobile, or desktop), downloaded
-  from OneDrive and committed with hand truth from onenote-cli's round 2 authoring spec (goal record, Decisions,
-  "onenote-cli (round 2, q3)"), scanned for the account email before commit; its package built through cab and
-  read equal to its directory; tags onenote v0.1.x). OneNote for the web couldn't create a notebook during
-  onenote-cli (2026-11-04).
-- coordinator · roadmap, the `onenote-cli` task's summary: its fixture sentence reads "Fixtures: Interop-TestSuites'
-  OneNote files (MIT) and onenote.rs's maintainer samples (MPL-2.0), never its AGPL ones, with hand-written
-  expectations; .onepkg through packages the tests build" where it names onenote.rs's MIT samples and an authored
-  notebook (the authored notebook moves to `onenote-fixture`).
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task `onenote-fixture` after `onenote-cli`, named
+  "An authored OneNote notebook". The architect authors a notebook in OneNote (web, mobile, or desktop) and
+  downloads it from OneDrive; it is committed with hand truth from onenote-cli's round 2 authoring spec (goal
+  record, Decisions, "onenote-cli (round 2, q3)") after a scan for the account email; its package, built through
+  cab, reads equal to its directory; the task tags onenote v0.1.x. OneNote for the web couldn't create a notebook
+  during onenote-cli (2026-11-04).
+- coordinator · roadmap, the `onenote-cli` task's summary: the sentence "Fixtures: onenote.rs's MIT samples, never
+  its AGPL ones, and a notebook the architect authors in OneNote, in both variants, with hand truth." reads
+  "Fixtures: Interop-TestSuites' OneNote files (MIT) and onenote.rs's maintainer samples (MPL-2.0), never its AGPL
+  ones, with hand-written expectations; .onepkg through packages the tests build." The authored notebook moves to
+  `onenote-fixture`.
 - roadmap note · spike-ai-pipeline-onenote: OneNote section decryption waits for a specification or an open
   implementation, since [MS-ONESTORE] 2.5.19 leaves the scheme undocumented (onenote-cli, round 2 q7).
 - coordinator · roadmap, the `onenote` task: onenote_parser issue #48 (a 375 MB OneDrive-format section needs over
-  9 GB) bounds what the adapter can read, and its finding measures it (spike-ai-pipeline-onenote's
-  docs/findings/onenote-cli.md).
+  9 GB) bounds what the adapter can read. onenote's finding (spike-ai-pipeline-onenote's
+  docs/findings/onenote-cli.md) measured the 161 MB Large OneDrive.one at 135 MiB, so #48 didn't show at that
+  size, and advises the adapter to bound the CLI's memory all the same.
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-onenote` bullet, to v0.1.0: "Processing routes the
+  pages' media to their stages (evidence 17)." reads "Processing's `onenote` package is to route the pages' media
+  to their stages.", and the bullet ends with: "Its known limits: password-protected sections are refused, since
+  [MS-ONESTORE] leaves their encryption undocumented; no OneNote-written .onepkg is tested; and onenote_parser
+  issue #48 can make a large OneDrive section with a long edit history need gigabytes of memory. Its
+  [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md)
+  records every expected field recovered against the public fixtures' hand-written expectations, and its time
+  and peak memory per input (evidence 17)."
+- coordinator · roadmap, the `onenote-cli` task (optional): add `proof = "The check passes on ubuntu-24.04 and
+  ubuntu-24.04-arm, onenote v0.1.0 is released with both archives and SHA256SUMS, and
+  docs/findings/onenote-cli.md records the fields recovered per kind against the public fixtures' expectations
+  and each input's time and peak memory."`
