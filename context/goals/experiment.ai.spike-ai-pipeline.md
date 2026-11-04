@@ -182,7 +182,7 @@ Release       spike-ai-pipeline-processing v0.5.0
 
 ## Progress
 
-slices 0/8 committed · standards — · spec — · editor —
+slices 8/8 committed (1 741b15e, 2 da168b3, 3 3224fc7, 4 548cd9a, 5 200ed48, 6 520ab64 2634874, 7 54c8237, 8 root 190732c; 17 MIME inputs, 39 in all) · standards 7a33536 (checkpoint), 88f485e 76a6c2a · spec: no gaps (round 1) · editor done (processing 501ce46 94e2c6f)
 
 ## Decisions
 
@@ -1492,6 +1492,33 @@ slices 0/8 committed · standards — · spec — · editor —
   the real binary; fixtures:built stays at mail v0.1.0 and the built .msg is not rebuilt.
   Rejected: rebuilding the built .msg with an .eml stored as application/octet-stream.
 - email-mime (brief): the built .eml and mbox.rlug's five splits are read as MIME inputs.
+- email-mime (2026-11-04, build): host-update stopped on gb10-2's root steps; the architect ran the apt upgrade
+  (tailscale and nvidia userland among 28 packages) and regenerated the CDI spec, but the reboot it left pending waits
+  until the architect can log in after it. The router was untouched and serves set A loaded (all four models), so the
+  integration tier runs against it as it stands; the next session's host-update asks for the reboot.
+- email-mime (2026-11-04, build): the hermetic check reads 17 MIME inputs beside mail's 22 .pst and .msg
+  fixtures, 39 in all; the plan's 16 and 38 were an arithmetic slip. The findings tier reads 40, the
+  built .msg among them.
+- email-mime (2026-11-04, build): TestBuiltManifest no longer requires the built .msg's generator tag to
+  equal the fixture copy's tag, only that it names a tag and a full commit, since the built .msg stays
+  built by mail v0.1.0's generator while the copy moved to v0.2.0.
+- email-mime (2026-11-04, build): a MIME read's skipped attachments are tested only through the stand-in
+  mail, since mail skips a MIME attachment only when its reader panics; a real skipped message and its
+  ordinal gap are proven through the real mail on a temporary mbox (TestRealMboxOrdinals).
+- email-mime (2026-11-04, build): the nested .eml check runs after every signature, so a signature still
+  decides first (a PDF named .eml routes as a document) and v0.4.0's routes and reasons are unchanged; a
+  malformed media-type parameter is ignored, the type still read.
+- email-mime (2026-11-04, build): the integration tier reads the MIME inputs after the stores and sends
+  each picture once by content across the whole run; every MIME picture had already been sent from a
+  .pst or .msg, so the MIME inputs sent 0.
+- email-mime (2026-11-04, build): the findings run read mail's existing .state/scale set in place, not
+  regenerated: its content SHA-256 and mboxrd SHA-256 match mail's v0.2.0 records, and no generator file
+  changed between the set's build (b3f2f8b) and the tag. Results went to
+  docs/findings/email-results/mail-0.2.0/ so the first run's files stay. The .pst times are compared
+  only within one run, since the first run read the scale store from tmpfs and this one from the page
+  cache.
+- email-mime (2026-11-04, build): the standards review replaced headerShaped's byte loop with bufio's
+  ReadSlice over a 64 KiB buffer (88f485e), with the same behavior.
 
 ## Pending edits
 
@@ -1699,22 +1726,6 @@ slices 0/8 committed · standards — · spec — · editor —
   .ost, which outlook-pst doesn't read, is refused; embedded messages in a .pst are listed without
   content, since outlook-pst 1.2.0 can't read them; and every mbox is read as an mboxrd, so
   mboxcl's Content-Length is ignored and an mboxo body line that was ">From " loses its ">"."
-- roadmap note · spike-ai-pipeline-processing (its next task, `email-mime`): mail v0.2.0's
-  additions to schema "1", for the adapter to expect (mail's README, "Schema "1""):
-  - the store line's format is "eml" or "mbox" as well, with no encoding, password, or
-    display_name;
-  - an .eml gives a store line and one message line with no id and no folder, then a skipped
-    line for each unreadable attachment, which names no message;
-  - an mbox gives a store line and its messages in file order, with no folders and no folder
-    lines; each message's id is its 1-based ordinal, which can skip a number where an entry is
-    empty, and a skipped message line has kind "message" and the ordinal as its id;
-  - a MIME message has no class and no creation or modification time, and every address is
-    SMTP;
-  - message/rfc822 and message/global parts in an .eml or mbox are embedded_message, nested in
-    full, so the by-value .eml route sees only a message attached under another type, or a
-    .msg's or .pst's by-value .eml;
-  - exit 3's reason for a non-mail input is "neither a .pst, a .msg, an .eml nor an mbox";
-  - the pin and MailMinimum go to v0.2.0, whose fixtures add tests/fixtures/mime/.
 - coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task after `formats` and before
   the capstone, for a CLI in spike-ai-pipeline that runs the full document-processing suite over
   an input set (such as `~/docs`) and routes each file to its processor. It comes once every
@@ -1722,16 +1733,19 @@ slices 0/8 committed · standards — · spec — · editor —
   during mail-mime). Its name, scope, and whether it scores against truth are settled by
   `marathon plan`.
 - coordinator · roadmap, the `email-mime` task: `repos` gains `"spike-ai-pipeline"`, for evidence
-  16's sentence. In its summary, "type message/rfc822" reads "type message/rfc822 or
-  message/global".
+  16's sentence. In its summary, "by extension .eml or type message/rfc822 plus mail's header-shape
+  check, an exception to the signature rule" reads "by extension .eml or type message/rfc822 or
+  message/global plus mail's header-shape check, when its content has no routed signature".
 - coordinator · roadmap, the `email-mime` task (optional): add `proof = "The check passes,
   processing v0.5.0 is released, and docs/findings/email.md's addendum records the .eml and mbox
   threads and routes against hand truth and the adapter's time and peak memory on the scale mboxrd
   beside mail's."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet: in the pending
-  v0.4.0 sentence, "runs the spike's mail CLI over .pst stores and .msg messages" reads "runs the
-  spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files", and an attached
-  .eml is nested.
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, to v0.5.0: in the
+  pending v0.4.0 sentence, "runs the spike's mail CLI over .pst stores and .msg messages" reads "runs
+  the spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files", and "names each
+  attachment's stage by its content's signature, for the caller to run" reads "names each
+  attachment's stage by its content's signature, a by-value .eml by its name or stored type and its
+  header's shape, for the caller to run".
 - coordinator · roadmap, the `gb10-2-align` task (a note for its plan): currency now reports
   llama.cpp b12110 (v0.9.0, 2026-11-04), past the b12063 target. v0.9.0 resizes Gemma 4 images
   without letterbox padding and speeds Gemma 4 E2B/E4B prefill, so the target choice may want a
