@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** onenote-cli
-- **Branch:** onenote-cli
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -20,7 +20,7 @@
 12. [x] email
 13. [x] mail-mime
 14. [x] email-mime
-15. [ ] onenote-cli
+15. [x] onenote-cli
 16. [ ] onenote
 17. [ ] gb10-2-align
 18. [ ] audio
@@ -364,10 +364,6 @@ Door          One-way:
 
 Release       onenote v0.1.0
 ```
-
-## Progress
-
-slices 10/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80; 11: 33e738b; 10: c9d83cc, cf4d9c5; 8 dropped) · standards slice-1 pass done, slice-6 pass done, final pass done (03c52cf, 5ebeddd, 1c6dfd2) · spec done (gaps closed in e14fb92) · editor done (981dde2)
 
 ## Decisions
 
