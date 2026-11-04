@@ -207,7 +207,9 @@ Release       spike-ai-pipeline-mail v0.2.0
 
 ## Progress
 
-slices 0/7 committed · standards — · spec — · editor —
+slices 7/7 committed (e0596b2, 0d78281, 580f45f, 644bc13 + 1a52a3a, 90f13ac, b3f2f8b + ff2409a, c3a4a61; checkpoint standards pass 8a65705) · standards ✓ (523f0c1, 657af87) · spec ✓ (no gaps; two minor findings closed in 2dae9c7) · editor ✓
+
+Decided without the architect: mbox read in slice 1 (slice 4 completes it); the sender gets address type SMTP like to/cc/bcc (fixed in slice 2); repeated headers read last except Received (first); message_id, in_reply_to, references unfolded and trimmed, brackets kept; transport_headers without the closing blank line. Slice 2: bodies take only text-kind / HTML-kind parts (an HTML-only message has no body.text), joined with "\n"; inline follows Content-Disposition strictly; an unparseable message/rfc822 is listed without its message, with a warning; encoded message/rfc822 nesting raised from 3 to 16; a nested unreadable attachment warns without a skipped line, as in .msg. Slice 3: the MIME group is tests/fixtures/mime/ (eml/09-threading.eml, truth.json, sha256.json listing every other file in the group); an unknown Importance falls back to X-Priority; X-Priority reads its leading digits as one number; matching is case-insensitive; Sensitivity "Normal" is unknown (the brief names three values); Thread-Topic decodes encoded words as Subject does. Slice 4: the blank line before each separator belongs to the separator and is dropped; every separator counts toward the ordinal, and an empty entry keeps its ordinal but writes no line; the mboxrd is tests/fixtures/mime/nine.mboxrd (separator "From MAILER-DAEMON Thu Jan  1 00:00:00 1970", LF separators, CRLF messages, *.mboxrd -text), written by scripts/mboxrd.sh (mise run mboxrd) and rebuilt by a cargo test; no size check of mail's own for a message of 4 GiB or more (unparseable, skipped). Slice 5: mime4j's splits keep the blank line that RFC 4155 and mboxrd give the separator, so the rlug test drops exactly one trailing "\n" from each split before comparing every field but id; mbox.rlug is 7-bit ASCII, so it exercises no charset decoding; its source is pinned in tests/fixtures/mime/sources.json (c9847207a5aa3ce2526bfee78edf3dbae9c22e35). Slice 6: the recorded run is named v0.2.0 though the binary still prints 0.1.0 until slice 7; scale.mboxrd is compared only with the same run's scale.pst (today's pst median is 12% above v0.1.0's); scale.json records the mboxrd's SHA-256, its bytes being deterministic; no scale message needs >From quoting.
 
 ## Decisions
 
@@ -1468,6 +1470,35 @@ slices 0/7 committed · standards — · spec — · editor —
   sender, times, transport headers, bodies and inline; embedded messages to depth 16; Importance over X-Priority; the
   Sensitivity map; Thread-Index base64 to hex; the header-shape check per mbox message; mbox.rlug with its splits, LICENSE and
   NOTICE; mail-parser by caret requirement 1.0.1.
+- mail-mime (2026-11-04, build): an mbox's blank line before each separator belongs to the separator, as RFC 4155 and
+  mboxrd give it, and is dropped from the message before it. mime4j's expected splits of mbox.rlug keep it, so the rlug
+  test drops exactly one trailing "\n" from each split before comparing every field but id.
+- mail-mime (2026-11-04, build): every separator line counts toward an mbox message's ordinal; an entry with nothing
+  after its separator keeps its ordinal and writes no line, so ids are places in the file and can skip a number.
+- mail-mime (2026-11-04, build): the MIME fixture group is tests/fixtures/mime/: eml/09-threading.eml and its hand truth
+  truth.json; nine.mboxrd (separator "From MAILER-DAEMON Thu Jan  1 00:00:00 1970", LF separators, CRLF messages,
+  `*.mboxrd -text`), which scripts/mboxrd.sh writes (`mise run mboxrd`) and a cargo test rebuilds; rlug/ with mbox.rlug,
+  its five splits, LICENSE and NOTICE; sources.json, which pins mime4j at c9847207a5aa3ce2526bfee78edf3dbae9c22e35; and
+  sha256.json, which lists every other file in the group.
+- mail-mime (2026-11-04, build): a message/global part (RFC 6532) is an embedded message too, like the brief's
+  message/rfc822: method embedded_message, nested under `message` to 16 levels.
+- mail-mime (2026-11-04, build): a Sensitivity of "Normal" is unknown, left out with a warning, since the brief maps
+  only Personal, Private and Company-Confidential; a MIME message never gets sensitivity "normal".
+- mail-mime (2026-11-04, build): exit 3's reason for an input of no format mail reads is "neither a .pst, a .msg, an
+  .eml nor an mbox", where v0.1.0's was "neither a .pst nor a .msg".
+- mail-mime (2026-11-04, build): repeated MIME headers are read last, except Received, whose first gives delivery_time;
+  Message-ID, In-Reply-To and References are unfolded and trimmed, their angle brackets kept; an HTML-only message has
+  no body.text.
+- mail-mime (2026-11-04, build): an mbox message of 4 GiB or more gets no size check of mail's own; mail-parser can't
+  parse it, so it is skipped with a warning.
+- mail-mime (2026-11-04, build): findings run v0.2.0 was made at b3f2f8b, before the version was raised, so its binary
+  prints 0.1.0. Its scale.pst median, 14.82 s, is 12% above v0.1.0's 13.27 s on the same store, the spread between two
+  days' runs on the laptop, so scale.mboxrd (6.86 s) is compared only with the same run's scale.pst; v0.1.0's .pst and
+  .msg tables stand, and v0.2.0 repeated their scores exactly.
+- mail-mime (2026-11-04, build): a header's encoded words, such as a Subject's or Thread-Topic's, decode lossily with no
+  warning, since mail-parser reports no decoding problems there: the five undefined windows-1252 bytes become U+FFFD
+  silently. A body or attachment part warns. It is a known limit in mail's README and CHANGELOG; an RFC 2047 decoder of
+  mail's own stays out of scope (r1 q2).
 
 ## Pending edits
 
@@ -1642,9 +1673,11 @@ slices 0/7 committed · standards — · spec — · editor —
   peak memory."`
 - roadmap note · spike-ai-pipeline-mail (its next task): the static musl release binary takes 2.0
   to 2.3 times a glibc build's time on large stores (13.27 s against 6.51 s on the 2.1 GB scale
-  store), and its system time (3.2 s against 0.7 s) points at musl's allocator
-  (docs/findings/mail-cli.md, "The release binary against a glibc build"); measure a replacement
-  allocator if processing's email runs find the time matters.
+  store at v0.1.0, 14.82 s against 6.88 s at v0.2.0) and 1.7 times on the 2.7 GB scale mboxrd
+  (6.86 s against 4.09 s). Its system time (3.2 s against 0.7 s on the store at v0.1.0, 2.6 to 2.8 s
+  against 1.0 s on the mboxrd) points at musl's allocator (docs/findings/mail-cli.md, "The release
+  binary against a glibc build" and ".eml and mbox"); measure a replacement allocator if
+  processing's email runs find the time matters.
 - coordinator · roadmap, the `email` task (optional): add `proof = "The check passes, processing
   v0.4.0 is released, and docs/findings/email.md records the threads and routes against hand
   truth, each route carried to its real stage, and the adapter's time and peak memory beside
@@ -1657,3 +1690,35 @@ slices 0/7 committed · standards — · spec — · editor —
 - coordinator · context/system-tools.md, "First case" (optional): "and the spike's own Open XML
   CLI, built as a system tool" reads "and the spike's own Open XML and mail CLIs, each built as a
   system tool".
+- coordinator · roadmap, the `mail-mime` task (optional): add `proof = "The check passes on
+  ubuntu-24.04 and ubuntu-24.04-arm, mail v0.2.0 is released with both archives and SHA256SUMS,
+  and docs/findings/mail-cli.md records the .eml and mbox fields recovered against hand truth and
+  the scale mboxrd's time and peak memory beside the scale store's."`
+- coordinator · roadmap, the `mail-mime` task's summary (optional), to what the task built:
+  "Nested message/rfc822 parts parsed" reads "Nested message/rfc822 and message/global parts
+  parsed, to 16 levels"; "decoded as WHATWG windows-1252" reads "decoded as WHATWG windows-1252,
+  except the five bytes it leaves undefined, which become U+FFFD"; and "a generated .eml carrying
+  Thread-Index and Thread-Topic" reads "a hand-written .eml carrying Thread-Index, Thread-Topic,
+  Sensitivity, and X-Priority".
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-mail` bullet: "Two limits are
+  known: .ost, which outlook-pst doesn't read, is refused, and embedded messages in a .pst are
+  listed without content, since outlook-pst 1.2.0 can't read them." reads "Its known limits:
+  .ost, which outlook-pst doesn't read, is refused; embedded messages in a .pst are listed without
+  content, since outlook-pst 1.2.0 can't read them; and every mbox is read as an mboxrd, so
+  mboxcl's Content-Length is ignored and an mboxo body line that was ">From " loses its ">"."
+- roadmap note · spike-ai-pipeline-processing (its next task, `email-mime`): mail v0.2.0's
+  additions to schema "1", for the adapter to expect (mail's README, "Schema "1""):
+  - the store line's format is "eml" or "mbox" as well, with no encoding, password, or
+    display_name;
+  - an .eml gives a store line and one message line with no id and no folder, then a skipped
+    line for each unreadable attachment, which names no message;
+  - an mbox gives a store line and its messages in file order, with no folders and no folder
+    lines; each message's id is its 1-based ordinal, which can skip a number where an entry is
+    empty, and a skipped message line has kind "message" and the ordinal as its id;
+  - a MIME message has no class and no creation or modification time, and every address is
+    SMTP;
+  - message/rfc822 and message/global parts in an .eml or mbox are embedded_message, nested in
+    full, so the by-value .eml route sees only a message attached under another type, or a
+    .msg's or .pst's by-value .eml;
+  - exit 3's reason for a non-mail input is "neither a .pst, a .msg, an .eml nor an mbox";
+  - the pin and MailMinimum go to v0.2.0, whose fixtures add tests/fixtures/mime/.
