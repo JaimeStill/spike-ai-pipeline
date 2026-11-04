@@ -1722,3 +1722,9 @@ Decided without the architect: mbox read in slice 1 (slice 4 completes it); the 
     .msg's or .pst's by-value .eml;
   - exit 3's reason for a non-mail input is "neither a .pst, a .msg, an .eml nor an mbox";
   - the pin and MailMinimum go to v0.2.0, whose fixtures add tests/fixtures/mime/.
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task after `formats` and before
+  the capstone, for a CLI in spike-ai-pipeline that runs the full document-processing suite over
+  an input set (such as `~/docs`) and routes each file to its processor. It comes once every
+  processor task has shipped, so it has the whole suite to route to (the architect, 2026-11-04,
+  during mail-mime). Its name, scope, and whether it scores against truth are settled by
+  `marathon plan`.
