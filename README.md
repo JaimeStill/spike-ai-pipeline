@@ -32,6 +32,11 @@ each released by tag:
   messages, through its own MS-OXMSG reader, into JSON Lines of folders, messages with their
   threading fields, and attachments. Outlook .ost files are refused. Processing's `email`
   package runs it as a system tool, builds the threads, and names each attachment's stage.
+- [spike-ai-pipeline-onenote](https://github.com/JaimeStill/spike-ai-pipeline-onenote): the
+  OneNote CLI, a static Rust binary that reads OneNote .one sections, .onepkg exports, and
+  notebook directories, through onenote_parser, into JSON Lines of sections and pages with their
+  Markdown, images, embedded files, and ink. Processing's `onenote` package is to run it as a
+  system tool (tasks onenote-cli and onenote).
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
