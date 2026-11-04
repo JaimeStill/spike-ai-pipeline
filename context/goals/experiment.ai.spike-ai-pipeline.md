@@ -1824,6 +1824,11 @@ slices 8/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   cut/fill tools sit in the session scratchpad (truth-draft/); the architect authors from the sheet. A resuming
   session without that scratchpad regenerates them from the round 2 q3 spec. Slice 11 runs before 10 and 8, since it
   needs no authored fixture.
+- onenote-cli (escalation, 2026-11-04): OneNote for the web wouldn't create a notebook, so v0.1.0 ships without
+  the authored fixture. Behaviors 15 (its authored part), 17 and 18 and slice 8 are dropped; the finding (behavior
+  20) scores against the public fixtures' hand-written expectations; "no authored hand truth" is a known limit; a
+  later task commits an authored notebook and its truth in a v0.1.x release. Rejected: OneDrive's New menu or a
+  mobile app now; holding the task in handoff.
 
 ## Pending edits
 
@@ -2058,3 +2063,9 @@ slices 8/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
 - roadmap note · spike-ai-pipeline-mail (its next task): its .claude/marathon.toml still says "No CI runs yet"
   and merges without waiting on checks, though its CI runs; office and onenote chain `gh pr checks --watch`
   before the merge (onenote-cli).
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task `onenote-fixture` after `onenote-cli` ("An
+  authored OneNote notebook": a notebook the architect authors in OneNote (web, mobile, or desktop), downloaded
+  from OneDrive and committed with hand truth from onenote-cli's round 2 authoring spec (goal record, Decisions,
+  "onenote-cli (round 2, q3)"), scanned for the account email before commit; its package built through cab and
+  read equal to its directory; tags onenote v0.1.x). OneNote for the web couldn't create a notebook during
+  onenote-cli (2026-11-04).
