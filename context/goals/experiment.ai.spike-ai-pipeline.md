@@ -20,10 +20,12 @@
 12. [x] email
 13. [ ] mail-mime
 14. [ ] email-mime
-15. [ ] gb10-2-align
-16. [ ] audio
-17. [ ] streams
-18. [ ] formats
+15. [ ] onenote-cli
+16. [ ] onenote
+17. [ ] gb10-2-align
+18. [ ] audio
+19. [ ] streams
+20. [ ] formats
 
 ## Task brief · experiment.ai.spike-ai-pipeline · email
 
@@ -1438,6 +1440,21 @@ names every by-value attachment unrouted, since no content was written to sniff.
 - plan (2026-11-03, q13): the schema stays "1", additive. Rejected: "2".
 - plan (2026-11-03, q14): mail-mime's fixtures are mail's 8 generated .eml with truth.json, a generated mboxrd from them, and mime4j's
   mbox.rlug. Rejected: CPython's test_email data (real names, truth still to write).
+- plan (2026-11-03, onenote, q1): OneNote gets its own Rust layer repository, spike-ai-pipeline-onenote, with mail's setup copied.
+  Rejected: a subcommand of the mail CLI.
+- plan (2026-11-03, onenote, q2): onenote_parser 2.1 (MPL-2.0; desktop OneNote 2016+ and OneDrive files since 2.0.0) is used
+  unmodified. Rejected: an [MS-ONESTORE] reader of our own (several sessions, as [MS-PST] would have been); pyOneNote (embedded files
+  only); Apache Tika's parser (Java, text only, desktop only).
+- plan (2026-11-03, onenote, q3): inputs are .one sections, .onepkg exports, and notebook directories through their .onetoc2.
+- plan (2026-11-03, onenote, q4): ink is written as its recognized text and its strokes as SVG, which processing rasterizes through
+  magick for vision.
+- plan (2026-11-03, onenote, q5): each page at its latest revision only; the recycle bin is skipped with a warning.
+- plan (2026-11-03, onenote, q6): fixtures are onenote.rs's MIT samples, never its AGPL ones, plus a notebook the architect authors in
+  OneNote with hand truth, since no free OneNote writer runs on Linux.
+- plan (2026-11-03, onenote, q7): files only. Rejected: Microsoft Graph's OneNote API, the capstone's ingestion if anywhere.
+- plan (2026-11-03, onenote, q8): two tasks, onenote-cli (onenote v0.1.0) and onenote (processing v0.6.0), under evidence 17.
+- plan (2026-11-03, onenote, q9): the OneNote tasks run after email-mime and before gb10-2-align; audio re-tags v0.7.0, streams
+  v0.8.0, formats v0.9.0.
 
 ## Pending edits
 

@@ -65,6 +65,13 @@ stage by stage in real time?
     [email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md)
     records the threads rebuilt across folders, each attachment's route proven against its real
     stage, and the adapter's time and peak memory.
+17. OneNote notebooks: .one sections, from desktop OneNote 2016 and later and from OneDrive,
+    .onepkg exports, and notebook directories through their .onetoc2, read by the spike's OneNote
+    CLI through onenote_parser into notebooks, sections, and pages at their latest revision (rich
+    text, lists, tables, math, note tags, and a Markdown body), with images, embedded files, and
+    ink (its recognized text and its strokes as SVG) routed to the stages their formats take;
+    with the fields recovered against hand truth from public and authored fixtures, and each
+    input's time.
 
 ## Gates
 
