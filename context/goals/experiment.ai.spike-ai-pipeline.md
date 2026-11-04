@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** email-mime
+- **Branch:** email-mime
 
 ## Tasks
 
@@ -27,183 +27,162 @@
 19. [ ] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · mail-mime
+## Task brief · experiment.ai.spike-ai-pipeline · email-mime
 
 ```
-Problem       The mail CLI, v0.1.0, reads only .pst and .msg, and refuses
-              everything else with exit 3. Evidence 16 names .eml messages
-              and mbox files too, and processing's email-mime needs them in
-              schema "1" to thread and route them. No .eml or mbox reader
-              exists, and no committed fixture carries Thread-Index,
-              Thread-Topic, Sensitivity or X-Priority, or an mbox. This task
-              reads .eml and mbox through Stalwart's mail-parser 1.0.1 into
-              schema "1", additively, and tags mail v0.2.0.
+Problem       Processing's email package, v0.4.0, runs mail v0.1.0, which
+              reads only .pst and .msg. mail v0.2.0 now reads .eml messages
+              and mbox files into schema "1", additively, and evidence 16
+              names both. Processing pins and requires 0.1.0, its fixture
+              copy predates the MIME group, and its docs, tests and finding
+              cover .pst and .msg only. A by-value .eml attachment, such as
+              the one in mail's 08-forward .msg, is unrouted, a known limit
+              of v0.4.0. This task takes mail v0.2.0, threads and routes
+              .eml and mbox reads against hand truth, routes a by-value .eml
+              as nested, and tags processing v0.5.0. The Reader's API and the
+              Request's are unchanged.
 
 Behaviors
-  1.  The input is still told by its content, never its name. A .pst and a
-      .msg are recognized as before, and are checked first. A file whose
-      first line starts "From " is an mbox. A file that passes the RFC 5322
-      header-shape check (its first line a header field, and a From or Date
-      field in its header block) is an .eml. Anything else exits 3 before
-      any output, with a reason naming all four formats it reads.
-  2.  An .eml gives a store line of format "eml", then one message line,
-      then a skipped line for each attachment that can't be read. Neither
-      line has an id or a folder. An .eml mail-parser can't parse, such as
-      empty input or input of 4 GiB or more, exits 3.
-  3.  An mbox gives a store line of format "mbox", then its messages in file
-      order, with no folder line:
-      - each message's id is its 1-based ordinal in the file, and no
-        message has a folder;
-      - mboxrd is read: each quoted ">…>From " line loses one ">";
-      - mboxo is read the same way, with a caveat: a body line that was
-        ">From " to begin with also loses its ">";
-      - mboxcl and mboxcl2 are a known limit: Content-Length is ignored,
-        so an unquoted body line starting "From " starts a new message;
-      - a message that fails the header-shape check, or that mail-parser
-        can't parse, gives a skipped line of kind "message" with its
-        ordinal, and a warning, and the run exits 0;
-      - an mbox with no messages gives the store line alone.
-      Memory follows the message being read, not the file.
-  4.  A MIME message's fields fill schema "1":
-      - sender: the first From mailbox;
-      - to, cc and bcc: their mailboxes in order, groups flattened, each
-        with address type SMTP;
-      - subject: decoded from its encoded words;
-      - submit_time: Date; delivery_time: the first Received header's date,
-        to the second in UTC; the mbox separator line's date is not used;
-      - message_id, in_reply_to, references: as stored;
-      - transport_headers: the message's raw header block.
-      No class is written.
-  5.  Bodies:
-      - body.text is the text-body parts, decoded and joined in order;
-      - body.html is the HTML-body parts, decoded and joined in order;
-      - body.derived.markdown follows the same rule as for .pst and .msg:
-        made from the HTML, else from the text, with cid: images kept.
-      No RTF body is written, and no derived HTML.
-  6.  Attachments: each attachment part is one attachment record, in the
-      message's order:
-      - with --attachments, each distinct content is written once, named
-        by its SHA-256 and extension, as for .pst and .msg; without it,
-        nothing is written;
-      - method is by_value;
-      - filename, mime_type and content_id come from the part;
-      - inline is true when the part's Content-Disposition is inline;
-      - a message/rfc822 part, encoded or not, is method embedded_message,
-        with its parsed message nested under message and no file, as in a
-        .msg. Nesting stops at 16 levels: a deeper message is listed
-        without its message, with a warning.
-  7.  Charsets:
-      - parts and encoded words labelled US-ASCII or ISO-8859-1 decode as
-        windows-1252;
-      - the five bytes 0x81, 0x8D, 0x8F, 0x90 and 0x9D become U+FFFD;
-      - multi-byte charsets are decoded (feature full_encoding);
-      - any decoding problem mail-parser reports (base64 or
-        quoted-printable faults, an unknown charset, an invalid sequence)
-        gives a lossy-decoding warning naming the record.
-      .pst and .msg decoding is unchanged.
-  8.  Threading and priority headers:
-      - Thread-Index is base64-decoded and written as conversation_index in
-        lowercase hex; one that doesn't decode is left out, with a warning;
-      - Thread-Topic fills conversation_topic;
-      - importance comes from Importance, else X-Priority (1 to 2 high,
-        3 normal, 4 to 5 low);
-      - Sensitivity's personal, private and company-confidential fill
-        sensitivity as personal, private and confidential.
-      An unknown value is left out, with a warning.
-  9.  Warnings keep their one-line shape. The record a warning names is:
-      - in an .eml, "message";
-      - in an mbox, "message <n>";
-      - followed by ", attachment <n>", and by ", message" for each level
-        of nesting.
-      Exit codes 0 to 4 mean what they meant at v0.1.0.
-  10. MIME fixtures form a new group with its own hand truth and SHA-256
-      list, which the check verifies:
-      - one hand-written .eml carrying Thread-Index, Thread-Topic,
-        Sensitivity and X-Priority, with body lines starting "From " and
-        ">From ";
-      - an mboxrd of the eight generated .eml plus that one, written by a
-        shell script under a mise task; the check rebuilds it and compares
-        it byte for byte with the committed file;
-      - Apache James mime4j's mbox.rlug, with its five expected splits, its
-        LICENSE and NOTICE, and its source pinned to its commit.
-      The generator's .eml set, its manifest, and the generated .pst and
-      .msg files are untouched.
-  11. The hermetic check runs the built binary:
-      - over the eight .eml against truth.json, and over the new .eml
-        against its own truth;
-      - over the mboxrd: each message equals the CLI's read of its source
-        .eml, with ids 1 to 9;
-      - over mbox.rlug: five messages, each equal to the CLI's read of its
-        split as an .eml;
-      - over refusals: a file that is no mail, a failed header-shape check,
-        and empty input exit 3, and an mbox with an unreadable message
-        exits 0 with a skipped line;
-      - with .pst and .msg output unchanged against the goldens.
-  12. The generator's scale mode also writes its 50,000 seeded messages as
-      an mboxrd, never committed. The finding gains a section for .eml and
-      mbox:
-      - the fields recovered per kind against the hand truth;
-      - time and peak memory on the scale mboxrd beside the scale .pst,
-        median of 3 runs.
-      The run is recorded for v0.2.0.
-  13. README (usage, schema "1" additions, exit reasons, known limits),
-      capability map, STANDARDS (if a judgement call joins), and a
-      CHANGELOG v0.2.0 entry describe the change. --version prints
-      "0.2.0". The new known limits are:
-      - mboxcl and mboxcl2 Content-Length is ignored;
-      - in mboxo, a body line that was ">From " loses its ">";
-      - the five undefined windows-1252 bytes become U+FFFD.
+  1.  The Reader requires mail 0.2.0. NewReader refuses an older mail
+      with a VersionError naming the minimum 0.2.0. mise pins mail 0.2.0
+      from its release, checked against the release's digest.
+  2.  Processing's copy of mail's fixtures and goldens is mail v0.2.0's,
+      byte for byte, the MIME group included. Its manifest pins tag v0.2.0
+      and its commit, and the check verifies the copy against the manifest
+      offline. The pinned mail's version equals the copy's tag. The built
+      .msg and its manifest are unchanged, still built by mail's
+      generator at v0.1.0.
+  3.  An .eml read yields a Store of format "eml", with no encoding,
+      password or display name. It then yields one Message with no id and
+      no folder, then a Skipped record for each unreadable attachment,
+      which names no message.
+  4.  An mbox read yields a Store of format "mbox", then its messages in
+      file order. There is no Folder record, and no message has a folder.
+      Each message's id is its 1-based ordinal in the file and can skip a
+      number where an entry is empty. A message mail couldn't read is a
+      Skipped record of kind "message" whose id is its ordinal. A skipped
+      attachment's record names its message's ordinal.
+  5.  A MIME message decodes with no class and no creation or
+      modification time, and every address has type SMTP. A
+      message/rfc822 or message/global part is an embedded message,
+      nested under its attachment record in full and routed nested.
+  6.  The hermetic check reads every MIME input through the real pinned
+      mail:
+      - the eight generated .eml;
+      - the hand-written threading .eml;
+      - the nine-message mboxrd;
+      - mime4j's mbox.rlug and its five splits;
+      - the built .eml source.
+      Mail ships no goldens for these. Each read is checked against mail's
+      own stdout from the same run, each record marshalling back to its
+      line, and against hand-written record kinds, ids and skipped
+      records. The .pst and .msg reads stay checked against mail's
+      goldens. A file that is no mail is refused with exit 3 and mail's
+      reason, "neither a .pst, a .msg, an .eml nor an mbox".
+  7.  Threads over the MIME inputs match hand truth:
+      - the mboxrd threads by RFC 5256's REFERENCES: the reply and the
+        threading message sit under the first message, through a pruned
+        placeholder; the forward's missing parent is pruned to a root;
+      - mbox.rlug's reply sits under the message it names;
+      - each single-message .eml is one root.
+      A thread's ID is the mbox ordinal, or zero for an .eml.
+  8.  A by-value attachment routes nested when two things hold. First,
+      its name has the extension .eml, in any case, or its stored type,
+      parsed as a media type, is message/rfc822 or message/global. Second,
+      its content passes mail's header-shape check: its first line is a
+      header field, and a From or Date field comes before its header block
+      ends. The check reads the block line by line, as mail does, capping
+      a line at 64 KiB. A file that meets the name-or-type condition but
+      fails the check stays unrouted, with a reason saying so. An .eml
+      whose first line is an mbox "From " separator is one of these, a
+      known limit. Header-shaped content with neither the extension nor
+      the type stays unrouted. Every other route is decided as at v0.4.0.
+  9.  mail's 08-forward .msg routes its "Notes on the engine (draft).eml"
+      nested, and a second Reader read of that file yields its message.
+      Unit tests cover each condition on its own: the extension alone, each
+      type alone, a failed shape check, and the "From " first line.
+  10. Routes over every MIME input match hand truth:
+      - the picture goes to vision;
+      - the CSV and text attachments are unrouted;
+      - the forwarded message is nested under its record;
+      - the built .eml's attachments go where the built .msg's do.
+      The fixture route totals are re-recorded with 08-forward's .eml
+      nested.
+  11. The integration tier carries every MIME input's attachments to
+      their real stage. Each nested route gets its second read. Each
+      distinct picture goes to Gemma 4 26B-A4B on gb10-2's router, and
+      pictures the .msg and .pst reads already sent are not sent again.
+  12. The email finding gains an addendum, from a recorded run with mail
+      0.2.0:
+      - threads and routes over the MIME inputs against hand truth;
+      - the .pst and .msg route counts re-recorded;
+      - the adapter's time and peak memory on mail v0.2.0's scale mboxrd
+        beside mail alone, median of 3, with the scale mboxrd named like
+        the scale store, never committed.
+  13. Docs describe .eml and mbox reads and the new route: README, the
+      email package doc, the route doc, CHANGELOG v0.5.0, MailMinimum and
+      MailSpec. The known limit "a by-value .eml is unrouted" is replaced
+      by the shape-check and "From " first-line limit. The root's
+      evidence 16 gains a sentence saying processing's email finding
+      covers .eml and mbox threads and routes.
 
-Test seams    The CLI binary: an input in, JSON Lines on stdout, warnings on
-              stderr, and an exit code, as at v0.1.0. The mboxrd script's
-              output is the second seam, compared byte for byte.
+Test seams    The email package's exported surface: Reader.Read's Stream
+              of Records over the real pinned mail, Threader and Threads,
+              and Attachment.Route. The findings and integration tiers
+              drive the same surface.
 
-Slices        1. The walking skeleton: mail-parser 1.0.1 (full_encoding)
-                 joins, the content sniff gains the mbox and header-shape
-                 rules, an .eml gives its store and message lines with
-                 addresses, times and the stored threading fields, and the
-                 refusals exit 3, tested against truth.json's headers
-                 (behaviors 1, 2, 4, part of 9). Checkpoint after a
-                 standards-review pass.
-              2. Bodies, attachments, nested messages to depth 16, charsets
-                 and lossy warnings over the eight .eml, against truth.json
-                 in full (behaviors 5 to 7). Checkpoint as slice 1, without
-                 the review pass.
-              3. Threading and priority headers, the new .eml and its hand
-                 truth, and the MIME group's SHA-256 list (behavior 8, the
-                 .eml part of 10). Checkpoint as slice 2.
-              4. mbox: streaming messages with ordinal ids and skipped
-                 lines, the mboxrd script and its mise task, the committed
-                 mboxrd, its byte-for-byte rebuild in the check, and the
-                 equal-to-.eml tests (behavior 3, the mboxrd part of 10,
-                 11). Checkpoint as slice 2.
-              5. mime4j's mbox.rlug with its splits, license, notice and
-                 pinned source, and its split tests (the rlug part of 10,
-                 11). Checkpoint as slice 2.
-              6. The scale mboxrd and the findings section, with a recorded
-                 run (behavior 12). Checkpoint: the tables.
-              7. Release preparation: README, capability map, CHANGELOG
-                 v0.2.0, version 0.2.0 (behavior 13). Checkpoint as
-                 slice 2.
+Slices        1. Upgrade: mail 0.2.0 pinned, MailMinimum and MailSpec at
+                 0.2.0, the fixture copy refreshed at tag v0.2.0 with its
+                 manifest rewritten, and the existing tests passing on it,
+                 08-forward's .eml still unrouted (behaviors 1, 2).
+                 Processing's currency then exits 0. The root's currency
+                 reports only llama.cpp, which is held, so it needs no
+                 upgrade slice. Checkpoint: the check passes.
+              2. MIME reads: the MIME inputs in the hermetic check, the
+                 same-run round trip and the hand-written structure, the
+                 type docs for eml, mbox, ordinal ids and skipped records,
+                 and the refusal reason (behaviors 3 to 6). Checkpoint
+                 after a standards-review pass.
+              3. MIME threads: hand truth for the mboxrd, mbox.rlug and
+                 the .eml roots (behavior 7). Checkpoint as slice 2,
+                 without the review pass.
+              4. The nested .eml route: the extension-or-type condition,
+                 the header-shape check, its unit tests, 08-forward
+                 re-truthed to nested, and route truth for every MIME
+                 input (behaviors 8 to 10). Checkpoint as slice 3.
+              5. The integration tier over the MIME inputs, run against
+                 gb10-2 (behavior 11). Checkpoint: the run's lines.
+              6. The finding's addendum: the scale-mbox input to the
+                 findings tier, the scale set regenerated from mail
+                 v0.2.0, and a recorded run (behavior 12). Checkpoint:
+                 the tables.
+              7. Release preparation: README, doc.go, route doc,
+                 CHANGELOG v0.5.0 with the known limits (behavior 13,
+                 processing's part). Checkpoint as slice 3.
+              8. The root's evidence 16 sentence (behavior 13, the root's
+                 part). Checkpoint: the root's check passes.
               Every slice: the check passes.
 
-Out of scope  Processing (email-mime). Any change to the generator's .eml
-              set, its manifest, or the generated .pst and .msg. Reading
-              mboxcl Content-Length. Maildir, which mail-parser also reads.
-              An RFC 2047 decoder of mail's own, or exact WHATWG decoding of
-              the five bytes. Writing mail. Committing the scale mboxrd. A
-              replacement allocator for the musl build. .ost. A change to the
-              root, whose evidence 16 already names .eml and mbox.
+Out of scope  Any change to mail, its fixtures or goldens, or a mail
+              release. Rebuilding the built .msg, or moving fixtures:built
+              off mail v0.1.0. A fixture of processing's own carrying an
+              index-only parent. Routing an attached mbox, or an .eml
+              whose first line is an mbox separator. Any change to Reader
+              or Request. llama.cpp on gb10-2, which gb10-2-align moves.
+              Maildir. The suite CLI.
 
-Door          One-way for the release: tag v0.2.0 publishes the schema "1"
-              additions (store formats "eml" and "mbox", MIME field
-              mapping, mbox ordinal ids) and the binaries. The release is
-              additive only: .pst and .msg output is unchanged. Two-way
-              otherwise: code, fixtures and docs in mail, all revertible
-              before the tag.
+Door          One-way for the release: tag v0.5.0 publishes MailMinimum
+              0.2.0, which refuses mail 0.1.0, and moves a by-value
+              .eml's route from unrouted to nested. Both are additive to
+              the API. Two-way otherwise: code, tests, the finding and the
+              root's sentence can all be reverted before the tag.
 
-Release       spike-ai-pipeline-mail v0.2.0
+Release       spike-ai-pipeline-processing v0.5.0
 ```
+
+## Progress
+
+slices 0/8 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1493,6 +1472,26 @@ Release       spike-ai-pipeline-mail v0.2.0
   warning, since mail-parser reports no decoding problems there: the five undefined windows-1252 bytes become U+FFFD
   silently. A body or attachment part warns. It is a known limit in mail's README and CHANGELOG; an RFC 2047 decoder of
   mail's own stays out of scope (r1 q2).
+- email-mime: held llama.cpp at b11669: gb10-2-align moves it to b12063; b12110 (v0.9.0) resizes
+  Gemma 4 images without letterbox padding, which would shift vision outputs mid-spike. Rejected:
+  moving it in this task.
+- email-mime (round 1, q2): the nested-.eml route's stored-type condition is message/rfc822 or
+  message/global, parsed as a media type, as mail nests both. Rejected: message/rfc822 alone.
+- email-mime (round 1, q3): a by-value .eml whose first line is an mbox "From " separator fails the
+  header-shape check and stays unrouted, a known limit. Rejected: also accepting mail's mbox
+  separator.
+- email-mime (round 1, q4): the MIME inputs are checked by a same-run round trip against mail's own
+  stdout, plus hand-written record kinds, ids and skipped records. Rejected: goldens written by
+  processing; a mail v0.2.1 that ships goldens.
+- email-mime (round 1, q5): thread hand truth covers the nine-message mboxrd, mbox.rlug, and each
+  .eml as one root; the index-parent path stays covered by its unit tests and Tika's .pst.
+  Rejected: a MIME fixture of processing's own with an index-only parent.
+- email-mime (round 1, q6): the finding's addendum also times the adapter on mail v0.2.0's scale
+  mboxrd beside mail alone. Rejected: scoring the fixtures only.
+- email-mime (round 1, q7): each route condition is proven by unit tests, plus 08-forward's .msg on
+  the real binary; fixtures:built stays at mail v0.1.0 and the built .msg is not rebuilt.
+  Rejected: rebuilding the built .msg with an .eml stored as application/octet-stream.
+- email-mime (brief): the built .eml and mbox.rlug's five splits are read as MIME inputs.
 
 ## Pending edits
 
@@ -1722,3 +1721,18 @@ Release       spike-ai-pipeline-mail v0.2.0
   processor task has shipped, so it has the whole suite to route to (the architect, 2026-11-04,
   during mail-mime). Its name, scope, and whether it scores against truth are settled by
   `marathon plan`.
+- coordinator · roadmap, the `email-mime` task: `repos` gains `"spike-ai-pipeline"`, for evidence
+  16's sentence. In its summary, "type message/rfc822" reads "type message/rfc822 or
+  message/global".
+- coordinator · roadmap, the `email-mime` task (optional): add `proof = "The check passes,
+  processing v0.5.0 is released, and docs/findings/email.md's addendum records the .eml and mbox
+  threads and routes against hand truth and the adapter's time and peak memory on the scale mboxrd
+  beside mail's."`
+- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet: in the pending
+  v0.4.0 sentence, "runs the spike's mail CLI over .pst stores and .msg messages" reads "runs the
+  spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files", and an attached
+  .eml is nested.
+- coordinator · roadmap, the `gb10-2-align` task (a note for its plan): currency now reports
+  llama.cpp b12110 (v0.9.0, 2026-11-04), past the b12063 target. v0.9.0 resizes Gemma 4 images
+  without letterbox padding and speeds Gemma 4 E2B/E4B prefill, so the target choice may want a
+  fresh look.
