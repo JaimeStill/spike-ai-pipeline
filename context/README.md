@@ -64,7 +64,9 @@ stage by stage in real time?
     records the fields recovered per kind and each store's time and peak memory, and processing's
     [email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md)
     records the threads rebuilt across folders, each attachment's route proven against its real
-    stage, and the adapter's time and peak memory.
+    stage, and the adapter's time and peak memory. Its addendum for mail 0.2.0 does the same for
+    .eml messages and mbox files, scoring their threads and routes against hand truth, routing a
+    by-value .eml as a nested message, and timing the adapter on the scale mboxrd beside mail.
 17. OneNote notebooks: .one sections, from desktop OneNote 2016 and later and from OneDrive,
     .onepkg exports, and notebook directories through their .onetoc2, read by the spike's OneNote
     CLI through onenote_parser into notebooks, sections, and pages at their latest revision (rich
