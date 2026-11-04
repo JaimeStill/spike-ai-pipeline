@@ -367,7 +367,7 @@ Release       onenote v0.1.0
 
 ## Progress
 
-slices 8/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
+slices 9/10 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80; 11: 33e738b; 8 dropped) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
 
 ## Decisions
 
@@ -2069,3 +2069,12 @@ slices 8/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   "onenote-cli (round 2, q3)"), scanned for the account email before commit; its package built through cab and
   read equal to its directory; tags onenote v0.1.x). OneNote for the web couldn't create a notebook during
   onenote-cli (2026-11-04).
+- coordinator · roadmap, the `onenote-cli` task's summary: its fixture sentence reads "Fixtures: Interop-TestSuites'
+  OneNote files (MIT) and onenote.rs's maintainer samples (MPL-2.0), never its AGPL ones, with hand-written
+  expectations; .onepkg through packages the tests build" where it names onenote.rs's MIT samples and an authored
+  notebook (the authored notebook moves to `onenote-fixture`).
+- roadmap note · spike-ai-pipeline-onenote: OneNote section decryption waits for a specification or an open
+  implementation, since [MS-ONESTORE] 2.5.19 leaves the scheme undocumented (onenote-cli, round 2 q7).
+- coordinator · roadmap, the `onenote` task: onenote_parser issue #48 (a 375 MB OneDrive-format section needs over
+  9 GB) bounds what the adapter can read, and its finding measures it (spike-ai-pipeline-onenote's
+  docs/findings/onenote-cli.md).
