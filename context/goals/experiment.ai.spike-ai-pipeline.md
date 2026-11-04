@@ -367,7 +367,7 @@ Release       onenote v0.1.0
 
 ## Progress
 
-slices 7/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
+slices 8/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b; 9: 3e5ab80) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
 
 ## Decisions
 
@@ -1817,6 +1817,13 @@ slices 7/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   a CheckBox shape as To Do, escapes mail's htmd rules plus `$`, and keeps OCR text out.
 - onenote-cli (2026-11-04, build): slice 9 (CI) runs before slice 8 while the authored ZIP is awaited, and the hand
   truth is drafted from the round 2 spec in the scratchpad, committed only with the fixture in slice 8.
+- onenote-cli (2026-11-04, build): CI copies mail's workflow (checkout v7.0.1, mise-action v5.2.6, cache v6.1.0);
+  the merge waits through `gh pr checks --watch` chained before `gh pr merge`, office's form; currency gains mail's
+  Action-pin scan. No ruleset, as mail has none. Rejected: office's committed ruleset applied through gh api.
+- onenote-cli (2026-11-04, build): the authored notebook's truth draft, authoring sheet, generated assets and the
+  cut/fill tools sit in the session scratchpad (truth-draft/); the architect authors from the sheet. A resuming
+  session without that scratchpad regenerates them from the round 2 q3 spec. Slice 11 runs before 10 and 8, since it
+  needs no authored fixture.
 
 ## Pending edits
 
@@ -2048,3 +2055,6 @@ slices 7/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c64
   llama.cpp b12110 (v0.9.0, 2026-11-04), past the b12063 target. v0.9.0 resizes Gemma 4 images
   without letterbox padding and speeds Gemma 4 E2B/E4B prefill, so the target choice may want a
   fresh look.
+- roadmap note · spike-ai-pipeline-mail (its next task): its .claude/marathon.toml still says "No CI runs yet"
+  and merges without waiting on checks, though its CI runs; office and onenote chain `gh pr checks --watch`
+  before the merge (onenote-cli).
