@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** mail-mime
-- **Branch:** mail-mime
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -18,7 +18,7 @@
 10. [x] office
 11. [x] mail-cli
 12. [x] email
-13. [ ] mail-mime
+13. [x] mail-mime
 14. [ ] email-mime
 15. [ ] onenote-cli
 16. [ ] onenote
@@ -204,12 +204,6 @@ Door          One-way for the release: tag v0.2.0 publishes the schema "1"
 
 Release       spike-ai-pipeline-mail v0.2.0
 ```
-
-## Progress
-
-slices 7/7 committed (e0596b2, 0d78281, 580f45f, 644bc13 + 1a52a3a, 90f13ac, b3f2f8b + ff2409a, c3a4a61; checkpoint standards pass 8a65705) · standards ✓ (523f0c1, 657af87) · spec ✓ (no gaps; two minor findings closed in 2dae9c7) · editor ✓
-
-Decided without the architect: mbox read in slice 1 (slice 4 completes it); the sender gets address type SMTP like to/cc/bcc (fixed in slice 2); repeated headers read last except Received (first); message_id, in_reply_to, references unfolded and trimmed, brackets kept; transport_headers without the closing blank line. Slice 2: bodies take only text-kind / HTML-kind parts (an HTML-only message has no body.text), joined with "\n"; inline follows Content-Disposition strictly; an unparseable message/rfc822 is listed without its message, with a warning; encoded message/rfc822 nesting raised from 3 to 16; a nested unreadable attachment warns without a skipped line, as in .msg. Slice 3: the MIME group is tests/fixtures/mime/ (eml/09-threading.eml, truth.json, sha256.json listing every other file in the group); an unknown Importance falls back to X-Priority; X-Priority reads its leading digits as one number; matching is case-insensitive; Sensitivity "Normal" is unknown (the brief names three values); Thread-Topic decodes encoded words as Subject does. Slice 4: the blank line before each separator belongs to the separator and is dropped; every separator counts toward the ordinal, and an empty entry keeps its ordinal but writes no line; the mboxrd is tests/fixtures/mime/nine.mboxrd (separator "From MAILER-DAEMON Thu Jan  1 00:00:00 1970", LF separators, CRLF messages, *.mboxrd -text), written by scripts/mboxrd.sh (mise run mboxrd) and rebuilt by a cargo test; no size check of mail's own for a message of 4 GiB or more (unparseable, skipped). Slice 5: mime4j's splits keep the blank line that RFC 4155 and mboxrd give the separator, so the rlug test drops exactly one trailing "\n" from each split before comparing every field but id; mbox.rlug is 7-bit ASCII, so it exercises no charset decoding; its source is pinned in tests/fixtures/mime/sources.json (c9847207a5aa3ce2526bfee78edf3dbae9c22e35). Slice 6: the recorded run is named v0.2.0 though the binary still prints 0.1.0 until slice 7; scale.mboxrd is compared only with the same run's scale.pst (today's pst median is 12% above v0.1.0's); scale.json records the mboxrd's SHA-256, its bytes being deterministic; no scale message needs >From quoting.
 
 ## Decisions
 
