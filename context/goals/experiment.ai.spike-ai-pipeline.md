@@ -367,7 +367,7 @@ Release       onenote v0.1.0
 
 ## Progress
 
-slices 0/11 committed · standards — · spec — · editor —
+slices 7/11 committed (1: e8de53c; review 2b8ac30, 13a1e2a; 2: 2b8badb; 3: 93c6433; 4: deea11f; 5: 05425ab; 6: 72a68da; review 0f2f5de, 3fe14eb; 7: 51e486b) · standards slice-1 pass done, slice-6 pass done · spec — · editor —
 
 ## Decisions
 
@@ -1740,6 +1740,35 @@ slices 0/11 committed · standards — · spec — · editor —
   Windows 11 evaluation VM for a desktop variant and a real .onepkg.
 - onenote-cli (round 2, q3): the web-limited authoring spec, with [try] items the architect reports on;
   the OneDrive ZIP is delivered as downloaded.
+- onenote-cli (round 2, q3): the approved authoring spec, for OneNote for the web; [try] marks a feature the
+  current web help doesn't confirm, which the architect tries and reports. Use only generated pictures and files;
+  never paste a whole text container from another section (onenote_parser #39).
+  - Notebook "Spike Fixture", created in OneNote for the web, alone in a new OneDrive folder.
+  - Section "Text":
+    - page "Formatting": Heading 1 and 2, Normal paragraphs; bold, italic, underline, highlight, font colour, and
+      [try] strikethrough, superscript, subscript; Quote and Code styles; a web link; a link to the page "Lists";
+      accented, CJK and Arabic right-to-left text; an indented paragraph.
+    - page "Lists": bullets three levels deep; numbering nested as 1/a/i; [try] a list restarted at 5.
+    - page "Tables": a 3×3 table with a bold first row, a cell of two paragraphs, a cell with a bullet list, an
+      empty cell, a shaded cell; a second table with all borders removed.
+    - page "Tags": To Do, To Do checked, Important, Question, Remember for later, Definition, and a tag inside a
+      table cell.
+    - page "Layout": three text containers, two side by side and one below.
+    - a subpage under "Lists", and [try] a subpage under that one; an untitled page.
+    - page "Revisions": type "first", wait for it to sync, then change it to "second".
+  - Section "Media":
+    - page "Pictures": a generated PNG with alt text, a JPEG, and a PNG of printed text after "Copy Text from
+      Picture" is run on it.
+    - page "Files": [try] attach a .pdf, .docx, .txt and .csv; [try] insert the PDF as a printout.
+  - [try] Section "Ink", if a Draw tab exists: handwritten "Hello world"; a pen-and-highlighter drawing in two
+    colours; handwriting inside a text container; [try] a handwritten a²+b²=c² converted to typed math, and a
+    typed fraction. Never Ink to Text.
+  - [try] Section group "Group A" holding section "Nested", and inside it group "Inner" holding section "Deep".
+  - An empty section.
+  - One page deleted, so Deleted Notes holds it.
+  - Download the OneDrive folder as a ZIP and deliver it as downloaded.
+  - Left out, since the web can't make them: custom tags, a locked section, audio, merged or nested tables, screen
+    clippings, a .onepkg.
 - onenote-cli (round 2, q4): the session drafts truth.json from the spec; the architect reports [try]
   outcomes and departures. Rejected: the architect writing truth.json.
 - onenote-cli (round 2, q5): .onepkg is covered by MSZIP packages the tests build through cab 0.6.0's
@@ -1755,6 +1784,39 @@ slices 0/11 committed · standards — · spec — · editor —
   ids from FileIdentity and the page GUID.
 - onenote-cli (2026-11-04, build): host-update stopped at gb10-2's pending reboot, which the architect
   can't run remotely; the router was untouched and still serves set A. This task uses no inference.
+- onenote-cli (2026-11-04, build): Schnelle Notizen.one is left out of the MPL set: a third party attached it to
+  onenote.rs issue #11 with no licence grant. Ink recognition rests on handwriting_recognition.one.
+- onenote-cli (2026-11-04, build): onenote_parser println!s debug dumps on some malformed sections, so the CLI writes
+  its lines to a dup of stdout and points stdout at /dev/null (libc dup2, one unsafe call).
+- onenote-cli (2026-11-04, build): an encrypted section is refused with the parser's own "Unexpected end of file".
+- onenote-cli (2026-11-04, build): a page's title area is a `title` container first in content, since the parser
+  keeps it apart from contents(); table cells hold outline items, so lists inside a cell survive; tables carry tags.
+- onenote-cli (2026-11-04, build): an empty table cell is written `{}`, the one empty object the line rules allow,
+  since a cell holds its position in the row.
+- onenote-cli (2026-11-04, build): ink drawings and bounds are in ink units (0.01 mm), page ink at its stroke
+  coordinates plus offsets as one2html places it; transparency read as 0 opaque per ISF and one2html; colour as
+  COLORREF, none as black; ink_text is lines of {text, alternatives, language} with the raw LCID. Colour,
+  transparency, pen tip and paragraph ink have unit tests only, since no fixture holds them. Checkpoint render of
+  handwriting_recognition.one's page read correctly.
+- onenote-cli (2026-11-04, build): a math run is {"math":"display"|"inline","latex"} with no text or styling; a
+  failed parse keeps math with the LaTeX of its marker-stripped text and warns, exit 0. The port adds finl_unicode
+  1.5.1 ((MIT OR Apache-2.0) AND Unicode-DFS-2016) for general categories; the third-party notice names it too.
+  The only committed equation is a=b; Math.one is in onenote.rs's AGPL joplin/ set, a local sanity read only.
+- onenote-cli (2026-11-04, build): skipped section lines come after the notebook's entries, in report order, not
+  in their TOC place (behavior 5): onenote_parser drops a failing entry and keeps only its message. A section that
+  fails inside a section group is lost silently, since the parser discards the nested notebook's report, and a TOC
+  entry whose file is missing gets no warning, since the TOC's entries aren't public and a directory-only check
+  would break package/directory equality. All three are known limits for the README.
+- onenote-cli (2026-11-04, build): a .onetoc2 input is named for its directory, a package for its stem; skipped is
+  {"line":"skipped","kind":"section","name","reason"}; no committed notebook lists a section group, so the test
+  composes one from committed samples.
+- onenote-cli: held typed-path at 0.12.4: onenote_parser 2.1.0 requires ^0.12.3 and takes its types in its API;
+  0.13.0 (2026-10-20, after the plan's currency run) waits on onenote_parser moving.
+- onenote-cli (2026-11-04, build): Markdown places an ink container by its strokes' bounds (stored offsets are 0,0),
+  writes page ink once, drops PageDateTime lines (creation_time holds the time), splits lists with `<!-- -->`, treats
+  a CheckBox shape as To Do, escapes mail's htmd rules plus `$`, and keeps OCR text out.
+- onenote-cli (2026-11-04, build): slice 9 (CI) runs before slice 8 while the authored ZIP is awaited, and the hand
+  truth is drafted from the round 2 spec in the scratchpad, committed only with the fixture in slice 8.
 
 ## Pending edits
 
