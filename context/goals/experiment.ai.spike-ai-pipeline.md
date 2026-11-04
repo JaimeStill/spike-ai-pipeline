@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** email-mime
-- **Branch:** email-mime
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -19,7 +19,7 @@
 11. [x] mail-cli
 12. [x] email
 13. [x] mail-mime
-14. [ ] email-mime
+14. [x] email-mime
 15. [ ] onenote-cli
 16. [ ] onenote
 17. [ ] gb10-2-align
@@ -179,10 +179,6 @@ Door          One-way for the release: tag v0.5.0 publishes MailMinimum
 
 Release       spike-ai-pipeline-processing v0.5.0
 ```
-
-## Progress
-
-slices 8/8 committed (1 741b15e, 2 da168b3, 3 3224fc7, 4 548cd9a, 5 200ed48, 6 520ab64 2634874, 7 54c8237, 8 root 190732c; 17 MIME inputs, 39 in all) · standards 7a33536 (checkpoint), 88f485e 76a6c2a · spec: no gaps (round 1) · editor done (processing 501ce46 94e2c6f)
 
 ## Decisions
 
