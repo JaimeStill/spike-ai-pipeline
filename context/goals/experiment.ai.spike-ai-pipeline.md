@@ -1672,6 +1672,15 @@ Release       spike-ai-pipeline-processing v0.7.0
   15 s; Below (dB under the mean) and a fixed Threshold are exclusive. A silence ends a window only
   if it began inside the window and leaves the window audio outside its seams, so seams never
   overlap; a silence crossing the limit counts only up to it.
+- slice 3 (3187e29, processing): Splitter.Windows(ctx, WindowsRequest{Path, Dir, Concurrency},
+  Plan) yields WindowFile (Index, Count, Window, Path, SHA256, Samples) lazily in order; 16 kHz mono
+  s16 WAV named <sha>.wav; fixture windows byte-identical on both runners, within one sample of
+  the plan.
+- decided without the architect, slice 3: ffmpeg writes raw PCM to stdout and the package writes
+  the 44-byte WAV header (the container mounts only the source's directory; a piped WAV can't fill
+  its sizes), identical to ffmpeg's bitexact WAV. Only yielded windows stay in the media
+  directory. Windows re-probes and refuses a plan of another file. A failed window yields its
+  error and the stream goes on, as document does.
 
 ## Pending edits
 
