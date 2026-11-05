@@ -476,7 +476,23 @@ b11669 and stay as measured.
   default.
 - **The second run:** host-update printed `nothing changed: clone current, router at the pin,
   preset unchanged, set A loaded` (exit 0).
-- **Routing check:** (session fills in)
+- **Routing:** gb10-2's one DHCP connection, `Wired connection 1` (enP7s7, the default route),
+  sent its hostname over DHCPv4 and DHCPv6; the netplan ConnectX-7 connections are manual. The
+  architect set `ipv4.dhcp-send-hostname no` and `ipv6.dhcp-send-hostname no` and re-upped it
+  (new leases within a second), upgraded apt (ca-certificates, ca-certificates-java),
+  regenerated the CDI spec (driver 580.178.04), and no reboot was required. The routing check
+  (spike-hosting-upgrades `docs/findings/gb10-2-upgrade.md`, "The routing check"), from the laptop:
+
+  | When (UTC) | `gb10-2.lan` A | AAAA | bare name | 50 connects |
+  |---|---|---|---|---|
+  | 20:17:58, before | PRESENT | PRESENT | tailnet | 0 failed, 0 over 50 ms, max 0.0066 s |
+  | 21:45:16, after the hostname send stopped | PRESENT | PRESENT | tailnet | 0 failed, 0 over 50 ms, max 0.0050 s |
+  | 22:01:05, after the router's leases were cleared | none | none | tailnet | 0 failed, 0 over 50 ms, max 0.0071 s |
+
+  Stopping the send left the records, so the architect cleared the router's gb10-2 lines in
+  `/tmp/odhcpd.leases`, `/tmp/hosts/odhcpd.hosts.lan`, and `/tmp/dhcp.leases`, with no earlier
+  name to add; dnsmasq's start printed udhcpc's "no lease, failing", OpenWrt's check for another
+  DHCP server. The check passes.
 
 The commands, from the laptop at this repository's root unless they say gb10-2. Delivering the
 branch to the clone, which was on `main`, then host-update, the read-backs, and the probe:
