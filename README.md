@@ -20,8 +20,10 @@ each released by tag:
 - [spike-ai-pipeline-processing](https://github.com/JaimeStill/spike-ai-pipeline-processing): the
   processing layer and its system-tool adapters. It prepares content for a model before inference,
   such as a PDF's pages as corrected images, regions, and text layers, an office document's
-  model or Markdown with its pictures, or a mail store's records, threads, and attachment routes;
-  a layer above runs the inference.
+  model or Markdown with its pictures, a mail store's records, threads, and attachment routes, or
+  a OneNote page's Markdown and media. Its `dispatch` package walks an input and every part found
+  in it, attachments, media, and ZIP entries, to those stages, inspecting each part first and
+  preparing each distinct content once. A layer above runs the inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
   CLI, a NativeAOT binary that turns docx, xlsx, and pptx files into a JSON document model and
   Markdown, with chart data and embedded media in place of page images. It is built for
@@ -36,8 +38,8 @@ each released by tag:
 - [spike-ai-pipeline-onenote](https://github.com/JaimeStill/spike-ai-pipeline-onenote): the
   OneNote CLI, a static Rust binary that reads OneNote .one sections, .onepkg exports, and
   notebook directories, through onenote_parser, into JSON Lines of sections and pages with their
-  Markdown, images, embedded files, and ink. Processing's `onenote` package, which will run it as
-  a system tool, is still to come (the `onenote` task).
+  Markdown, images, embedded files, and ink. Processing's `onenote` package runs it as a system
+  tool and routes each page's media.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web

@@ -21,348 +21,255 @@
 13. [x] mail-mime
 14. [x] email-mime
 15. [x] onenote-cli
-16. [ ] onenote
+16. [x] onenote
 17. [ ] gb10-2-align
 18. [ ] audio
 19. [ ] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · onenote-cli
+## Task brief · experiment.ai.spike-ai-pipeline · onenote
 
 ```
-Problem       The spike reads mail and office documents but no OneNote.
-              Evidence 17 asks for notebooks read into their sections and
-              pages at the latest revision: rich text, lists, tables,
-              math, note tags, a Markdown body, and images, embedded files
-              and ink written out for processing's stages. The answer is
-              to be scored against hand truth and timed per input.
-              spike-ai-pipeline-onenote holds only its init commit.
+Problem       Processing reads PDFs, office documents and mail, but not
+              OneNote, and its format packages have grown into one
+              another: signature checks live in three packages, office
+              owns picture conversion email's callers need, document and
+              office each declare magick, office and email each copy the
+              CLI contract. Every route is left for the caller to run, so
+              an attachment holding an attachment is recursion every
+              caller rebuilds, with no inspection, no dedupe across
+              inputs, and a media directory that holds a whole store's
+              attachments until the read ends. An enterprise share drive
+              (large .pst stores, repeated content) needs all of that
+              without losing data. mail can't resume a store.
 
-              This task builds the OneNote CLI as a static musl Rust
-              binary over onenote_parser 2.1, used unmodified. It reads
-              .one sections in desktop and OneDrive format, .onetoc2
-              notebooks, notebook directories and .onepkg packages, and
-              writes JSON Lines of schema "1".
+              This task gives mail a record cursor (v0.3.0, released as
+              a checkpoint first). In processing it cleans up the layers
+              against those findings: `route` (identification and
+              routing for every format in the spike's inventory),
+              `picture` (conversion to PNG, SVG included, with the
+              corrections and assessment), an internal CLI contract, and
+              a written adapter convention. Then it adds an inspection
+              step, the `onenote` adapter over the CLI at v0.1.0, and a
+              dispatcher that inspects and prepares each part once per
+              content across inputs, runs and workers, recurses with no
+              default caps, holds media only until each part is
+              consumed, reads zip, and resumes. It never runs inference.
+              A finding; processing v0.6.0. The root's evidence 17 links
+              the finding.
 
-              Fixtures come from three sources:
-              - Microsoft's Interop-TestSuites OneNote files (MIT);
-              - onenote.rs's maintainer samples (MPL-2.0);
-              - a notebook the architect authors in OneNote for the web
-                under their personal Microsoft account and downloads
-                from OneDrive, with hand truth. Its author fields read
-                "Jaime Still", the architect's public name.
-              No OneNote-written .onepkg can be had without Windows, so
-              the tests build packages themselves. The task adds CI, a
-              finding, and the release onenote v0.1.0. Currency reports
-              nothing trailing, so there is no upgrade slice.
+              Currency: processing and mail current; the root's llama.cpp
+              b12110 held (email-mime). No upgrade slice.
 
 Behaviors
-  1.  Usage is `spike-ai-pipeline-onenote [--media <dir>] <input>`.
-      Arguments come in any order and are read as OsString.
-      `--version`, alone, prints the bare version, 0.1.0.
-      Exit codes:
-      - 0: read, even with skips;
-      - 1: stdout or a media file couldn't be written;
-      - 2: a usage error, with usage on stderr;
-      - 3: refused before any output;
-      - 4: a fault of the CLI's own, never reported as any other code.
-      An error is one stderr line, "spike-ai-pipeline-onenote: error:
-      <reason>". A warning is one line, "spike-ai-pipeline-onenote:
-      warning: <where>: <what>", where <where> names the section, then
-      the page, down to the record.
-  2.  The input is sniffed from its content, never its name:
-      - a CAB signature is a package;
-      - a OneStore header is a section or a notebook, as
-        onenote_parser's store type says;
-      - a directory is read through the one .onetoc2 it holds.
-      Each of these is refused with exit 3 and its own reason:
-      - a missing or unreadable input;
-      - a ZIP ("extract the OneDrive download first");
-      - a directory with no .onetoc2, or with more than one;
-      - anything else ("not a OneNote section, notebook, or package").
-      A section input that onenote_parser can't read is refused the
-      same way, with the parser's reason. A password-protected section
-      fails this way ("unexpected EOF"), a known limit. A parser panic
-      is caught and refused with exit 3 and a reason naming it.
-  3.  Each line is a JSON object whose `line` field names its kind. A
-      field with no value, and an empty list, are left out. Times are
-      ISO 8601 UTC, to the second. The same input always gives
-      byte-identical output.
-      The first line is the `notebook` line:
-      - its schema, "1";
-      - its input kind: "section", "notebook", or "package";
-      - its name: the directory's, the package's, or the section
-        file's stem;
-      - for notebook and package inputs, its id (onenote_parser's
-        FileIdentity) and its colour.
-  4.  The notebook's entries follow depth-first, in the .onetoc2's
-      order:
-      - a `section_group` line: id, parent group, path (the names from
-        the notebook root), and display name;
-      - a `section` line: id, parent group, path, display name, and
-        colour;
-      - after each section's line, its `page` lines, in the order of
-        its page series.
-      A section input gives one section line and its pages.
-  5.  A section that fails inside a notebook gets a `skipped` line of
-      kind "section" in its place, naming the section and the parser's
-      reason, and a warning; the read goes on and exits 0. Every
-      warning in onenote_parser's section and notebook reports goes to
-      stderr. A password-protected section inside a notebook is
-      skipped this way.
-  6.  A recycle bin is skipped with a warning naming it. For a
-      directory, the CLI detects it as a OneNote_RecycleBin entry
-      beside the .onetoc2. For a package, the CLI lists the cabinet's
-      entries through cab 0.6.0. Its pages are never written.
-  7.  A page line holds:
-      - id: the page's GUID;
-      - section: its section's id;
-      - level: its subpage depth;
-      - title;
-      - created and modified times;
-      - author, as stored;
-      - content;
-      - recognised ink text;
-      - markdown.
-      A page is read at its latest revision only.
-  8.  A page's content is its containers in stored order: outlines,
-      images, embedded files, and ink, each with its offsets. Outline
-      items nest as stored. A paragraph holds:
-      - its style (h1 to h6, PageTitle, Quote, Code, ...);
-      - its runs;
-      - its list marker: a bullet character, or a numbering format and
-        its restart;
-      - its note tags;
-      - its inline ink.
-      A table holds rows of cells, and a cell holds blocks.
-  9.  A run holds:
-      - its text;
-      - flags: bold, italic, underline, strikethrough, superscript,
-        subscript;
-      - its highlight and font colour, as hex;
-      - its link target.
-      Hidden runs are left out. A note tag holds its label, shape,
-      status, and completed time.
-  10. An equation, the text between OneNote's math markers, is one run
-      of kind math. It holds its LaTeX, from a port of one2html's MIT
-      math lexer, parser and LaTeX renderer that keeps one2html's
-      notice. It is display math when it is its paragraph's only
-      content, and inline math otherwise. Unit tests cover every
-      tom.h object type the port handles.
-  11. An image holds:
-      - its file;
-      - size;
-      - extension;
-      - filename;
-      - alt text;
-      - OneNote's own text from the picture;
-      - hyperlink;
-      - printout page number.
-      An embedded file holds its file, filename, type ("audio",
-      "video", or none), and size. An image or embedded file whose
-      data is missing or invalid has no file, keeps its other fields,
-      and gives a warning.
-  12. With --media, each distinct content is written once into the
-      directory, created if missing. Its name is the lowercase hex
-      SHA-256 of its bytes, plus "." and the stored extension when
-      that is 1 to 8 ASCII letters and digits. The stored extension is
-      the image's own, else its filename's; an embedded file's is its
-      filename's; ink's is "svg". Files are written before the line
-      that names them. Without --media nothing is written to disk, and
-      the names are still in the model. Stored filenames are never
-      used as paths.
-  13. Ink is written as SVG by the CLI's own code:
-      - one SVG per page, of all its page-level ink at its offsets;
-      - one SVG per paragraph that holds inline ink.
-      Each stroke is a path with its colour, width and transparency.
-      An ink record names its file, its stroke count and its bounds.
-      A page's recognised text is its recognition's lines of words,
-      each word with its best guess, its alternatives and its
-      language.
-  14. A page's markdown:
-      - Containers in position order: top to bottom, then left to
-        right.
-      - The title as `#`; an hN paragraph one level down, capped at 6.
-      - Bold `**`, italic `*`, strikethrough `~~`, links `[text](url)`.
-        Underline, highlight, colour, superscript and subscript are
-        kept as plain text.
-      - Code paragraphs fenced; Quote and Citation as `>`.
-      - Lists nested, numbered from their restart.
-      - To Do tags as `[ ]` and `[x]` task items; other tags as a
-        `[Label]` prefix.
-      - Tables as GFM, the first row as the header, a cell's blocks
-        joined by `<br>`.
-      - Math as `$…$` and `$$…$$`.
-      - Images as `![alt](file)`, files as `[filename](file)`, ink as
-        `![ink: <recognised text>](file)`.
-      - Literal text escaped as mail's Markdown is.
-      The renderer has unit tests of its own, apart from the fixtures.
-  15. A package reads like its notebook directory. Tests build MSZIP
-      packages in memory through cab 0.6.0's writer, from the authored
-      notebook and from onenote.rs's recycle-bin notebook. Each read
-      must equal the directory's read in every line but the notebook
-      line's input kind, the recycle-bin warning included. That no
-      OneNote-written package is tested is a known limit.
-  16. The public fixtures are pinned by commit and listed by SHA-256,
-      each set with its LICENSE beside it:
-      - Interop-TestSuites' small MIT OneNote files, at fe87ed32;
-      - onenote.rs's MPL-2.0 samples, at v2.1.0 (727389a);
-      - never Joplin's AGPL samples.
-      Every file reads as hand-written structural expectations say:
-      exit code, line kinds, sections, pages, titles, content kinds and
-      their counts, skipped sections, recognised words. Interop's
-      Encryption.one is refused with exit 3, and a notebook holding it
-      skips it.
-  17. The authored notebook is the architect's OneDrive download of
-      "Spike Fixture", authored under their personal Microsoft account.
-      The ZIP is committed as delivered and its extracted directory
-      beside it, both listed by SHA-256, with no byte patched. Its hand
-      truth was drafted from round 2's authoring spec, then cut to the
-      [try] items the architect reports as made and corrected for each
-      departure the architect lists. Every page's author is "Jaime
-      Still". Its directory read matches the truth field by field:
-      structure, page fields with author, runs, lists, tables, tags,
-      math LaTeX, media names and sizes, ink records, and markdown. Its
-      ZIP is refused with exit 3.
-  18. Before the authored fixture is committed, every file in it, the
-      ZIP's entries included, is scanned for the architect's account
-      email address, in UTF-8 and in UTF-16LE. A hit stops the commit.
-      The display name "Jaime Still" is expected and is not scanned
-      for. The account's CID, which OneDrive-format files carry in a
-      Windows Live resolutionId block, is kept as downloaded by
-      decision. The scan lists its hits in the fixture's manifest and
-      doesn't stop the commit for them.
-  19. CI runs `mise run check` on every pull request into main and
-      every push to main, on ubuntu-24.04 and ubuntu-24.04-arm, with
-      Actions pinned by exact release tag, and the merge waits on it.
-      The release runs on a pushed tag vX.Y.Z:
-      - each architecture's binary is built natively;
-      - packing is refused unless --version matches the tag;
-      - spike-ai-pipeline-onenote-<tag>-linux-x64.tar.gz and
-        -linux-arm64.tar.gz each hold the binary, LICENSE and the
-        third-party notice;
-      - the release is created as a draft, SHA256SUMS added, then
-        published.
-      The third-party notice names onenote_parser under MPL-2.0 with
-      its source repository, and one2html's MIT notice for the ported
-      math code.
-  20. The finding records, from a recorded run of the static musl
-      release binary:
-      - against the authored notebook's truth: the fields recovered
-        per kind;
-      - against the public fixtures' expectations: the structural
-        checks;
-      - for every committed input, and for Interop's LargeData.one and
-        onenote.rs's Large Desktop.one and Large OneDrive.one (fetched
-        at their pinned commits, never committed): time and peak
-        resident memory, median of 3.
-      Large OneDrive.one's figure shows onenote_parser issue #48 at
-      that size.
-  21. README, CHANGELOG v0.1.0 and the README's schema "1" tables
-      describe the contract above. The known limits:
-      - password-protected sections;
-      - no OneNote-written package tested;
-      - no desktop-format hand truth;
-      - no merged table cells;
-      - page history not read;
-      - parser issues #39, #48 and #50.
-      The goal record's pending edits gain three items:
-      - the roadmap's onenote-cli fixture wording: "Fixtures:
-        Interop-TestSuites' OneNote files (MIT) and onenote.rs's
-        maintainer samples (MPL-2.0), never its AGPL ones, and a
-        notebook the architect authors in OneNote for the web,
-        downloaded from OneDrive, with hand truth; .onepkg through
-        packages the tests build";
-      - a roadmap note: OneNote section decryption waits for a
-        specification or an open implementation, since [MS-ONESTORE]
-        2.5.19 leaves the scheme undocumented;
-      - the roadmap's onenote task: onenote_parser issue #48 (a 375 MB
-        OneDrive-format section needs over 9 GB) bounds what the
-        adapter can read, and its finding measures it.
+  mail (spike-ai-pipeline-mail)
+  1.  `--after <id>` resumes a .pst after a message node id and an
+      mbox after a 1-based ordinal. Folder lines are always written.
+      A .msg or .eml refuses it with exit 2; an id not in the store is
+      refused with exit 3. A resumed read equals the tail of a whole
+      read, byte for byte; a .pst skips without opening messages.
+  2.  README, CHANGELOG v0.3.0, the mail-cli finding's resume timing on
+      the scale store, and the v0.3.0 release.
 
-Test seams    The built binary: its stdout lines, stderr, exit code,
-              and media directory, driven by tests against the real
-              fixtures. The Markdown renderer and the math port also
-              have unit tests over their own inputs. The findings run
-              drives the same binary.
+  Processing: lower layers
+  3.  `route` (standard library only) identifies content by signature:
+      PDF; PNG, JPEG, GIF, BMP; TIFF, EMF, WMF; SVG; HEIC, WebP, AVIF;
+      ZIP and OLE2 by extension; ODF; RTF; OneStore and MSCF; WAV,
+      FLAC, MP3, Ogg, M4A; MP4, MKV, WebM, AVI; gzip, zstd, 7z;
+      executables (PE, ELF, Mach-O, shebang); text by extension or BOM;
+      the .eml rule kept. File(path, name, mimeType) returns a route
+      and reason: document, office, vision, vision-converted, nested,
+      onenote, archive, audio, video, text, unrouted. email's v0.5.0
+      routes and reasons are unchanged for every fixture.
+  4.  `picture` converts TIFF, EMF, WMF and SVG to PNG named by the
+      original's SHA-256 (SVG at 150 dpi flattened on white; each
+      picture in its own directory, so external references don't
+      resolve; no lossy re-encode), and holds the corrections, their
+      catalog and Assess, and the magick and LibreOffice specs. office
+      and document call it; their outputs are byte-identical to v0.5.0
+      on every fixture. ~/docs' script-bearing.svg converts with no
+      script run.
+  5.  office, email and onenote share one internal CLI contract (exit
+      codes 1 to 4 as shared sentinels, ExitError, the stderr warning
+      reader, limitedBuffer, spool); errors.Is matches a refusal from
+      any of them through any package's ErrRefused.
+  6.  The README records the adapter convention (Spec and Minimum,
+      Config, a constructor refusing a missing or old Tool, Request
+      with a media directory, typed exit errors, warnings, SHA-256
+      media, iter.Seq2 streaming, a route per part) and each
+      package's deviation. email.Route, office.ConvertPicture and its
+      request, document.Corrector and kin, and both MagickSpecs move
+      without aliases, each listed in the CHANGELOG.
 
-Slices        1. Contract and structure:
-                 - the CLI surface, input sniffing and refusals;
-                 - notebook, section and page lines over a .one input;
-                 - the public fixture sets with their pins, licences
-                   and SHA-256 lists;
-                 - the structural expectations for single sections.
-                 Behaviors 1 to 4, 7 (fields other than content), 16
-                 (sections). Checkpoint after a standards-review pass.
-              2. Rich text: paragraphs, runs, lists, tables and note
-                 tags in the model (behaviors 8, 9). Checkpoint: the
-                 check passes.
-              3. Media: images and embedded files, --media and SHA-256
-                 naming (behaviors 11, 12). Checkpoint as slice 2.
-              4. Ink: page and paragraph SVGs, and recognised text
-                 against the MPL handwriting samples (behavior 13).
-                 Checkpoint: the SVGs of handwriting_recognition.one
-                 for the architect to view.
-              5. Math: the one2html port, math runs, and its unit tests
-                 (behavior 10). Checkpoint as slice 2.
-              6. Notebooks:
-                 - .onetoc2 and directory inputs, section groups and
-                   skipped sections;
-                 - the recycle-bin warning;
-                 - .onepkg through cab, with test-built packages from
-                   the MPL notebook;
-                 - the structural expectations for notebooks.
-                 Behaviors 4 to 6, 15 (MPL part), 16. Checkpoint after
-                 a standards-review pass.
-              7. Markdown: the renderer and its unit tests (behavior
-                 14). Checkpoint: the Markdown of the MPL samples for
-                 the architect to read.
-              8. The authored fixture. BUILD pauses here until the
-                 architect delivers the OneDrive ZIP of "Spike Fixture"
-                 and the [try] report (round 1 q5; round 2 q3, q4).
-                 Then:
-                 - the truth is cut and corrected from the report;
-                 - the email scan runs before any fixture commit;
-                 - the directory read is checked against the truth,
-                   with the test-built package from it and the ZIP's
-                   refusal.
-                 Behaviors 15, 17, 18. Checkpoint: the truth diff and
-                 the scan's output for the architect.
-              9. CI on both runners, with the merge waiting on it
-                 (behavior 19, CI part). Checkpoint: the pull request's
-                 checks pass on both.
-              10. The finding: the findings run, its fetched large
-                 inputs, and a recorded run (behavior 20). Checkpoint:
-                 the tables.
-              11. Release preparation: the release workflow and pack
-                 script, the third-party notice, README, CHANGELOG
-                 v0.1.0, the known limits, and the pending-edit entries
-                 (behaviors 19, release part, and 21). Checkpoint after
-                 a standards-review pass.
+  Processing: inspection
+  7.  Every part is inspected before its stage, on the standard
+      library, each finding a flag with its check, class and evidence.
+      Active content, flagged and still processed: a signature that
+      disagrees with the extension; a polyglot; executable content or
+      an executable or double extension; OOXML vbaProject.bin, ActiveX
+      parts, oleObject embeddings and external relationships; PDF
+      /JavaScript, /JS, /OpenAction, /AA, /Launch, /EmbeddedFile,
+      /RichMedia, /XFA, /Encrypt (hex-escaped forms included); SVG
+      <script>, on* attributes, external hrefs, foreignObject.
+      Unsafe to read, quarantined (no stage runs, content kept, the
+      part yielded "quarantined" with its evidence): a zip entry name
+      with "..", an absolute path or a drive letter; a symlink entry;
+      a zip entry past both 1,000:1 and 1 GiB expanded. A caller
+      policy overrides any check.
+  8.  ~/docs' hazard inputs (javascript.pdf, script-bearing.svg, the
+      macro files, the archive set, malformed PDFs) each yield their
+      expected flags; the clean fixtures yield none.
+
+  Processing: onenote
+  9.  onenote runs the CLI, pinned from its v0.1.0 release through
+      mise, on the exec runner; refuses a missing Tool or one older
+      than 0.1.0, and a bad Request with ErrRequest before anything
+      runs. Records yields Notebook, SectionGroup, Section, Page,
+      Skipped and Unknown values while the CLI runs, one line at a
+      time. A schema other than "1" is ErrSchema; exits 1 to 4 are an
+      ExitError; warnings come back without their prefix.
+  10. All of schema "1"'s content is typed (containers, items, blocks,
+      paragraphs, runs incl. math, tables, images, embedded files, ink,
+      recognised words). A same-run round trip of every fixture equals
+      the CLI's stdout. A page's markdown is the CLI's, links untouched.
+  11. A page's Media iterates every image, embedded file and ink record
+      wherever it sits (container, outline block, table cell,
+      paragraph), with its content path when a media directory was
+      given, routed by route.File; ink vision-converted; recordings
+      audio.
+  12. onenote v0.1.0's public fixtures and expectations are copied into
+      processing under a SHA-256 manifest, with a fixtures:onenote
+      refresh from the tag; the check verifies them offline. ~/docs
+      gains a onenote area (the public sets and the three large
+      inputs) in MANIFEST.json with source, pin, licence and SHA-256.
+
+  Processing: dispatcher
+  13. Dispatch takes an input, the caller's stages and an index, hashes
+      the input before any stage runs, and yields events depth-first:
+      each Part (path, name, size, SHA-256, route and reason, flags,
+      parent, depth, where found) with its outcome (prepared, no
+      processor yet, seen, cycle, quarantined, encrypted, failed, and
+      limited only under a cap the caller set) and its stage's
+      outputs. It recurses into email's attachments and embedded
+      messages, onenote's media, office's media and zip entries, and
+      never calls a model.
+  14. Stages are an exported interface; adapters for document, office,
+      picture, email, onenote and zip ship in the dispatcher package;
+      a caller may register its own.
+  15. No count, byte or depth cap applies by default; a caller may set
+      any. A part whose SHA-256 equals an ancestor's is "cycle".
+  16. The index is an exported, content-addressed interface: outputs
+      keyed by SHA-256 plus stage identity (name, tool version,
+      configuration hash), flags by SHA-256 alone; look up, record,
+      claim and wait. Content the index holds is "seen", carrying the
+      recorded outputs and flags by the caller's keys, and is neither
+      inspected nor prepared again. A claimed content in flight makes
+      a second dispatch wait for its outputs. Shipped: an in-memory
+      index, and a file-backed one on the standard library (one record
+      per key in a caller-named directory, atomic rename, exclusive
+      claim files reclaimed after a stale timeout).
+  17. Each part's content file is removed once the caller's loop moves
+      past its event unless the caller kept it; disk stays near one
+      record's media in flight, mail held back through its pipe.
+  18. Zip through archive/zip one entry at a time; entries written by
+      SHA-256, names never used as paths; encrypted entries
+      "encrypted"; Unicode names kept. ~/docs' zip-in-zip,
+      unicode-filenames, password-protected and high-ratio (at a test
+      threshold) inputs read as expected.
+  19. A pool dispatches an iterator of inputs over N workers sharing
+      one index, merging events with each input's identity.
+  20. email's Request gains After, passed to mail; the Threader saves
+      and restores its keys. A resumed read's threads equal a whole
+      read's.
+
+  Proof and release
+  21. The integration tier runs every fixture through Dispatch against
+      the real stages (office, document, email, picture then vision on
+      gb10-2, zip), each route checked against hand route truth.
+  22. The finding records, from recorded runs: routes against hand
+      truth; inspection flags over ~/docs' hazards; vision's reading of
+      handwriting_recognition.one's ink against a hand transcription
+      beside OneNote's stored recognition, 3 greedy runs; the onenote
+      adapter's time and peak memory beside the CLI alone on
+      LargeData.one, Large Desktop.one and Large OneDrive.one; the
+      dispatcher over mail's 2.1 GB scale store (peak memory, peak disk
+      with removal on and off, time beside email alone); a resume run
+      (stopped midway, resumed by cursor, against a whole read); the
+      concurrent run (1, 2, 4, 8 workers over plaso's store, the scale
+      store, a byte copy of it and mail's fixtures, one file-backed
+      index: throughput, dedupe hits, peak memory and disk). Known
+      limits: OneNote for the web can't export a notebook, so there is
+      no authored OneNote truth; the CLI's memory unbounded (#48);
+      mail's .eml cap at 4 GiB and .msg nesting cap at 16; office's
+      whole-document model; the Threader's memory per message; legacy
+      OLE2 macros undetected; routes without a processor yet.
+  23. README, package docs, CHANGELOG v0.6.0. Pending edits: the
+      onenote task's repos become mail, processing and root; formats
+      gains text, xlsb, WordPerfect, ODG, tar, gzip, zstd, 7z and OLE2
+      macro detection, and loses zip; audio gains the audio route's
+      processor; onenote-fixture dropped, with a backlog note for an
+      authored notebook (desktop OneNote on Windows or a Mac); the
+      onenote README's stale "later release" line; ai-strategy's
+      processing and onenote bullets; roadmap notes for ClamAV as a
+      potential future check, a tool-wide memory limit, mail's .msg
+      nesting past 16, office per-sheet output, and Threader spilling.
+      The root's evidence 17 links the finding.
+
+Test seams    mail's built binary over its fixtures, whole against
+              resumed; route.File and Identify over signature samples;
+              picture on the real magick; the inspector over ~/docs'
+              hazards; onenote's Reader over the real pinned binary and
+              a stand-in for exits 1 to 4; Dispatch and the pool over
+              the fixtures, the main seam, which the integration and
+              findings tiers drive too.
+
+Slices        1.  mail cursor (behavior 1).
+              2.  mail v0.3.0 (behavior 2). Checkpoint: a mail checkpoint
+                  brief; on the architect's acceptance, mail's branch is
+                  published, merged and tagged v0.3.0, ahead of SHIP.
+              3.  route (3, 6 part).
+              4.  picture (4, 6 part). Checkpoint: the ink PNG.
+              5.  Internal CLI contract and README convention (5, 6).
+                  Standards-review pass over 3 to 5.
+              6.  Inspection (7, 8). Checkpoint: the flags over ~/docs'
+                  hazards.
+              7.  onenote contract and stream, fixtures copied, ~/docs
+                  area (9, 12).
+              8.  onenote typed content and round trip (10).
+              9.  Page media and routes (11).
+              10. Dispatcher: Part, events, stage interface, adapters,
+                  top-level hashing, index (memory and file, claims),
+                  cycle, seen, release after consumption (13 to 17).
+                  Standards-review pass.
+              11. Zip stage (18, quarantine rules of 7).
+              12. Pool and resume: pool, email After, Threader save and
+                  restore, pinning mail v0.3.0 (19, 20).
+              13. Integration tier on gb10-2 (21). Checkpoint: the
+                  routes-to-stages log.
+              14. Finding (22); the scale store and its copy generated
+                  outside any checkout. Checkpoint: the tables.
+              15. Release preparation (23, processing). Standards-review
+                  pass.
+              16. Root: evidence 17's link (23, root).
               Every slice: the check passes.
 
-Out of scope  Microsoft Graph and any network read by the CLI. Writing
-              OneNote files. Patching or rewriting fixture bytes.
-              Decrypting password-protected sections, and any
-              --password option. Page history and conflict pages.
-              Reading ZIPs. Merged table cells, which onenote_parser
-              doesn't expose. Desktop-format hand truth and a
-              OneNote-written .onepkg. Any change to onenote_parser or
-              one2html, or reporting upstream. Processing's onenote
-              adapter. The root repository and gb10-2.
+Out of scope  Any inference in processing. Processors for audio, video,
+              text, ODF, RTF, HEIC/WebP/AVIF, xlsb, WordPerfect, ODG,
+              tar, gzip, zstd, 7z. OLE2 macro detection, oletools,
+              ClamAV. Running macros or scripts, ever. A cursor for
+              onenote or office. Office per-sheet streaming; Threader
+              spilling; a tool memory bound. Chunking content for
+              embeddings (the capstone's chunker). The authored OneNote
+              notebook and any onenote release. Microsoft Graph.
+              Rewriting fixture bytes. gb10-2 changes.
 
-Door          One-way:
-              - The tag v0.1.0 publishes schema "1", which processing's
-                onenote task pins.
-              - The authored fixture, once pushed, can't leave the
-                history without a rewrite. It carries the architect's
-                public name and its account CID by decision, and the
-                email scan guards against more.
-              Two-way otherwise: code, tests, fixtures before their
-              push, the finding and the docs can all be reverted before
-              the tag.
+Door          One-way: mail v0.3.0, published at slice 2's checkpoint by
+              the architect's decision (round 5, answer 6), ahead of the
+              session brief; processing v0.6.0, which publishes the
+              moved APIs and the dispatcher's contract. Two-way
+              otherwise.
 
-Release       onenote v0.1.0
+Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 ```
 
 ## Decisions
@@ -1836,6 +1743,48 @@ Release       onenote v0.1.0
 - onenote-cli (2026-11-04, build): `mise run check` runs scripts/notices.sh, which fails when
   THIRD-PARTY-NOTICES.md misses a crate either musl target links at runtime per Cargo.lock, or names one neither
   links. The final review had found thiserror's notice missing.
+- onenote (round 1, q1→r2 q1): signature routing moves from email into a stdlib-only `route` package used by email, onenote, picture and office. Rejected: exporting from email; copying.
+- onenote (r1 q2→r2 q2): picture conversion to PNG (TIFF, EMF, WMF, SVG) moves from office into a `picture` package; image conversion is not office's concern. Rejected: SVG added to office.
+- onenote (r1 q3): ink and SVG rasterize at 150 dpi flattened on white. Rejected: 300 dpi.
+- onenote (r1 q4, r3 q2): recordings get the named `audio` route with "no processor yet" until the audio task.
+- onenote (r1 q5): all of schema "1"'s content is typed. Rejected: top-level fields with raw JSON.
+- onenote (r1 q6): onenote v0.1.0's public fixtures are copied into processing under a SHA-256 manifest with a refresh task, and mirrored into ~/docs. Rejected: fetching at test time.
+- onenote (r1 q7): no memory bound on the OneNote CLI; #48 a known limit, roadmap note for a tool-wide limit.
+- onenote (r1 q8): ink scored by vision against a hand transcription beside OneNote's stored recognition, 3 greedy runs.
+- onenote (r1 q10): the root's evidence 17 links the finding in this task.
+- onenote (r2 q3): document's corrections and Assess move into `picture`.
+- onenote (r2 q4): one internal CLI-contract package for office, email and onenote; exported errors unchanged.
+- onenote (r2 q5): the lower-layer cleanup leads this task rather than a task of its own (architect: no context rebuild).
+- onenote (r2 q6): ~/docs gains a onenote area holding the public sets and the three large inputs.
+- onenote (r3 q1): processing gains a dispatcher that runs each part's preparation stage and recurses; no inference. Rejected: caller-run recipe.
+- onenote (r3 q2): `route` names a route for every format in the inventory, "no processor yet" where none exists.
+- onenote (r3 q3, q4): no processors pulled forward; text, xlsb, WordPerfect, ODG, tar, gzip, zstd, 7z added to formats.
+- onenote (r3 q5, r4 q1, q2): a written adapter convention, plus an exported stage interface and a shared Part type in the dispatcher. Rejected: one interface every format package implements.
+- onenote (r3 q6, r6 q1): onenote-fixture was folded in, then dropped: OneNote for the web offers no download or export of a notebook. Backlog note: an authored notebook needs desktop OneNote on Windows or a Mac. No onenote v0.1.1.
+- onenote (r4 q6): zip recursion moves from formats into this task.
+- onenote (r4 q7): every SVG converts to PNG through picture.
+- onenote (r5 q1, q2): no count, byte or depth cap by default; caller-settable. Rejected: 10,000 parts, 1 GiB, depth 16 (data loss on enterprise stores).
+- onenote (r5 q3, r6 q2, q5): unsafe means unsafe to read: zip entries escaping their directory, symlink entries, the bomb rule (past both 1,000:1 and 1 GiB) and cycles are quarantined, recorded and recoverable. Active content (macros, ActiveX, OLE embeddings, external relationships, PDF JavaScript and actions, SVG scripts, executables, mismatched or double extensions, polyglots) is flagged and still processed, since no stage executes it. Rejected: quarantining scripted content.
+- onenote (r5 q4): each part's content file is removed once consumed unless the caller keeps it.
+- onenote (r5 q5, r6 q6–q9): a caller-supplied content-addressed index, keyed by SHA-256 plus stage identity (flags by SHA-256 alone), checked for top-level inputs too; in-memory and file-backed indexes ship; PostgreSQL is the capstone's.
+- onenote (r5 q6, r6 q10, q11): mail gains `--after <id>` in v0.3.0, released as a checkpoint before processing's changes; processing resumes by cursor plus restored Threader keys plus the index.
+- onenote (r5 q7, r6 q14): the finding measures the dispatcher on mail's scale store and concurrently at 1, 2, 4, 8 workers.
+- onenote (r6 q3): OLE2 macro detection deferred to formats. Rejected: oletools (an unmaintained Python dependency is a maintenance liability, unlike a stable Rust crate).
+- onenote (r6 q4): ClamAV excluded; roadmap note as a potential future addition.
+- onenote (r6 q12, q13): the index claims content in flight so concurrent dispatches never duplicate work; processing offers a pool over N workers.
+- onenote (build): mail's `--after` always writes folder lines, accepts a cursor naming a message the whole read skips, exits 3 on an unreadable mbox entry before the cursor, and refuses .msg and .eml after sniffing.
+- onenote (build): `route` changes v0.5.0's "unrouted" to text for two email attachments (отчёт.csv, note-g.txt). A ZIP with neither OOXML nor ODF is archive, ODF is told by its mimetype entry, .pst and mbox are nested, tar is archive, and WordPerfect, .xlsb, and an OLE2 EncryptedPackage named as OOXML or .xlsb are office's, the last coming out encrypted. HTML is unrouted until the capstone takes web content; a text-extension file starting "From " stays text.
+- onenote (build): `picture`'s outputs equal goldens recorded before the move, byte for byte. An SVG inside an office document passes on as stored; only picture.Convert converts SVG. A batch whose pictures share a PNG stem is refused.
+- onenote (build): each adapter keeps its own ExitError type over internal/cli's shared sentinels, so office's code-1 text is now "not written"; one LimitedBuffer replaces document's and picture's copies.
+- onenote (build): `inspect` flags encryption as active, adds /EmbeddedFiles, /EF, an XLM macro-sheet check, and linked-picture relationships (hyperlinks excepted), quarantines a ZIP whose central directory can't be read, skips polyglot checks for container and text kinds, and leaves members to the dispatcher. Unchecked: legacy OLE2 macros, ODF scripts, and PDF names inside compressed object streams.
+- onenote (build): `onenote` keeps ink and ink_text as top-level fields, unknown variants in one shared Unknown, and drops unknown fields inside known kinds; its Float reproduces serde_json's float32 formatting, so the round trip is byte for byte. An ink container is no medium, since page ink draws its strokes. A recording's signature routes before the CLI's type, so an executable typed audio stays unrouted.
+- onenote (build): `dispatch` yields a part's event after its subtree's, so the outcome is final; checks a cycle before the index and gives it its own "cycle" outcome; keeps quarantined parts unrecorded; gives Encrypted when a stage fails on content flagged encrypted; records a part only when its subtree finished, else releases the claim. File-index claims are never renewed, so Stale must outlast the slowest stage. Known limits: two dispatches each holding content the other contains wait on each other until their contexts end; a stale-claim takeover can prepare content twice.
+- onenote (build): the caller fills each adapter's tool version (dispatch.Versions), and the adapter's version is in the configuration hash. office asks for Markdown only; a missing tool is no processor; a failed PDF page fails the part without stopping the others. Each adapter yields a record before its Markdown, and the email stage a message's attachments before both, so a cursor never skips an attachment.
+- onenote (build, the session's call for behaviors 17 and 20): outputs and found parts stream to the caller and the index as each is produced, not held until the part's event. A stage's originals are released once their content is recorded, the dispatcher checking the hash against the CLI's file name. Known limit: a released content's later reference takes the first occurrence's route. FileIndex's format changed with no migration.
+- onenote (build): any encrypted ZIP entry makes the ZIP Encrypted ("n of m entries") after its readable entries are dispatched. The zip stage decompresses from OpenRaw, so a lying declared size shows as a bomb, which becomes a quarantined record on the kept ZIP; under a permissive policy a symlink entry is written as a regular file.
+- onenote (build): MailMinimum stays 0.2.0, 0.3.0 checked only when After is set; a resumed input's own entry isn't recorded; the Threader's save format is versioned and deterministic.
+- onenote (build): the integration tier dispatches every fixture over one index, so shared content is seen as in a real run; its 12 first-run mismatches were wrong expectations. Known limits: Encryption.one fails rather than coming out encrypted, since onenote gives no encryption signal, and a bare RFC 822 file with no extension is unrouted.
+- onenote (build): the ink truth is the session's draft, pending the architect's confirmation. Saving the Threader at every message is quadratic (3.5 ms a save at 25,000 messages), so the docs recommend a checkpoint every N messages.
 
 ## Pending edits
 
@@ -1907,24 +1856,42 @@ Release       onenote v0.1.0
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.3.0 (this replaces the bullet's v0.1.0 and v0.2.0 drafts, which were never applied):
+  v0.6.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0 and v0.5.0 amendments, which were
+  never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
-  >   and embeddings. It runs mature system tools through adapters it owns (`system-tools.md`),
-  >   with herald's `internal/format` as its prior art. Its `tool` package, on the standard library
-  >   alone, is the contract: a Tool bound to one program, found and version-checked at
-  >   construction, runs an invocation under the caller's context through the exec runner
-  >   (binaries, and scripts through their interpreter) or the container runner (the docker CLI, an
-  >   image pinned by digest, each run locked down), and reports the run's CPU time. Its `document`
-  >   package prepares a PDF's pages: Ghostscript, which won the renderer bake-off against
-  >   pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG and
-  >   reads text layers; ImageMagick corrects page images, lists its corrections as a catalog for a
-  >   prompt, and assesses a page for the defects they fix; and a page stream yields the prepared
-  >   pages in order. Its `office` package runs the spike's Open XML CLI over docx, xlsx, and
-  >   pptx, converts legacy .doc, .xls, and .ppt to OOXML through LibreOffice in a digest-pinned
-  >   container, and converts EMF, WMF, and TIFF pictures to PNG; no stage re-encodes a picture
-  >   lossily. ffmpeg and ffprobe take audio and video, live sources included.
+  >   and embeddings, and processing runs none. It runs mature system tools through adapters it
+  >   owns (`system-tools.md`), with herald's `internal/format` as its prior art. Its `tool`
+  >   package, on the standard library alone, is the contract: a Tool bound to one program, found
+  >   and version-checked at construction, runs an invocation under the caller's context through
+  >   the exec runner (binaries, and scripts through their interpreter) or the container runner
+  >   (the docker CLI, an image pinned by digest, each run locked down), and reports the run's CPU
+  >   time. Its `route` package identifies content by its signature and names the stage it goes to
+  >   next, for every format in the spike's inventory, "no processor yet" where no stage exists.
+  >   Its `picture` package converts TIFF, EMF, WMF, and SVG pictures to PNG, EMF and WMF through
+  >   LibreOffice in a digest-pinned container, and holds ImageMagick's page corrections, their
+  >   catalog for a prompt, and a page assessment; no stage re-encodes a picture lossily. Its
+  >   `document` package prepares a PDF's pages: Ghostscript, which won the renderer bake-off
+  >   against pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG
+  >   and reads text layers, and a page stream yields the prepared pages in order. Its `office`
+  >   package runs the spike's Open XML CLI over docx, xlsx, and pptx, and converts legacy .doc,
+  >   .xls, and .ppt to OOXML through LibreOffice in the same container. Its `email` package runs
+  >   the spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files, streams
+  >   their records as typed values, rebuilds threads by RFC 5256's REFERENCES algorithm with
+  >   conversation-index parents, and resumes a store after a message. Its `onenote` package runs
+  >   the spike's OneNote CLI over sections, notebooks, and packages, streams their records as
+  >   typed values, and lists each page's images, embedded files, and ink with their routes. Each
+  >   format package's text, a Markdown body or a text layer, is complete without inference; only
+  >   pictures and page images go to vision. Its `inspect` package inspects every part before its
+  >   stage: active content, such as macros, scripts, embeddings, and executables, is flagged and
+  >   still prepared, since no stage executes it, and content unsafe to read, such as a ZIP entry
+  >   escaping its directory, a symbolic link, or a bomb, is quarantined. Its `dispatch` package
+  >   walks an input and every part found in it (attachments, embedded messages, media, and ZIP
+  >   entries) to those stages with no default caps, under a content-addressed index that prepares
+  >   each distinct content once across a share's inputs, runs, and workers, removes each part's
+  >   file once the caller has consumed it, and resumes a store by cursor. ffmpeg and ffprobe take
+  >   audio and video, live sources included.
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -2019,11 +1986,6 @@ Release       onenote v0.1.0
   v0.4.0 is released, and docs/findings/email.md records the threads and routes against hand
   truth, each route carried to its real stage, and the adapter's time and peak memory beside
   mail's."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet: the v0.3.0
-  draft above gains, before its last sentence, "Its `email` package runs the spike's mail CLI over
-  .pst stores and .msg messages, streams their records as typed values, rebuilds threads by RFC
-  5256's REFERENCES algorithm with conversation-index parents, and names each attachment's stage
-  by its content's signature, for the caller to run."
 - coordinator · context/system-tools.md, "First case" (optional): "and the spike's own Open XML
   CLI, built as a system tool" reads "and the spike's own Open XML and mail CLIs, each built as a
   system tool".
@@ -2057,12 +2019,6 @@ Release       onenote v0.1.0
   processing v0.5.0 is released, and docs/findings/email.md's addendum records the .eml and mbox
   threads and routes against hand truth and the adapter's time and peak memory on the scale mboxrd
   beside mail's."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, to v0.5.0: in the
-  pending v0.4.0 sentence, "runs the spike's mail CLI over .pst stores and .msg messages" reads "runs
-  the spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files", and "names each
-  attachment's stage by its content's signature, for the caller to run" reads "names each
-  attachment's stage by its content's signature, a by-value .eml by its name or stored type and its
-  header's shape, for the caller to run".
 - coordinator · roadmap, the `gb10-2-align` task (a note for its plan): currency now reports
   llama.cpp b12110 (v0.9.0, 2026-11-04), past the b12063 target. v0.9.0 resizes Gemma 4 images
   without letterbox padding and speeds Gemma 4 E2B/E4B prefill, so the target choice may want a
@@ -2070,32 +2026,82 @@ Release       onenote v0.1.0
 - roadmap note · spike-ai-pipeline-mail (its next task): its .claude/marathon.toml still says "No CI runs yet"
   and merges without waiting on checks, though its CI runs; office and onenote chain `gh pr checks --watch`
   before the merge (onenote-cli).
-- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task `onenote-fixture` after `onenote-cli`, named
-  "An authored OneNote notebook". The architect authors a notebook in OneNote (web, mobile, or desktop) and
-  downloads it from OneDrive; it is committed with hand truth from onenote-cli's round 2 authoring spec (goal
-  record, Decisions, "onenote-cli (round 2, q3)") after a scan for the account email; its package, built through
-  cab, reads equal to its directory; the task tags onenote v0.1.x. OneNote for the web couldn't create a notebook
-  during onenote-cli (2026-11-04).
 - coordinator · roadmap, the `onenote-cli` task's summary: the sentence "Fixtures: onenote.rs's MIT samples, never
   its AGPL ones, and a notebook the architect authors in OneNote, in both variants, with hand truth." reads
   "Fixtures: Interop-TestSuites' OneNote files (MIT) and onenote.rs's maintainer samples (MPL-2.0), never its AGPL
-  ones, with hand-written expectations; .onepkg through packages the tests build." The authored notebook moves to
-  `onenote-fixture`.
+  ones, with hand-written expectations; .onepkg through packages the tests build." The authored notebook goes to the
+  backlog (the note below).
 - roadmap note · spike-ai-pipeline-onenote: OneNote section decryption waits for a specification or an open
   implementation, since [MS-ONESTORE] 2.5.19 leaves the scheme undocumented (onenote-cli, round 2 q7).
-- coordinator · roadmap, the `onenote` task: onenote_parser issue #48 (a 375 MB OneDrive-format section needs over
-  9 GB) bounds what the adapter can read. onenote's finding (spike-ai-pipeline-onenote's
-  docs/findings/onenote-cli.md) measured the 161 MB Large OneDrive.one at 135 MiB, so #48 didn't show at that
-  size, and advises the adapter to bound the CLI's memory all the same.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-onenote` bullet, to v0.1.0: "Processing routes the
-  pages' media to their stages (evidence 17)." reads "Processing's `onenote` package is to route the pages' media
-  to their stages.", and the bullet ends with: "Its known limits: password-protected sections are refused, since
+  pages' media to their stages (evidence 17)." reads "Processing's `onenote` package runs it as a system tool, and
+  its `dispatch` package carries each page's images, embedded files, and ink to their stages (evidence 17).", and
+  the bullet ends with: "Its known limits: password-protected sections are refused, since
   [MS-ONESTORE] leaves their encryption undocumented; no OneNote-written .onepkg is tested; and onenote_parser
   issue #48 can make a large OneDrive section with a long edit history need gigabytes of memory. Its
   [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md)
   records every expected field recovered against the public fixtures' hand-written expectations, and its time
-  and peak memory per input (evidence 17)."
+  and peak memory per input. Processing's
+  [onenote finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/onenote.md)
+  records each medium routed to its real stage and vision reading page ink at a character error rate of 0.028,
+  against 0.68 for OneNote's stored recognition (evidence 17)."
 - coordinator · roadmap, the `onenote-cli` task (optional): add `proof = "The check passes on ubuntu-24.04 and
   ubuntu-24.04-arm, onenote v0.1.0 is released with both archives and SHA256SUMS, and
   docs/findings/onenote-cli.md records the fields recovered per kind against the public fixtures' expectations
   and each input's time and peak memory."`
+- coordinator · roadmap, the `onenote` task: `repos` becomes `["spike-ai-pipeline-mail",
+  "spike-ai-pipeline-processing", "spike-ai-pipeline"]`, and its summary says what the task
+  delivered:
+
+  ```
+  Mail's record cursor, `--after`, released first as mail v0.3.0. Processing's lower layers
+  cleaned up: `route`, which identifies content by signature and names a route for every format
+  in the inventory, "no processor yet" where no stage exists; `picture`, conversion to PNG (TIFF,
+  EMF, WMF, SVG) with the corrections and assessment; one internal CLI contract; and a written
+  adapter convention. Then `inspect`, every part inspected before its stage, active content
+  flagged and content unsafe to read quarantined; `onenote`, the adapter over the OneNote CLI at
+  v0.1.0, its records typed and each page's media routed; and `dispatch`, which walks an input
+  and every part found in it to the caller's stages, with adapters for document, office, picture,
+  email, onenote, and zip, under a content-addressed index (in memory or a directory) that
+  prepares each content once across inputs, runs, and workers, a pool over N workers, and a
+  store resumed by cursor. Processing runs no inference. A finding; tags processing v0.6.0; the
+  root's evidence 17 links the finding. Evidence 17.
+  ```
+- coordinator · roadmap, the `formats` task's summary: "zip archives recursed within size and
+  depth limits" is cut, since the `onenote` task's dispatcher reads ZIP. It gains processors for
+  text, decoded by its encoding, for .xlsb, WordPerfect, and ODG, and for tar, gzip, zstd, and 7z
+  archives, each a route processing v0.6.0 reports as "no processor yet", and legacy OLE2 macro
+  detection in `inspect`.
+- coordinator · roadmap, the `audio` task's summary: it gains the audio route's processor, a
+  dispatcher stage for `route.Audio`. The summary says processing transcribes windows, which
+  conflicts with the decision that processing runs no inference; audio's plan settles whether
+  processing prepares the windows and a layer above transcribes them.
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline: recorded video files (MP4, MKV, WebM,
+  AVI) route to `route.Video` with no task owning their processor; `streams` or `formats` takes
+  them, settled at the next of their plans.
+- coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: an authored OneNote
+  notebook, committed to spike-ai-pipeline-onenote with hand truth from onenote-cli's round 2
+  authoring spec, needs desktop OneNote on Windows or a Mac, since OneNote for the web can
+  neither download nor export a notebook (onenote, r6 q1).
+- spike-ai-pipeline-onenote · README.md, "Known limits": "No authored hand truth: every
+  expectation comes from the public Interop-TestSuites (MIT) and onenote.rs (MPL-2.0) fixtures. A
+  later release adds an authored notebook." loses its last sentence; the authored notebook is a
+  backlog note, not a planned release.
+- roadmap note · spike-ai-pipeline-processing: ClamAV could become an `inspect` check; v0.6.0
+  excludes it (onenote, r6 q4).
+- roadmap note · spike-ai-pipeline-processing: the `tool` package could bound every run's memory. The
+  OneNote CLI's memory is unbounded: onenote_parser issue #48 (a 375 MB OneDrive-format section
+  needs over 9 GB) didn't show on the 161 MB Large OneDrive.one, which peaks at 135 MiB, but
+  bounds what a large, long-edited section can need (onenote-cli finding; processing's onenote
+  finding, "Known limits").
+- roadmap note · spike-ai-pipeline-mail: mail caps a .msg's nesting at 16 levels; raise or lift the
+  cap if real stores nest deeper.
+- roadmap note · spike-ai-pipeline-office: office could write a huge workbook sheet by sheet, since
+  it reads a whole document into its model before writing it.
+- roadmap note · spike-ai-pipeline-processing: the email `Threader` holds about 60 bytes a message
+  for the whole read, about 60 MB past a million messages; spilling its keys to disk would bound it.
+- roadmap note · spike-ai-pipeline-processing: a bare RFC 822 file with no extension is unrouted,
+  since the nested route needs an .eml name or a message type.
+- roadmap note · spike-ai-pipeline-processing: `Encryption.one`, a password-protected section, is
+  reported failed rather than encrypted, since the OneNote CLI gives no encryption signal; a signal
+  from onenote, or an inspect check for OneNote encryption, would make it Encrypted.
