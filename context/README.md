@@ -100,8 +100,8 @@ waits on spike-hosting-upgrades' verify-gb10. The spike returns to `planned` in 
 - **host**: gb10-2's llama.cpp router serving set A. The router runs from spike-model-engines'
   llama.cpp container scripts, copied from its commit dfc1d3d into `host/` beside the set A
   preset and the root's own pins, `host/llama.env`, which hold gb10 at b12098
-  (`host/README.md`). `mise.host.toml` pins `hf`, which stages the models on gb10-2. `mise run host-update`
-  brings gb10-2 current and loads set A at each session's start. It restarts a running router
+  (`host/README.md`). `mise.host.toml` pins `hf`, which stages the models on gb10-2.
+  `mise run host-update` brings gb10-2 current and loads set A at each session's start. It restarts a running router
   whose preset mount is dead, and re-creates one whose preset mount is sourced anywhere but
   `host/llama-preset/`, as after the scripts moved from `engines/`, with `host/engines llama
   update`. `mise run integration` probes every capability (`probe/`), and
