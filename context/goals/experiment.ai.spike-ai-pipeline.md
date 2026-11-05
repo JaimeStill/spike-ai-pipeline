@@ -1681,6 +1681,15 @@ Release       spike-ai-pipeline-processing v0.7.0
   its sizes), identical to ffmpeg's bitexact WAV. Only yielded windows stay in the media
   directory. Windows re-probes and refuses a plan of another file. A failed window yields its
   error and the stream goes on, as document does.
+- slice 4 (d9c7f76, processing): audio.Join(transcripts, JoinRequest{SeamWords}) returns
+  Transcript{Words, Seams[]{Matched, Matches, Overlap, Position}}, reproducing transformers'
+  whisper `_find_longest_common_sequence` (score matches/i + i/10000, earliest tie wins, midpoint
+  splice) and checked against it on the table cases; textscore gains NormalizeWords,
+  NormalizedWordErrors, Align, SeamErrors (radius 5).
+- decided without the architect, slice 4: the search is bounded by SeamWords (default 16 words);
+  a failed or silent window is an empty string and leaves both its seams unmatched; fillers are
+  um, umm, uh, uhm, er, erm, hm, hmm, mm, mmm, mhm, mm-hmm, uh-huh. Align keeps a full n×m table,
+  too large for the 4.4 h source; slice 7 must score long sources in linear memory.
 
 ## Pending edits
 
