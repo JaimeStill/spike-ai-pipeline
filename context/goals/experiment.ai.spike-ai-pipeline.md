@@ -1690,6 +1690,14 @@ Release       spike-ai-pipeline-processing v0.7.0
   a failed or silent window is an empty string and leaves both its seams unmatched; fillers are
   um, umm, uh, uhm, er, erm, hm, hmm, mm, mmm, mhm, mm-hmm, uh-huh. Align keeps a full n×m table,
   too large for the 4.4 h source; slice 7 must score long sources in linear memory.
+- slice 5 (e7075b7, processing): dispatch.AudioStage (NewAudioStage(AudioConfig{Splitter, Version,
+  Request, Concurrency})) yields a `plan` record (JSON, with the detection) first, then `window N`
+  audio outputs whose Meta carries index, count, span, cut, and seams; video stays no stage; a
+  source with no audio stream fails with ErrNoAudio. Wired into the integration tier: tone.wav
+  and onenote's embedded MP3 now prepared. Capability map: audio is preparation.
+- decided without the architect, slice 5: no ffmpeg means no audio stage registered ("no stage for
+  route audio"), as every adapter requires its tools; windows number from 0 to match the plan's
+  seams; a failed window fails the part after the others are yielded, as a document's pages do.
 
 ## Pending edits
 
