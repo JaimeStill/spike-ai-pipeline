@@ -2105,3 +2105,8 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 - roadmap note · spike-ai-pipeline-processing: `Encryption.one`, a password-protected section, is
   reported failed rather than encrypted, since the OneNote CLI gives no encryption signal; a signal
   from onenote, or an inspect check for OneNote encryption, would make it Encrypted.
+- coordinator · context/ai-strategy.md, "Gates" under "Experiment: spike-ai-pipeline": the capstone
+  waits for the host, client, and processing tasks and for spike-model-layout's and
+  spike-model-gateway's answers; spike-model-engines and spike-html-apps have answered, and neither
+  experiment's intake is a gate (the architect, 2026-11-05). gb10-2-align waits on
+  spike-hosting-upgrades' verify-gb10.

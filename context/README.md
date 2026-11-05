@@ -89,9 +89,11 @@ stage by stage in real time?
 
 ## Gates
 
-The host, client, and processing tasks run now. The capstone waits for three things: those tasks,
-spike-model-gateway's answer, and experiment.html's intake. The spike returns to `planned` in
-between.
+The host, client, and processing tasks run now. The capstone waits for those tasks
+(gb10-2-align, audio, streams, and formats remain) and for two answers: experiment.hosting's
+spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
+spike-html-apps have answered, and neither experiment's intake is a gate. gb10-2-align itself
+waits on spike-hosting-upgrades' verify-gb10. The spike returns to `planned` in between.
 
 ## Capability map
 
