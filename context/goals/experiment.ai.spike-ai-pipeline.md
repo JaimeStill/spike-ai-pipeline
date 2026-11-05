@@ -274,7 +274,7 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 
 ## Progress
 
-slices 0/16 committed · standards — · spec — · editor —
+slices 2/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published (x64, arm64, SHA256SUMS) · processing from slice 3 · editor —
 
 ## Decisions
 
