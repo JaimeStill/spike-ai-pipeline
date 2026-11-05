@@ -124,7 +124,7 @@ func TestRouter(t *testing.T) {
 		}
 		floor, err := buildNumber(pin)
 		if err != nil {
-			t.Fatalf("%s LLAMA_BUILD_GB10: %v", pinPath, err)
+			t.Fatalf("%s %s: %v", pinPath, pinVar, err)
 		}
 		if have < floor {
 			t.Errorf("router build b%d is below the pin %s", have, pin)
@@ -192,12 +192,12 @@ func TestRouter(t *testing.T) {
 		}
 	})
 
-	// A model whose section sets cache-ram, the host-side prompt cache's budget in MiB, starts
-	// with it: the router's /models lists each loaded model's llama-server arguments as
-	// status.args. The gpt-oss section sets 0, serving without the cache; a section that leaves
-	// the cache at its default is skipped. Its companion key, cache-idle-slots = false, isn't
-	// checked: the router applies it but leaves it out of the arguments /models lists, so its
-	// absence there says nothing.
+	// A model whose section sets cache-ram, the host-side prompt cache's budget in MiB, or
+	// cache-idle-slots, whether a slot saves to that cache when it goes idle, starts with them:
+	// the router's /models lists each loaded model's llama-server arguments as status.args. The
+	// gpt-oss section sets 0 and false, serving without the cache; a section that sets neither
+	// leaves the cache at its default and is skipped. cache-idle-slots = false shows as
+	// --no-cache-idle-slots; true is the default, which the router doesn't list.
 	t.Run("prompt cache", func(t *testing.T) {
 		var got struct {
 			Data []struct {
@@ -214,18 +214,36 @@ func TestRouter(t *testing.T) {
 		}
 		for _, id := range p.models {
 			t.Run(id, func(t *testing.T) {
-				want, ok := p.value(id, "cache-ram")
-				if !ok {
+				ram, setsRAM := p.value(id, "cache-ram")
+				idle, setsIdle := p.value(id, "cache-idle-slots")
+				if !setsRAM && !setsIdle {
 					t.Skipf("the preset leaves %s's prompt cache at its default", id)
 				}
 				a, listed := args[id]
 				if !listed {
 					t.Fatalf("/models doesn't list %s", id)
 				}
-				if have, ok := argValue(a, "--cache-ram", "-cram"); !ok {
-					t.Errorf("%s's arguments in /models set no --cache-ram, want the preset's %s: %q", id, want, a)
-				} else if have != want {
-					t.Errorf("%s's arguments in /models set --cache-ram %s, want the preset's %s", id, have, want)
+				if setsRAM {
+					if have, ok := argValue(a, "--cache-ram", "-cram"); !ok {
+						t.Errorf("%s's arguments in /models set no --cache-ram, want the preset's %s: %q", id, ram, a)
+					} else if have != ram {
+						t.Errorf("%s's arguments in /models set --cache-ram %s, want the preset's %s", id, have, ram)
+					}
+				}
+				if setsIdle {
+					off := slices.Contains(a, "--no-cache-idle-slots")
+					switch idle {
+					case "false":
+						if !off {
+							t.Errorf("%s's arguments in /models lack --no-cache-idle-slots, want the preset's cache-idle-slots = false: %q", id, a)
+						}
+					case "true":
+						if off {
+							t.Errorf("%s's arguments in /models set --no-cache-idle-slots, want the preset's cache-idle-slots = true", id)
+						}
+					default:
+						t.Errorf("the preset sets %s's cache-idle-slots to %q, want true or false", id, idle)
+					}
 				}
 			})
 		}
