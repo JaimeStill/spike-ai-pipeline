@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** gb10-2-align
+- **Branch:** gb10-2-align
 
 ## Tasks
 
@@ -27,250 +27,66 @@
 19. [ ] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · onenote
+## Task brief · experiment.ai.spike-ai-pipeline · gb10-2-align
 
 ```
-Problem       Processing reads PDFs, office documents and mail, but not
-              OneNote, and its format packages have grown into one
-              another: signature checks live in three packages, office
-              owns picture conversion email's callers need, document and
-              office each declare magick, office and email each copy the
-              CLI contract. Every route is left for the caller to run, so
-              an attachment holding an attachment is recursion every
-              caller rebuilds, with no inspection, no dedupe across
-              inputs, and a media directory that holds a whole store's
-              attachments until the read ends. An enterprise share drive
-              (large .pst stores, repeated content) needs all of that
-              without losing data. mail can't resume a store.
-
-              This task gives mail a record cursor (v0.3.0, released as
-              a checkpoint first). In processing it cleans up the layers
-              against those findings: `route` (identification and
-              routing for every format in the spike's inventory),
-              `picture` (conversion to PNG, SVG included, with the
-              corrections and assessment), an internal CLI contract, and
-              a written adapter convention. Then it adds an inspection
-              step, the `onenote` adapter over the CLI at v0.1.0, and a
-              dispatcher that inspects and prepares each part once per
-              content across inputs, runs and workers, recurses with no
-              default caps, holds media only until each part is
-              consumed, reads zip, and resumes. It never runs inference.
-              A finding; processing v0.6.0. The root's evidence 17 links
-              the finding.
-
-              Currency: processing and mail current; the root's llama.cpp
-              b12110 held (email-mime). No upgrade slice.
+Problem       gb10-2 serves set A on llama.cpp b11669 and still sends its
+              DHCP hostname; gb10-1 runs b12098 with routing aligned.
+              The root's scripts read pin names upstream no longer has.
 
 Behaviors
-  mail (spike-ai-pipeline-mail)
-  1.  `--after <id>` resumes a .pst after a message node id and an
-      mbox after a 1-based ordinal. Folder lines are always written.
-      A .msg or .eml refuses it with exit 2; an id not in the store is
-      refused with exit 3. A resumed read equals the tail of a whole
-      read, byte for byte; a .pst skips without opening messages.
-  2.  README, CHANGELOG v0.3.0, the mail-cli finding's resume timing on
-      the scale store, and the v0.3.0 release.
+  1. gb10-2's router reports b12098 and serves every set A capability
+     (the integration probe passes).
+  2. The 7 copied host scripts are byte-identical to spike-model-engines'
+     verify-gb10 merge commit (dfc1d3d); the host README's diff check
+     prints nothing. The root's own llama.env gives gb10 b12098 and says
+     why it's held below b12100 (#31620, #31639).
+  3. host-update computes the router image from gb10's class pin through
+     the copied functions; a run moves b11669 to b12098, and a second run
+     changes nothing.
+  4. currency compares gb10's pin with the newest b-build that has a
+     server-cuda13 image on ghcr.io and reports only when the pin is lower.
+  5. The probe's build floor is gb10's class pin (LLAMA_BUILD_GB10).
+  6. Set A's gpt-oss section serves with cache-ram = 0 and
+     cache-idle-slots = false: the router's arguments show cache-ram 0,
+     and its log shows no idle-slot saves under load.
+  7. gb10-2's DHCP connections send no hostname (IPv4 and IPv6).
+  8. The routing check (spike-hosting-upgrades
+     docs/findings/gb10-2-upgrade.md, "The routing check") passes before
+     and after: no gb10-2.lan A or AAAA record, bare name tailnet-only,
+     50 connects with none failed and none over 50 ms. The router's
+     leases are cleared only if a record remains.
+  9. The host finding records build, stack, network path, MemAvailable
+     after set A loads and after the integration run (no threshold), and
+     the routing check's lines.
 
-  Processing: lower layers
-  3.  `route` (standard library only) identifies content by signature:
-      PDF; PNG, JPEG, GIF, BMP; TIFF, EMF, WMF; SVG; HEIC, WebP, AVIF;
-      ZIP and OLE2 by extension; ODF; RTF; OneStore and MSCF; WAV,
-      FLAC, MP3, Ogg, M4A; MP4, MKV, WebM, AVI; gzip, zstd, 7z;
-      executables (PE, ELF, Mach-O, shebang); text by extension or BOM;
-      the .eml rule kept. File(path, name, mimeType) returns a route
-      and reason: document, office, vision, vision-converted, nested,
-      onenote, archive, audio, video, text, unrouted. email's v0.5.0
-      routes and reasons are unchanged for every fixture.
-  4.  `picture` converts TIFF, EMF, WMF and SVG to PNG named by the
-      original's SHA-256 (SVG at 150 dpi flattened on white; each
-      picture in its own directory, so external references don't
-      resolve; no lossy re-encode), and holds the corrections, their
-      catalog and Assess, and the magick and LibreOffice specs. office
-      and document call it; their outputs are byte-identical to v0.5.0
-      on every fixture. ~/docs' script-bearing.svg converts with no
-      script run.
-  5.  office, email and onenote share one internal CLI contract (exit
-      codes 1 to 4 as shared sentinels, ExitError, the stderr warning
-      reader, limitedBuffer, spool); errors.Is matches a refusal from
-      any of them through any package's ErrRefused.
-  6.  The README records the adapter convention (Spec and Minimum,
-      Config, a constructor refusing a missing or old Tool, Request
-      with a media directory, typed exit errors, warnings, SHA-256
-      media, iter.Seq2 streaming, a route per part) and each
-      package's deviation. email.Route, office.ConvertPicture and its
-      request, document.Corrector and kin, and both MagickSpecs move
-      without aliases, each listed in the CHANGELOG.
+Test seams    the router's HTTP API via the integration probe; the check
+              and currency output
 
-  Processing: inspection
-  7.  Every part is inspected before its stage, on the standard
-      library, each finding a flag with its check, class and evidence.
-      Active content, flagged and still processed: a signature that
-      disagrees with the extension; a polyglot; executable content or
-      an executable or double extension; OOXML vbaProject.bin, ActiveX
-      parts, oleObject embeddings and external relationships; PDF
-      /JavaScript, /JS, /OpenAction, /AA, /Launch, /EmbeddedFile,
-      /RichMedia, /XFA, /Encrypt (hex-escaped forms included); SVG
-      <script>, on* attributes, external hrefs, foreignObject.
-      Unsafe to read, quarantined (no stage runs, content kept, the
-      part yielded "quarantined" with its evidence): a zip entry name
-      with "..", an absolute path or a drive letter; a symlink entry;
-      a zip entry past both 1,000:1 and 1 GiB expanded. A caller
-      policy overrides any check.
-  8.  ~/docs' hazard inputs (javascript.pdf, script-bearing.svg, the
-      macro files, the archive set, malformed PDFs) each yield their
-      expected flags; the clean fixtures yield none.
+Slices
+  1. Routing aligned: routing check before; DHCP connections listed;
+     the architect's one sitting (hostname send off and re-up, apt
+     update and upgrade, CDI spec regenerated and a reboot if asked);
+     routing check after; lease clearing only if a record remains.
+  2. Per-class pins: the 7 scripts re-copied from dfc1d3d, the root's
+     llama.env at b12098, the three readers on the class pin, currency
+     on image builds.
+  3. gpt-oss without the host prompt cache (preset, that one section).
+  4. gb10-2 on b12098: host-update, /props, integration probe, memory
+     reads, routing check, finding written.
 
-  Processing: onenote
-  9.  onenote runs the CLI, pinned from its v0.1.0 release through
-      mise, on the exec runner; refuses a missing Tool or one older
-      than 0.1.0, and a bad Request with ErrRequest before anything
-      runs. Records yields Notebook, SectionGroup, Section, Page,
-      Skipped and Unknown values while the CLI runs, one line at a
-      time. A schema other than "1" is ErrSchema; exits 1 to 4 are an
-      ExitError; warnings come back without their prefix.
-  10. All of schema "1"'s content is typed (containers, items, blocks,
-      paragraphs, runs incl. math, tables, images, embedded files, ink,
-      recognised words). A same-run round trip of every fixture equals
-      the CLI's stdout. A page's markdown is the CLI's, links untouched.
-  11. A page's Media iterates every image, embedded file and ink record
-      wherever it sits (container, outline block, table cell,
-      paragraph), with its content path when a media directory was
-      given, routed by route.File; ink vision-converted; recordings
-      audio.
-  12. onenote v0.1.0's public fixtures and expectations are copied into
-      processing under a SHA-256 manifest, with a fixtures:onenote
-      refresh from the tag; the check verifies them offline. ~/docs
-      gains a onenote area (the public sets and the three large
-      inputs) in MANIFEST.json with source, pin, licence and SHA-256.
+Out of scope  spike-model-engines changes (screen's merge, its currency);
+              the Gemma sections' cache settings; builds past b12098; any
+              other preset change
 
-  Processing: dispatcher
-  13. Dispatch takes an input, the caller's stages and an index, hashes
-      the input before any stage runs, and yields events depth-first:
-      each Part (path, name, size, SHA-256, route and reason, flags,
-      parent, depth, where found) with its outcome (prepared, no
-      processor yet, seen, cycle, quarantined, encrypted, failed, and
-      limited only under a cap the caller set) and its stage's
-      outputs. It recurses into email's attachments and embedded
-      messages, onenote's media, office's media and zip entries, and
-      never calls a model.
-  14. Stages are an exported interface; adapters for document, office,
-      picture, email, onenote and zip ship in the dispatcher package;
-      a caller may register its own.
-  15. No count, byte or depth cap applies by default; a caller may set
-      any. A part whose SHA-256 equals an ancestor's is "cycle".
-  16. The index is an exported, content-addressed interface: outputs
-      keyed by SHA-256 plus stage identity (name, tool version,
-      configuration hash), flags by SHA-256 alone; look up, record,
-      claim and wait. Content the index holds is "seen", carrying the
-      recorded outputs and flags by the caller's keys, and is neither
-      inspected nor prepared again. A claimed content in flight makes
-      a second dispatch wait for its outputs. Shipped: an in-memory
-      index, and a file-backed one on the standard library (one record
-      per key in a caller-named directory, atomic rename, exclusive
-      claim files reclaimed after a stale timeout).
-  17. Each part's content file is removed once the caller's loop moves
-      past its event unless the caller kept it; disk stays near one
-      record's media in flight, mail held back through its pipe.
-  18. Zip through archive/zip one entry at a time; entries written by
-      SHA-256, names never used as paths; encrypted entries
-      "encrypted"; Unicode names kept. ~/docs' zip-in-zip,
-      unicode-filenames, password-protected and high-ratio (at a test
-      threshold) inputs read as expected.
-  19. A pool dispatches an iterator of inputs over N workers sharing
-      one index, merging events with each input's identity.
-  20. email's Request gains After, passed to mail; the Threader saves
-      and restores its keys. A resumed read's threads equal a whole
-      read's.
-
-  Proof and release
-  21. The integration tier runs every fixture through Dispatch against
-      the real stages (office, document, email, picture then vision on
-      gb10-2, zip), each route checked against hand route truth.
-  22. The finding records, from recorded runs: routes against hand
-      truth; inspection flags over ~/docs' hazards; vision's reading of
-      handwriting_recognition.one's ink against a hand transcription
-      beside OneNote's stored recognition, 3 greedy runs; the onenote
-      adapter's time and peak memory beside the CLI alone on
-      LargeData.one, Large Desktop.one and Large OneDrive.one; the
-      dispatcher over mail's 2.1 GB scale store (peak memory, peak disk
-      with removal on and off, time beside email alone); a resume run
-      (stopped midway, resumed by cursor, against a whole read); the
-      concurrent run (1, 2, 4, 8 workers over plaso's store, the scale
-      store, a byte copy of it and mail's fixtures, one file-backed
-      index: throughput, dedupe hits, peak memory and disk). Known
-      limits: OneNote for the web can't export a notebook, so there is
-      no authored OneNote truth; the CLI's memory unbounded (#48);
-      mail's .eml cap at 4 GiB and .msg nesting cap at 16; office's
-      whole-document model; the Threader's memory per message; legacy
-      OLE2 macros undetected; routes without a processor yet.
-  23. README, package docs, CHANGELOG v0.6.0. Pending edits: the
-      onenote task's repos become mail, processing and root; formats
-      gains text, xlsb, WordPerfect, ODG, tar, gzip, zstd, 7z and OLE2
-      macro detection, and loses zip; audio gains the audio route's
-      processor; onenote-fixture dropped, with a backlog note for an
-      authored notebook (desktop OneNote on Windows or a Mac); the
-      onenote README's stale "later release" line; ai-strategy's
-      processing and onenote bullets; roadmap notes for ClamAV as a
-      potential future check, a tool-wide memory limit, mail's .msg
-      nesting past 16, office per-sheet output, and Threader spilling.
-      The root's evidence 17 links the finding.
-
-Test seams    mail's built binary over its fixtures, whole against
-              resumed; route.File and Identify over signature samples;
-              picture on the real magick; the inspector over ~/docs'
-              hazards; onenote's Reader over the real pinned binary and
-              a stand-in for exits 1 to 4; Dispatch and the pool over
-              the fixtures, the main seam, which the integration and
-              findings tiers drive too.
-
-Slices        1.  mail cursor (behavior 1).
-              2.  mail v0.3.0 (behavior 2). Checkpoint: a mail checkpoint
-                  brief; on the architect's acceptance, mail's branch is
-                  published, merged and tagged v0.3.0, ahead of SHIP.
-              3.  route (3, 6 part).
-              4.  picture (4, 6 part). Checkpoint: the ink PNG.
-              5.  Internal CLI contract and README convention (5, 6).
-                  Standards-review pass over 3 to 5.
-              6.  Inspection (7, 8). Checkpoint: the flags over ~/docs'
-                  hazards.
-              7.  onenote contract and stream, fixtures copied, ~/docs
-                  area (9, 12).
-              8.  onenote typed content and round trip (10).
-              9.  Page media and routes (11).
-              10. Dispatcher: Part, events, stage interface, adapters,
-                  top-level hashing, index (memory and file, claims),
-                  cycle, seen, release after consumption (13 to 17).
-                  Standards-review pass.
-              11. Zip stage (18, quarantine rules of 7).
-              12. Pool and resume: pool, email After, Threader save and
-                  restore, pinning mail v0.3.0 (19, 20).
-              13. Integration tier on gb10-2 (21). Checkpoint: the
-                  routes-to-stages log.
-              14. Finding (22); the scale store and its copy generated
-                  outside any checkout. Checkpoint: the tables.
-              15. Release preparation (23, processing). Standards-review
-                  pass.
-              16. Root: evidence 17's link (23, root).
-              Every slice: the check passes.
-
-Out of scope  Any inference in processing. Processors for audio, video,
-              text, ODF, RTF, HEIC/WebP/AVIF, xlsb, WordPerfect, ODG,
-              tar, gzip, zstd, 7z. OLE2 macro detection, oletools,
-              ClamAV. Running macros or scripts, ever. A cursor for
-              onenote or office. Office per-sheet streaming; Threader
-              spilling; a tool memory bound. Chunking content for
-              embeddings (the capstone's chunker). The authored OneNote
-              notebook and any onenote release. Microsoft Graph.
-              Rewriting fixture bytes. gb10-2 changes.
-
-Door          One-way: mail v0.3.0, published at slice 2's checkpoint by
-              the architect's decision (round 5, answer 6), ahead of the
-              session brief; processing v0.6.0, which publishes the
-              moved APIs and the dispatcher's contract. Two-way
-              otherwise.
-
-Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
+Door          two-way: pin rollback is a re-copy from d285b06 plus
+              host-update; DHCP rollback is the same nmcli command with
+              yes; cleared leases renew on their own.
 ```
+
+## Progress
+
+- (none yet)
 
 ## Decisions
 
@@ -1785,6 +1601,12 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 - onenote (build): MailMinimum stays 0.2.0, 0.3.0 checked only when After is set; a resumed input's own entry isn't recorded; the Threader's save format is versioned and deterministic.
 - onenote (build): the integration tier dispatches every fixture over one index, so shared content is seen as in a real run; its 12 first-run mismatches were wrong expectations. Known limits: Encryption.one fails rather than coming out encrypted, since onenote gives no encryption signal, and a bare RFC 822 file with no extension is unrouted.
 - onenote (build): the ink truth is the session's draft, pending the architect's confirmation. Saving the Threader at every message is quadratic (3.5 ms a save at 25,000 messages), so the docs recommend a checkpoint every N messages.
+- gb10-2-align (r1 q1): the root keeps its own host/llama.env at b12098 beside 7 scripts copied from spike-model-engines dfc1d3d (verify-gb10's merge); not gated on the unpushed screen branch. Supersedes plan (2026-11-03, q1)'s target b12063: b12100 and later (#31620, #31639) can't resolve set A's Google QAT vision tag, and b12098 is the newest build with #31391 and an image.
+- gb10-2-align (r1 q2): host-update, currency and the probe read gb10's pin through the copied functions (llama_pin gb10, llama_image); the Go probe parses LLAMA_BUILD_GB10.
+- gb10-2-align (r1 q3): currency compares gb10's pin with the newest b-build that has a server-cuda13 image on ghcr.io.
+- gb10-2-align (r1 q4): only gpt-oss loses the host prompt cache (cache-ram = 0, cache-idle-slots = false); the Gemma sections are unchanged, their traffic single-turn.
+- gb10-2-align (r1 q5): the finding records MemAvailable after set A loads and after the integration run, with no threshold.
+- gb10-2-align (r1 q6): the architect's root steps run in one sitting, DHCP first; router lease clearing is a separate step, run only if a gb10-2.lan record remains.
 
 ## Pending edits
 
@@ -2110,3 +1932,6 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
   spike-model-gateway's answers; spike-model-engines and spike-html-apps have answered, and neither
   experiment's intake is a gate (the architect, 2026-11-05). gb10-2-align waits on
   spike-hosting-upgrades' verify-gb10.
+- coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
+- coordinator · context/ai-hosting.md, "Hosts and access": the pending gb10-2 sentence names server-cuda13-b12098, not b11669.
+- roadmap note · spike-ai-pipeline: once spike-model-engines' screen branch merges, re-copy host/ from its merge commit so llama.env is a copy again.
