@@ -1698,6 +1698,12 @@ Release       spike-ai-pipeline-processing v0.7.0
 - decided without the architect, slice 5: no ffmpeg means no audio stage registered ("no stage for
   route audio"), as every adapter requires its tools; windows number from 0 to match the plan's
   seams; a failed window fails the part after the others are yielded, as a document's pages do.
+- slice 6 (c616286, processing): internal/audiotest (integration or findings tags): Run plans,
+  streams windows under slot backpressure, transcribes greedy through the client, joins. Fixture
+  on gb10-2: WER 0.000 (134 words), seam matched on 2 words with 0 seam errors, wall 3.95-4.41 s
+  at concurrency 1 and 2.17 s at 4; bounds WER 0.05, seam errors 1.
+- decided without the architect, slice 6: window files are deleted after transcription unless
+  Keep; a failed window joins as an empty string and the run goes on; Wall excludes planning.
 
 ## Pending edits
 
