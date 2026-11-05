@@ -192,6 +192,45 @@ func TestRouter(t *testing.T) {
 		}
 	})
 
+	// A model whose section sets cache-ram, the host-side prompt cache's budget in MiB, starts
+	// with it: the router's /models lists each loaded model's llama-server arguments as
+	// status.args. The gpt-oss section sets 0, serving without the cache; a section that leaves
+	// the cache at its default is skipped. Its companion key, cache-idle-slots = false, isn't
+	// checked: the router applies it but leaves it out of the arguments /models lists, so its
+	// absence there says nothing.
+	t.Run("prompt cache", func(t *testing.T) {
+		var got struct {
+			Data []struct {
+				ID     string `json:"id"`
+				Status struct {
+					Args []string `json:"args"`
+				} `json:"status"`
+			} `json:"data"`
+		}
+		r.get(t, "/models", &got)
+		args := make(map[string][]string, len(got.Data))
+		for _, m := range got.Data {
+			args[m.ID] = m.Status.Args
+		}
+		for _, id := range p.models {
+			t.Run(id, func(t *testing.T) {
+				want, ok := p.value(id, "cache-ram")
+				if !ok {
+					t.Skipf("the preset leaves %s's prompt cache at its default", id)
+				}
+				a, listed := args[id]
+				if !listed {
+					t.Fatalf("/models doesn't list %s", id)
+				}
+				if have, ok := argValue(a, "--cache-ram", "-cram"); !ok {
+					t.Errorf("%s's arguments in /models set no --cache-ram, want the preset's %s: %q", id, want, a)
+				} else if have != want {
+					t.Errorf("%s's arguments in /models set --cache-ram %s, want the preset's %s", id, have, want)
+				}
+			})
+		}
+	})
+
 	t.Run("chat", func(t *testing.T) {
 		text := r.chat(t, chatModel, "Reply with one word: ready.", 2048)
 		t.Logf("%s: %q", chatModel, text)
@@ -467,13 +506,20 @@ func loadPreset(path string) (*preset, error) {
 	return p, nil
 }
 
-// float returns key's value for model as a number: its section's, or else [*]'s. ok is false
-// when neither sets it.
-func (p *preset) float(model, key string) (v float64, ok bool, err error) {
-	s, found := p.sections[model][key]
-	if !found {
-		s, found = p.global[key]
+// value returns key's value for model: its section's, or else [*]'s. ok is false when neither
+// sets it.
+func (p *preset) value(model, key string) (v string, ok bool) {
+	if v, ok = p.sections[model][key]; ok {
+		return v, true
 	}
+	v, ok = p.global[key]
+	return v, ok
+}
+
+// float returns key's value for model as a number, as value finds it. ok is false when neither
+// its section nor [*] sets it.
+func (p *preset) float(model, key string) (v float64, ok bool, err error) {
+	s, found := p.value(model, key)
 	if !found {
 		return 0, false, nil
 	}

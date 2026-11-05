@@ -74,7 +74,8 @@ tracks `origin/main`, and host-update pulls it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
 `mise run integration` probes the router from the laptop (`probe/`). It checks every set A
-capability, and checks the build, sampling, and slots against the pin and the preset.
+capability, and checks the build, sampling, slots, and prompt cache against the pin and the
+preset.
 [The host finding](docs/findings/host.md) records its runs, including whether the router answers
 `/v1/responses` and whether transcription returns timestamps, and what the router's
 `/v1/messages` and `/v1/responses` drop, from the client's integration runs.
