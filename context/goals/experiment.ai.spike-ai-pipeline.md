@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** onenote
-- **Branch:** onenote
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -21,7 +21,7 @@
 13. [x] mail-mime
 14. [x] email-mime
 15. [x] onenote-cli
-16. [ ] onenote
+16. [x] onenote
 17. [ ] gb10-2-align
 18. [ ] audio
 19. [ ] streams
@@ -271,10 +271,6 @@ Door          One-way: mail v0.3.0, published at slice 2's checkpoint by
 
 Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 ```
-
-## Progress
-
-slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published · processing: aa71cc8 route; bb315b4, 786a64d picture; b855570, 4836e73, 10241b2 cli contract and convention · standards pass 3–5 done (283298b, d4810c3) · f6fb8fe, aadb24c inspect; 809ce5c onenote contract; d6beab2 typed content; f8512da page media; d51cacc, 5764fd7 dispatch core; a7a9855, 8a0f8c6 adapters · standards pass 6–10 done (4f1f1f4, 2360399) · f4d8f65, b2a8ee5 zip · d17e321, 9f202e4, cf52e5c pool and resume · 70dd654, 7b3caf7 outputs stream (12b) · fd41110, 023ec96 disk and children bounds (12c); 98b5d33 no-stage content released · e89175c, 3ee9173 integration tier · 96797c6, 256e94c finding · release prep 1a74b6c..564cb31 · root slice 16 committed · standards pass 11–15 done (24fab78, bc2a6e7) · spec done (gaps closed: 9b47530, fdbdab0, 05fd32f; pending edits to editor; ink truth to the architect) · editor done
 
 ## Decisions
 
