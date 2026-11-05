@@ -86,7 +86,10 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 
 ## Progress
 
-- (none yet)
+- slice 1: routing check before (2026-11-05T20:17:58Z) fails as expected: gb10-2.lan A and AAAA present; bare name tailnet; 50 connects, 0 failed, 0 over 50 ms, max 0.0066 s. One DHCP connection, Wired connection 1 (enP7s7), sends its hostname. WIP: waiting on the architect's root sitting.
+- slice 2: 90b59b2. 7 scripts re-copied from dfc1d3d; llama.env the root's own at b12098; host-update, currency (newest server-cuda13 image on ghcr.io), and the probe on gb10's class pin.
+- slice 3: 0a070c8. gpt-oss with cache-ram = 0 and cache-idle-slots = false; the probe asserts --cache-ram from the preset.
+- slice 4: not started (needs slice 1).
 
 ## Decisions
 
