@@ -1664,6 +1664,14 @@ Release       spike-ai-pipeline-processing v0.7.0
   (LibreOffice 26.8.2.2 rasterizes metafiles slightly differently: EMF 1.6-3.3% of pixels differ by
   anti-aliasing, WMF 5e-6). The renders were compared first; all Markdown sums, the legacy ones
   included, still match. The testdata README records why.
+- slice 2 (d20558c, processing): package audio: Splitter (Probe, Detect, Plan), pure PlanWindows,
+  ffmpeg/ffprobe Specs, FFmpegImage by digest; fixture audio/testdata/speech.flac (49.82 s,
+  LibriSpeech dev-clean 0000-0003 twice with 1 s gaps) and its truth, rebuilt by
+  `mise run fixtures:audio`. Plan: 0-24.979 s (silence), 22.979-49.820 s (end); runners agree.
+- decided without the architect, slice 2: WindowLimit 30 s is a constant; overlap must be under
+  15 s; Below (dB under the mean) and a fixed Threshold are exclusive. A silence ends a window only
+  if it began inside the window and leaves the window audio outside its seams, so seams never
+  overlap; a silence crossing the limit counts only up to it.
 
 ## Pending edits
 
