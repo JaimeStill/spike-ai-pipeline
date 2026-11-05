@@ -90,10 +90,10 @@ stage by stage in real time?
 ## Gates
 
 The host, client, and processing tasks run now. The capstone waits for those tasks
-(gb10-2-align, audio, streams, and formats remain) and for two answers: experiment.hosting's
+(audio, streams, and formats remain) and for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
-spike-html-apps have answered, and neither experiment's intake is a gate. gb10-2-align itself
-waits on spike-hosting-upgrades' verify-gb10. The spike returns to `planned` in between.
+spike-html-apps have answered, and neither experiment's intake is a gate. The spike returns to
+`planned` in between.
 
 ## Capability map
 
@@ -101,10 +101,10 @@ waits on spike-hosting-upgrades' verify-gb10. The spike returns to `planned` in 
   llama.cpp container scripts, copied from its commit dfc1d3d into `host/` beside the set A
   preset and the root's own pins, `host/llama.env`, which hold gb10 at b12098
   (`host/README.md`). `mise.host.toml` pins `hf`, which stages the models on gb10-2.
-  `mise run host-update` brings gb10-2 current and loads set A at each session's start. It restarts a running router
-  whose preset mount is dead, and re-creates one whose preset mount is sourced anywhere but
-  `host/llama-preset/`, as after the scripts moved from `engines/`, with `host/engines llama
-  update`. `mise run integration` probes every capability (`probe/`), and
+  `mise run host-update` brings gb10-2 current and loads set A at each session's start. It
+  restarts a running router whose preset mount is dead, and re-creates one whose preset mount is
+  sourced anywhere but `host/llama-preset/`, as after the scripts moved from `engines/`, with
+  `host/engines llama update`. `mise run integration` probes every capability (`probe/`), and
   `docs/findings/host.md` records the probe runs.
 - **consumers**: the check that builds on the layers at their released tags.
 - **capstone**: the backend and web UI, once the gates clear.

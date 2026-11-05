@@ -511,4 +511,5 @@ ssh gb10-2 'grep MemAvailable /proc/meminfo; free -g'
 mise run host-update
 ```
 
-The port, 37829, is gpt-oss-120b's instance's this run, from its `--port` in `/models`.
+The port, 37829, is the one gpt-oss-120b's instance served on in this run, read from its
+`--port` in `/models`.

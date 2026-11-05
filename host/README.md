@@ -1,7 +1,7 @@
 # host
 
 This directory runs gb10-2's llama.cpp router: spike-model-engines' llama.cpp container scripts,
-copied verbatim, and this repository's set A preset.
+copied verbatim, and this repository's own pins and set A preset.
 
 ## The copied scripts and their source
 

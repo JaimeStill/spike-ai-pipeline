@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** brief ready
 - **Task:** gb10-2-align
 - **Branch:** gb10-2-align
 
@@ -86,10 +86,11 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 
 ## Progress
 
-- slice 1: routing check before (2026-11-05T20:17:58Z) fails as expected: gb10-2.lan A and AAAA present; bare name tailnet; 50 connects, 0 failed, 0 over 50 ms, max 0.0066 s. One DHCP connection, Wired connection 1 (enP7s7), sends its hostname. WIP: waiting on the architect's root sitting.
-- slice 2: 90b59b2. 7 scripts re-copied from dfc1d3d; llama.env the root's own at b12098; host-update, currency (newest server-cuda13 image on ghcr.io), and the probe on gb10's class pin.
-- slice 3: 0a070c8. gpt-oss with cache-ram = 0 and cache-idle-slots = false; the probe asserts --cache-ram from the preset.
-- slice 4: not started (needs slice 1).
+- slice 1: done. The routing check before (2026-11-05T20:17:58Z) found gb10-2.lan A and AAAA present. One DHCP connection, Wired connection 1 (enP7s7), sent its hostname. The architect stopped its DHCP hostname send (IPv4 and IPv6), ran the apt upgrade (ca-certificates and ca-certificates-java only) and regenerated the CDI spec; no reboot was needed. After the DHCP change (21:45:16Z) the records were still present, so the architect cleared the router's leases. After that (22:01:05Z) A and AAAA are none, the bare name is tailnet, and 50 connects show 0 failed, 0 over 50 ms, and a max of 0.0071 s.
+- slice 2: 90b59b2. The 7 scripts are re-copied from dfc1d3d, llama.env is the root's own at b12098, and host-update, currency (newest server-cuda13 image on ghcr.io), and the probe read gb10's class pin.
+- slice 3: 0a070c8. gpt-oss serves with cache-ram = 0 and cache-idle-slots = false, and the probe checks the router's args against the preset.
+- slice 4: abd66e4. /props reads b12098-149f5641b, the integration run passes, MemAvailable is 22.7 GB after set A loads and 20.8 GB after the integration run, and the second host-update changed nothing.
+- reviews: standards: 2a66f5b (the probe checks both cache keys from the preset) and ec9fa2b (the capability map's rewrap). spec: behaviors 1–5, 7 and 9 pass, and 8 passes after the lease clearing. spec gap: behavior 6's log half can't fail, since the save messages are trace level; the session's call is that the evidence is the /models args plus b12098's source, and the finding says so. c5e90ba adds the routing lines to the finding.
 
 ## Decisions
 
@@ -1610,6 +1611,12 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 - gb10-2-align (r1 q4): only gpt-oss loses the host prompt cache (cache-ram = 0, cache-idle-slots = false); the Gemma sections are unchanged, their traffic single-turn.
 - gb10-2-align (r1 q5): the finding records MemAvailable after set A loads and after the integration run, with no threshold.
 - gb10-2-align (r1 q6): the architect's root steps run in one sitting, DHCP first; router lease clearing is a separate step, run only if a gb10-2.lan record remains.
+- gb10-2-align (build): the router's /models lists `--no-cache-idle-slots`, though the screen's report said it didn't show, so the probe checks both cache keys from the preset.
+- gb10-2-align (build): behavior 6's "no idle-slot saves in the log" can't be shown at the instances' verbosity 3, since the save messages are trace level. The evidence is the router's args plus b12098's source, which creates the prompt cache only when cache_ram_mib != 0.
+- gb10-2-align (build): behavior 8 reads "run before, passes after". Stopping the hostname send left the records, so the lease clearing ran.
+- gb10-2-align (build): currency's hold note names b12098 literally. When the pin moves, the note goes visibly stale, and that is accepted.
+- gb10-2-align (build): the preset's vision section comment reads "as read at b11669". The change is to the comment only, and it is kept.
+- gb10-2-align (build): the clone on gb10-2 stays on gb10-2-align until the merge; the session switches it back to main at SHIP.
 
 ## Pending edits
 
@@ -1933,8 +1940,7 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 - coordinator · context/ai-strategy.md, "Gates" under "Experiment: spike-ai-pipeline": the capstone
   waits for the host, client, and processing tasks and for spike-model-layout's and
   spike-model-gateway's answers; spike-model-engines and spike-html-apps have answered, and neither
-  experiment's intake is a gate (the architect, 2026-11-05). gb10-2-align waits on
-  spike-hosting-upgrades' verify-gb10.
-- coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
+  experiment's intake is a gate (the architect, 2026-11-05).
+- coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. In the summary, "the router's leases cleared only if a gb10-2.lan record remains" reads that the records remained after the hostname send stopped, so the architect cleared the router's leases. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes after the lease clearing. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
 - coordinator · context/ai-hosting.md, "Hosts and access": the pending gb10-2 sentence names server-cuda13-b12098, not b11669.
-- roadmap note · spike-ai-pipeline: once spike-model-engines' screen branch merges, re-copy host/ from its merge commit so llama.env is a copy again.
+- roadmap note · spike-ai-pipeline: once spike-model-engines' gb10 pin reaches the root's (its screen branch, at 4d5e114, sets b12098), re-copy host/ from that merge commit so llama.env is a copy again.
