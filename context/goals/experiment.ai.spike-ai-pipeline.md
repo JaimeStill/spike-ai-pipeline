@@ -1658,7 +1658,12 @@ Release       spike-ai-pipeline-processing v0.7.0
 
 ## Progress
 
-- slices: none committed yet (8 planned)
+- slice 1 (87155ae, processing): Gotenberg 9.0.0-libreoffice by digest; soffice runs unchanged;
+  check, currency, and the office/picture/email/dispatch integration tiers pass.
+- decided without the architect, slice 1: the 12 EMF/WMF golden PNG sums were re-recorded on 9.0.0
+  (LibreOffice 26.8.2.2 rasterizes metafiles slightly differently: EMF 1.6-3.3% of pixels differ by
+  anti-aliasing, WMF 5e-6). The renders were compared first; all Markdown sums, the legacy ones
+  included, still match. The testdata README records why.
 
 ## Pending edits
 
