@@ -262,7 +262,8 @@ clone_pull() {
 	echo "$branch $before $(git rev-parse --short HEAD) $upstream"
 }
 
-# The router's state, from the clone at $1, as six lines: "pin <image>" (host/llama.env),
+# The router's state, from the clone at $1, as six lines: "pin <image>", the image
+# engines-llama-update moves to with no version given (gb10's pin in host/llama.env, on gb10-2),
 # "image <image the llama container runs, or ->", "status <the container's status, or ->",
 # "mount <live, dead, or ->": live when the running container sees the preset at
 # /etc/llama-preset/models.ini, dead when it doesn't although the clone has
@@ -272,10 +273,21 @@ clone_pull() {
 # container's /etc/llama-preset binds, or ->" (llama.sh's llama_preset_mount). The last two are -
 # when the container isn't running.
 clone_router_state() {
-	# shellcheck source=host/llama.env
-	source "$1/host/llama.env"
-	echo "pin $LLAMA_IMAGE"
-	local image=- status=- mount=- preset=- mount_source=- host_dir
+	local image=- status=- mount=- preset=- mount_source=- host_dir pin
+	# llama.sh sourced from its resolved path, as engines-llama-update sources it, so the
+	# directory reads exactly as the one update compares the mount source with; in a subshell,
+	# so its variables and functions stay out of this one.
+	host_dir=$(dirname "$(readlink -f -- "$1/host/llama.sh")")
+	# The image update moves to with no version given (llama_build ""): the pin of the flavor's
+	# host class (llama_flavor), in that flavor (llama_image), so on gb10-2 gb10's server-cuda13
+	# image at its pin.
+	pin=$(
+		# shellcheck source=host/llama.sh
+		source "$host_dir/llama.sh"
+		llama_flavor
+		llama_image "$(llama_build "")"
+	) || return
+	echo "pin $pin"
 	if [[ -n $(docker container ls --all --quiet --filter 'name=^llama$') ]]; then
 		image=$(docker container inspect --format '{{.Config.Image}}' llama)
 		status=$(docker container inspect --format '{{.State.Status}}' llama)
@@ -288,10 +300,6 @@ clone_router_state() {
 		fi
 	fi
 	if [[ $status == running ]]; then
-		# llama.sh sourced from its resolved path, as engines-llama-update sources it, so the
-		# directory reads exactly as the one update compares the mount source with; in a subshell,
-		# so its variables and functions stay out of this one.
-		host_dir=$(dirname "$(readlink -f -- "$1/host/llama.sh")")
 		preset=$(
 			# shellcheck source=host/llama.sh
 			source "$host_dir/llama.sh"

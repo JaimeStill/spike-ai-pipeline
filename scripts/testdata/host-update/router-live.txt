@@ -1,5 +1,5 @@
-pin ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
-image ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
+pin ghcr.io/ggml-org/llama.cpp:server-cuda13-b12098
+image ghcr.io/ggml-org/llama.cpp:server-cuda13-b12098
 status running
 mount live
 preset /home/jaime/repos/spike-ai-pipeline/host/llama-preset

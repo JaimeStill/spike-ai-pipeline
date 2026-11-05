@@ -52,7 +52,7 @@ gb10-2 serves set A from llama.cpp's router container, run from this repository'
 Each session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale
 SSH (`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs
 a root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
-architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
+architect; otherwise it pulls the clone, moves the router to gb10's pin, reloads a changed preset,
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
 changes nothing and says so. A stopped llama container fails the run, which names the command that
 starts it. A running one whose preset mount is sourced anywhere but `host/llama-preset/`, such as
@@ -74,7 +74,8 @@ tracks `origin/main`, and host-update pulls it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
 `mise run integration` probes the router from the laptop (`probe/`). It checks every set A
-capability, and checks the build, sampling, and slots against the pin and the preset.
+capability, and checks the build, sampling, slots, and prompt cache against the pin and the
+preset.
 [The host finding](docs/findings/host.md) records its runs, including whether the router answers
 `/v1/responses` and whether transcription returns timestamps, and what the router's
 `/v1/messages` and `/v1/responses` drop, from the client's integration runs.

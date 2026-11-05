@@ -435,3 +435,81 @@ curl -s "$R/models?autoload=false" | jq -c '.data[] | {id, s: .status.value}'
 curl -s "$R/props?model=$M&autoload=false" | jq -c '{model_path, modalities, total_slots, n_ctx: .default_generation_settings.n_ctx}'
 mise run integration
 ```
+
+## 2026-11-05: the router at b12098, gpt-oss without the host prompt cache
+
+Task `gb10-2-align`. gb10-2's router moved from b11669 to b12098, the pin the root keeps in its
+own `host/llama.env`, beside the seven scripts re-copied from spike-model-engines `dfc1d3d`.
+b12098 (`149f5641b`) is the newest build with llama.cpp #31391, the fix for the idle-slot stall,
+and a server-cuda13 image: b12100 and later (#31620, #31639) match an `-hf` quant tag only after
+`-`, `.` or `/`, so set A's vision model, `google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0`, whose
+file is `gemma-4-26B_q4_0-it.gguf`, can't resolve on them. The preset's gpt-oss-120b section now
+sets `cache-ram = 0` and `cache-idle-slots = false`, serving it without llama-server's host-side
+prompt cache, and the probe checks the router started it so. The sections above record runs on
+b11669 and stay as measured.
+
+- **The move:** host-update printed `llama moved from ghcr.io/ggml-org/llama.cpp:server-cuda13-b11669
+  to ghcr.io/ggml-org/llama.cpp:server-cuda13-b12098`, the image at digest
+  `sha256:71f26c2ef2f336418cd42d617db8e479a738a0b9283e327add00e4de633cccfd`, removed b11669's
+  image, recorded the preset as read by the router as it started, and loaded all four of set A,
+  the QAT vision model among them (exit 0; `changed: router moved to the pin, 4 model(s) loaded`).
+- **llama.cpp build:** `b12098-149f5641b` (`/props` `build_info`); the router reports
+  `version: 0.8.0-dev (build 12098, commit 149f5641b)`, as host-update's record prints it.
+- **gb10-2's stack:** Ubuntu 24.04.5 LTS, DGX OS 7.6.0; kernel 7.0.0-1024-nvidia; driver
+  580.178.04; CUDA 13.0; Docker 29.6.2; NVIDIA Container Toolkit 1.20.1.
+- **The laptop's network path:** direct, 1 ms on the first host-update and under 1 ms on the
+  second (tailscale ping from the laptop, as host-update reports it).
+- **Memory:** MemAvailable 22,681,352 kB (`free -g`: 21 GiB available of 121) with set A loaded,
+  and 20,812,992 kB (19 GiB available) after the integration runs. Recorded, not gated.
+- **gpt-oss's prompt cache, off:** `/models` lists gpt-oss-120b's `status.args`, an array of
+  strings as the probe reads it, with `--no-cache-idle-slots` and `--cache-ram`, `0`. Its
+  instance's log, the router container `llama`'s lines from port 37829, holds no idle-slot save
+  over six tasks: 0 lines of `saving idle slot to prompt cache`, `updating prompt cache`, or
+  `making room for prompt cache entry`. The count is weak evidence by itself: in b12098's
+  `tools/server/server-context.cpp`, the first two are trace-level, below the instances'
+  verbosity 3, and no instance, cached or not, logged one. The source settles it: the prompt cache
+  is created only when `cache_ram_mib != 0`, and every save, the idle-slot one included, goes
+  through it.
+- **The probe:** `mise run integration` passed in 10.8 s, every check as before, with the build
+  at the pin (`router build_info: b12098-149f5641b, pin b12098`) and the new prompt-cache check
+  passing for gpt-oss-120b; it skips the other three, whose sections leave the cache at its
+  default.
+- **The second run:** host-update printed `nothing changed: clone current, router at the pin,
+  preset unchanged, set A loaded` (exit 0).
+- **Routing:** gb10-2's one DHCP connection, `Wired connection 1` (enP7s7, the default route),
+  sent its hostname over DHCPv4 and DHCPv6; the netplan ConnectX-7 connections are manual. The
+  architect set `ipv4.dhcp-send-hostname no` and `ipv6.dhcp-send-hostname no` and re-upped it
+  (new leases within a second), upgraded apt (ca-certificates, ca-certificates-java),
+  regenerated the CDI spec (driver 580.178.04), and no reboot was required. The routing check
+  (spike-hosting-upgrades `docs/findings/gb10-2-upgrade.md`, "The routing check"), from the laptop:
+
+  | When (UTC) | `gb10-2.lan` A | AAAA | bare name | 50 connects |
+  |---|---|---|---|---|
+  | 20:17:58, before | PRESENT | PRESENT | tailnet | 0 failed, 0 over 50 ms, max 0.0066 s |
+  | 21:45:16, after the hostname send stopped | PRESENT | PRESENT | tailnet | 0 failed, 0 over 50 ms, max 0.0050 s |
+  | 22:01:05, after the router's leases were cleared | none | none | tailnet | 0 failed, 0 over 50 ms, max 0.0071 s |
+
+  Stopping the send left the records, so the architect cleared the router's gb10-2 lines in
+  `/tmp/odhcpd.leases`, `/tmp/hosts/odhcpd.hosts.lan`, and `/tmp/dhcp.leases`, with no earlier
+  name to add; dnsmasq's start printed udhcpc's "no lease, failing", OpenWrt's check for another
+  DHCP server. The check passes.
+
+The commands, from the laptop at this repository's root unless they say gb10-2. Delivering the
+branch to the clone, which was on `main`, then host-update, the read-backs, and the probe:
+
+```sh
+git push ssh://gb10-2/~/repos/spike-ai-pipeline gb10-2-align:refs/heads/gb10-2-align
+ssh gb10-2 git -C repos/spike-ai-pipeline switch gb10-2-align
+mise run host-update
+ssh gb10-2 'grep MemAvailable /proc/meminfo; free -g'
+R=http://gb10-2:8080
+curl -s $R/props | jq -r .build_info
+curl -s $R/models | jq -c '.data[] | select(.id|test("gpt-oss")) | .status.args'
+mise run integration
+ssh gb10-2 docker logs llama 2>&1 | grep '^\[37829\]' | grep -c -e 'saving idle slot' -e 'updating prompt cache' -e 'making room for prompt cache'
+ssh gb10-2 'grep MemAvailable /proc/meminfo; free -g'
+mise run host-update
+```
+
+The port, 37829, is the one gpt-oss-120b's instance served on in this run, read from its
+`--port` in `/models`.

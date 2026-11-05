@@ -6,10 +6,12 @@
 # it prints each failure and exits 1 on any.
 set -euo pipefail
 
-dir=$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")
+# Named scripts, not dir: shellcheck follows the library into the copied host/engines.sh, whose
+# local dir it would take for this one (SC2031).
+scripts=$(dirname "$(readlink -f -- "${BASH_SOURCE[0]}")")
 # shellcheck source=scripts/host-update-lib.sh
-source "$dir/host-update-lib.sh"
-data=$dir/testdata/host-update
+source "$scripts/host-update-lib.sh"
+data=$scripts/testdata/host-update
 
 failures=0
 

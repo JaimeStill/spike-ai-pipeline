@@ -23,11 +23,9 @@ import (
 	"unicode"
 )
 
-// The files that configure the router, read for every expectation below.
-const (
-	presetPath = "../host/llama-preset/models.ini"
-	pinPath    = "../host/llama.env"
-)
+// The preset that configures the router, read for every expectation below; the pin file,
+// pinPath, is pin_test.go's.
+const presetPath = "../host/llama-preset/models.ini"
 
 // Set A's roles: the model each capability probe sends to. The preset names the set and its
 // values; it doesn't assign roles, so the probe does, and checks that each is a preset section.
@@ -126,7 +124,7 @@ func TestRouter(t *testing.T) {
 		}
 		floor, err := buildNumber(pin)
 		if err != nil {
-			t.Fatalf("%s LLAMA_BUILD: %v", pinPath, err)
+			t.Fatalf("%s %s: %v", pinPath, pinVar, err)
 		}
 		if have < floor {
 			t.Errorf("router build b%d is below the pin %s", have, pin)
@@ -189,6 +187,63 @@ func TestRouter(t *testing.T) {
 				r.get(t, "/props?model="+url.QueryEscape(id), &got)
 				if float64(got.TotalSlots) != want {
 					t.Errorf("%s total_slots = %d, want the preset's parallel = %v", id, got.TotalSlots, want)
+				}
+			})
+		}
+	})
+
+	// A model whose section sets cache-ram, the host-side prompt cache's budget in MiB, or
+	// cache-idle-slots, whether a slot saves to that cache when it goes idle, starts with them:
+	// the router's /models lists each loaded model's llama-server arguments as status.args. The
+	// gpt-oss section sets 0 and false, serving without the cache; a section that sets neither
+	// leaves the cache at its default and is skipped. cache-idle-slots = false shows as
+	// --no-cache-idle-slots; true is the default, which the router doesn't list.
+	t.Run("prompt cache", func(t *testing.T) {
+		var got struct {
+			Data []struct {
+				ID     string `json:"id"`
+				Status struct {
+					Args []string `json:"args"`
+				} `json:"status"`
+			} `json:"data"`
+		}
+		r.get(t, "/models", &got)
+		args := make(map[string][]string, len(got.Data))
+		for _, m := range got.Data {
+			args[m.ID] = m.Status.Args
+		}
+		for _, id := range p.models {
+			t.Run(id, func(t *testing.T) {
+				ram, setsRAM := p.value(id, "cache-ram")
+				idle, setsIdle := p.value(id, "cache-idle-slots")
+				if !setsRAM && !setsIdle {
+					t.Skipf("the preset leaves %s's prompt cache at its default", id)
+				}
+				a, listed := args[id]
+				if !listed {
+					t.Fatalf("/models doesn't list %s", id)
+				}
+				if setsRAM {
+					if have, ok := argValue(a, "--cache-ram", "-cram"); !ok {
+						t.Errorf("%s's arguments in /models set no --cache-ram, want the preset's %s: %q", id, ram, a)
+					} else if have != ram {
+						t.Errorf("%s's arguments in /models set --cache-ram %s, want the preset's %s", id, have, ram)
+					}
+				}
+				if setsIdle {
+					off := slices.Contains(a, "--no-cache-idle-slots")
+					switch idle {
+					case "false":
+						if !off {
+							t.Errorf("%s's arguments in /models lack --no-cache-idle-slots, want the preset's cache-idle-slots = false: %q", id, a)
+						}
+					case "true":
+						if off {
+							t.Errorf("%s's arguments in /models set --no-cache-idle-slots, want the preset's cache-idle-slots = true", id)
+						}
+					default:
+						t.Errorf("the preset sets %s's cache-idle-slots to %q, want true or false", id, idle)
+					}
 				}
 			})
 		}
@@ -469,13 +524,20 @@ func loadPreset(path string) (*preset, error) {
 	return p, nil
 }
 
-// float returns key's value for model as a number: its section's, or else [*]'s. ok is false
-// when neither sets it.
-func (p *preset) float(model, key string) (v float64, ok bool, err error) {
-	s, found := p.sections[model][key]
-	if !found {
-		s, found = p.global[key]
+// value returns key's value for model: its section's, or else [*]'s. ok is false when neither
+// sets it.
+func (p *preset) value(model, key string) (v string, ok bool) {
+	if v, ok = p.sections[model][key]; ok {
+		return v, true
 	}
+	v, ok = p.global[key]
+	return v, ok
+}
+
+// float returns key's value for model as a number, as value finds it. ok is false when neither
+// its section nor [*] sets it.
+func (p *preset) float(model, key string) (v float64, ok bool, err error) {
+	s, found := p.value(model, key)
 	if !found {
 		return 0, false, nil
 	}
@@ -484,20 +546,6 @@ func (p *preset) float(model, key string) (v float64, ok bool, err error) {
 		return 0, false, fmt.Errorf("%s [%s] %s = %q is not a number", p.path, model, key, s)
 	}
 	return v, true, nil
-}
-
-// loadPin returns LLAMA_BUILD from the pin file at path, a shell file of NAME=value lines.
-func loadPin(path string) (string, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	for line := range strings.Lines(string(b)) {
-		if v, ok := strings.CutPrefix(strings.TrimSpace(line), "LLAMA_BUILD="); ok {
-			return v, nil
-		}
-	}
-	return "", fmt.Errorf("%s sets no LLAMA_BUILD", path)
 }
 
 // router is the router under probe.
