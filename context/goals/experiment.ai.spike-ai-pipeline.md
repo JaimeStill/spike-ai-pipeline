@@ -274,7 +274,7 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 
 ## Progress
 
-slices 2/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published (x64, arm64, SHA256SUMS) · processing from slice 3 · editor —
+slices 9/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published · processing: aa71cc8 route; bb315b4, 786a64d picture; b855570, 4836e73, 10241b2 cli contract and convention · standards pass 3–5 done (283298b, d4810c3) · f6fb8fe, aadb24c inspect; 809ce5c onenote contract; d6beab2 typed content; f8512da page media · editor — (notes: ~/docs README layout table needs onenote; context/README.md:53 content wording)
 
 ## Decisions
 
