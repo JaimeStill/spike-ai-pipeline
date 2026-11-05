@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** gb10-2-align
-- **Branch:** gb10-2-align
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -22,7 +22,7 @@
 14. [x] email-mime
 15. [x] onenote-cli
 16. [x] onenote
-17. [ ] gb10-2-align
+17. [x] gb10-2-align
 18. [ ] audio
 19. [ ] streams
 20. [ ] formats
@@ -83,14 +83,6 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
               host-update; DHCP rollback is the same nmcli command with
               yes; cleared leases renew on their own.
 ```
-
-## Progress
-
-- slice 1: done. The routing check before (2026-11-05T20:17:58Z) found gb10-2.lan A and AAAA present. One DHCP connection, Wired connection 1 (enP7s7), sent its hostname. The architect stopped its DHCP hostname send (IPv4 and IPv6), ran the apt upgrade (ca-certificates and ca-certificates-java only) and regenerated the CDI spec; no reboot was needed. After the DHCP change (21:45:16Z) the records were still present, so the architect cleared the router's leases. After that (22:01:05Z) A and AAAA are none, the bare name is tailnet, and 50 connects show 0 failed, 0 over 50 ms, and a max of 0.0071 s.
-- slice 2: 90b59b2. The 7 scripts are re-copied from dfc1d3d, llama.env is the root's own at b12098, and host-update, currency (newest server-cuda13 image on ghcr.io), and the probe read gb10's class pin.
-- slice 3: 0a070c8. gpt-oss serves with cache-ram = 0 and cache-idle-slots = false, and the probe checks the router's args against the preset.
-- slice 4: abd66e4. /props reads b12098-149f5641b, the integration run passes, MemAvailable is 22.7 GB after set A loads and 20.8 GB after the integration run, and the second host-update changed nothing.
-- reviews: standards: 2a66f5b (the probe checks both cache keys from the preset) and ec9fa2b (the capability map's rewrap). spec: behaviors 1–5, 7 and 9 pass, and 8 passes after the lease clearing. spec gap: behavior 6's log half can't fail, since the save messages are trace level; the session's call is that the evidence is the /models args plus b12098's source, and the finding says so. c5e90ba adds the routing lines to the finding.
 
 ## Decisions
 
