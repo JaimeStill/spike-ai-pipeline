@@ -1644,17 +1644,17 @@ Release       spike-ai-pipeline-processing v0.7.0
 - gb10-2-align (build): currency's hold note names b12098 literally. When the pin moves, the note goes visibly stale, and that is accepted.
 - gb10-2-align (build): the preset's vision section comment reads "as read at b11669". The change is to the comment only, and it is kept.
 - gb10-2-align (build): the clone on gb10-2 stays on gb10-2-align until the merge; the session switches it back to main at SHIP.
-- audio (r1 q1): Gotenberg 9.0.0 adopted now and adapted, not held: no technical debt accumulates (architect)
-- audio (r1 q2): the seam join is released in processing v0.7.0; concurrent transcription stays test code
-- audio (r1 q3): overlap defaults to 2 s, a request field
-- audio (r1 q4): the silence threshold is relative, 15 dB below volumedetect's mean, with 0.3 s minimum silence; a fixed level is allowed
-- audio (r1 q5): the join is transformers' best-offset merge; under 2 matches it concatenates and reports the seam unmatched. Rejected: a full edit-distance alignment
-- audio (r1 q6): the unsplit baseline is one request over each source's first 10 min; whole sources exceed E4B's 32768 tokens
-- audio (r1 q7): the LibriVox M4B stands in for LibriSpeech's original MP3s (one 87 GB archive); pending roadmap edit
-- audio (r1 q8): the Earnings-22 call is 4479944
-- audio (r1 q9): WER normalization is in-house in textscore. Rejected: Whisper's normalizer (Python), fstalign (C++, .nlp only)
-- audio (r1 q10): seam accuracy counts edits within 5 words of each seam in one whole-truth alignment
-- audio (r1 q11): the gpt-oss seam pass is measured on the seam words only, never a whole-transcript rewrite
+- audio (r1 q1): Gotenberg 9.0.0 adopted now and adapted, not held: no technical debt accumulates (architect).
+- audio (r1 q2): the seam join is released in processing v0.7.0; concurrent transcription stays test code.
+- audio (r1 q3): overlap defaults to 2 s, a request field.
+- audio (r1 q4): the silence threshold is relative, 15 dB below volumedetect's mean, with 0.3 s minimum silence; a fixed level is allowed.
+- audio (r1 q5): the join is transformers' best-offset merge; under 2 matches it concatenates and reports the seam unmatched. Rejected: a full edit-distance alignment.
+- audio (r1 q6): the unsplit baseline is one request over each source's first 10 min; whole sources exceed E4B's 32768 tokens.
+- audio (r1 q7): the LibriVox M4B stands in for LibriSpeech's original MP3s (one 87 GB archive); pending roadmap edit.
+- audio (r1 q8): the Earnings-22 call is 4479944.
+- audio (r1 q9): WER normalization is in-house in textscore. Rejected: Whisper's normalizer (Python), fstalign (C++, .nlp only).
+- audio (r1 q10): seam accuracy counts edits within 5 words of each seam in one whole-truth alignment.
+- audio (r1 q11): the gpt-oss seam pass is measured on the seam words only, never a whole-transcript rewrite.
 
 ## Progress
 
