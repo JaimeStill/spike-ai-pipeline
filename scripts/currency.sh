@@ -2,7 +2,7 @@
 # currency reports every dependency and toolchain that trails its latest
 # release, one line each, and exits non-zero when it reports any: the Go
 # modules, the mise tools of mise.toml and of the host environment
-# (mise.host.toml, hf's), and the llama.cpp pin (host/llama.env). It reads
+# (mise.host.toml, hf's), and gb10's llama.cpp pin (host/llama.env). It reads
 # the network and writes nothing. Run it through `mise run currency`.
 #
 # Each scan captures its command's output in a variable before reading it, so
@@ -44,18 +44,46 @@ while read -r line; do
 	[ -n "$line" ] && report "$line"
 done <<<"$outdated"
 
-# The llama.cpp pin (host/llama.env, copied from spike-model-engines) against the b-build the
-# notes of llama.cpp's latest semver release name ("Nightly build:"), as spike-model-engines'
-# currency reads it. A pin that trails is moved by a new copy of llama.env, not an edit here.
-# shellcheck source=host/llama.env
-source host/llama.env
-release=$(curl -fsSL https://api.github.com/repos/ggml-org/llama.cpp/releases/latest)
-latest=$(jq -r '.body | capture("Nightly build:[^b]*(?<b>b[0-9]+)").b' <<<"$release")
-tag=$(jq -r .tag_name <<<"$release")
-if [ -z "$latest" ]; then
-	echo "currency: llama.cpp $tag's notes name no b-build (\"Nightly build:\")" >&2
+# gb10's llama.cpp pin (host/llama.env, read through the copied llama_pin, for class gb10 by name,
+# since gb10-2 is a GB10 whatever GPU runs currency) against the newest b-build that has a
+# server-cuda13 image, server-cuda13-bNNNNN, among ggml's image tags on ghcr.io. The registry's tag
+# list is read with an anonymous pull token, page by page. The pin is reported only when it is
+# lower. A pin held on purpose is reported like any other, with llama_hold, why it is held, after
+# it.
+# shellcheck source=host/llama-release.sh
+source host/llama-release.sh
+pin=$(llama_pin gb10)
+llama_hold="held at b12098 by gb10-2-align: b12100 and later can't resolve Google's QAT -hf tags"
+llama_hold+=" (llama.cpp #31620, #31639)"
+registry=https://ghcr.io
+token=$(curl -fsSL "$registry/token?scope=repository:ggml-org/llama.cpp:pull" |
+	jq -r '.token // empty') || token=
+if [ -z "$token" ]; then
+	echo "currency: ghcr.io gives no pull token for ggml-org/llama.cpp" >&2
 	exit 2
 fi
-[ "$latest" = "$LLAMA_BUILD" ] || report "host/llama.env: llama.cpp $LLAMA_BUILD -> $latest ($tag)"
+# Each page asks for the tags after the last one read (last=), until a page comes back empty.
+last=
+latest=0
+while :; do
+	page="/v2/ggml-org/llama.cpp/tags/list?n=1000${last:+&last=$last}"
+	if ! tags=$(curl -fsSL -H "Authorization: Bearer $token" "$registry$page"); then
+		echo "currency: ghcr.io's tag list for ggml-org/llama.cpp can't be read ($page)" >&2
+		exit 2
+	fi
+	last=$(jq -r '.tags // [] | last // empty' <<<"$tags")
+	[ -n "$last" ] || break
+	builds=$(jq -r '.tags[] | capture("^server-cuda13-b(?<b>[0-9]+)$").b' <<<"$tags")
+	for b in $builds; do
+		if ((b > latest)); then latest=$b; fi
+	done
+done
+if ((latest == 0)); then
+	echo "currency: ghcr.io lists no server-cuda13 image for ggml-org/llama.cpp" >&2
+	exit 2
+fi
+if ((${pin#b} < latest)); then
+	report "host/llama.env: llama.cpp (gb10) $pin -> b$latest (server-cuda13), $llama_hold"
+fi
 
 exit "$stale"

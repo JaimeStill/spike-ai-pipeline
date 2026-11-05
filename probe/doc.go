@@ -3,5 +3,5 @@
 // SPIKE_ROUTER_URL names; the hermetic check builds and lints it but never runs it. Its
 // expectations come from the files that configure the router, not the probe: the set and each
 // model's sampling and slots from the preset, host/llama-preset/models.ini, and the build
-// floor from the pin, host/llama.env.
+// floor from gb10's pin, LLAMA_BUILD_GB10 in host/llama.env.
 package probe

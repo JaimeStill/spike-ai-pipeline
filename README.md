@@ -52,7 +52,7 @@ gb10-2 serves set A from llama.cpp's router container, run from this repository'
 Each session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale
 SSH (`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs
 a root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
-architect; otherwise it pulls the clone, moves the router to the pin, reloads a changed preset,
+architect; otherwise it pulls the clone, moves the router to gb10's pin, reloads a changed preset,
 loads set A, and prints the build, gb10-2's stack, and the laptop's network path. A second run
 changes nothing and says so. A stopped llama container fails the run, which names the command that
 starts it. A running one whose preset mount is sourced anywhere but `host/llama-preset/`, such as

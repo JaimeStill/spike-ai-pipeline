@@ -23,11 +23,9 @@ import (
 	"unicode"
 )
 
-// The files that configure the router, read for every expectation below.
-const (
-	presetPath = "../host/llama-preset/models.ini"
-	pinPath    = "../host/llama.env"
-)
+// The preset that configures the router, read for every expectation below; the pin file,
+// pinPath, is pin_test.go's.
+const presetPath = "../host/llama-preset/models.ini"
 
 // Set A's roles: the model each capability probe sends to. The preset names the set and its
 // values; it doesn't assign roles, so the probe does, and checks that each is a preset section.
@@ -126,7 +124,7 @@ func TestRouter(t *testing.T) {
 		}
 		floor, err := buildNumber(pin)
 		if err != nil {
-			t.Fatalf("%s LLAMA_BUILD: %v", pinPath, err)
+			t.Fatalf("%s LLAMA_BUILD_GB10: %v", pinPath, err)
 		}
 		if have < floor {
 			t.Errorf("router build b%d is below the pin %s", have, pin)
@@ -484,20 +482,6 @@ func (p *preset) float(model, key string) (v float64, ok bool, err error) {
 		return 0, false, fmt.Errorf("%s [%s] %s = %q is not a number", p.path, model, key, s)
 	}
 	return v, true, nil
-}
-
-// loadPin returns LLAMA_BUILD from the pin file at path, a shell file of NAME=value lines.
-func loadPin(path string) (string, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	for line := range strings.Lines(string(b)) {
-		if v, ok := strings.CutPrefix(strings.TrimSpace(line), "LLAMA_BUILD="); ok {
-			return v, nil
-		}
-	}
-	return "", fmt.Errorf("%s sets no LLAMA_BUILD", path)
 }
 
 // router is the router under probe.
