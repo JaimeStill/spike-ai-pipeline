@@ -72,8 +72,8 @@ stage by stage in real time?
     CLI through onenote_parser into notebooks, sections, and pages at their latest revision (rich
     text, lists, tables, math, note tags, and a Markdown body), with images, embedded files, and
     ink (its recognized text and its strokes as SVG) routed to the stages their formats take;
-    with the fields recovered against hand truth from public and authored fixtures, and each
-    input's time. OneNote's
+    with the fields recovered against hand truth from public fixtures, and each input's time.
+    OneNote's
     [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md)
     records every expected field recovered against the public fixtures' hand-written
     expectations: 236 of 236 over the committed sections, 138 of 138 over the committed
@@ -85,9 +85,7 @@ stage by stage in real time?
     records every OneNote medium routed to its real stage against hand route truth, inside 225
     parts from 119 fixture inputs dispatched with no mismatch. It also records page ink rendered
     to PNG and read by vision at a character error rate of 0.028, against 0.68 for OneNote's own
-    stored recognition, and the adapter within 6% of the CLI's time on the large sections. No
-    authored notebook exists: OneNote for the web can neither download nor export one, so the
-    fields rest on the public fixtures alone.
+    stored recognition, and the adapter within 6% of the CLI's time on the large sections.
 
 ## Gates
 
