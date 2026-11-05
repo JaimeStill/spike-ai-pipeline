@@ -274,7 +274,7 @@ Release       mail v0.3.0 (at slice 2's checkpoint); processing v0.6.0
 
 ## Progress
 
-slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published · processing: aa71cc8 route; bb315b4, 786a64d picture; b855570, 4836e73, 10241b2 cli contract and convention · standards pass 3–5 done (283298b, d4810c3) · f6fb8fe, aadb24c inspect; 809ce5c onenote contract; d6beab2 typed content; f8512da page media; d51cacc, 5764fd7 dispatch core; a7a9855, 8a0f8c6 adapters · standards pass 6–10 done (4f1f1f4, 2360399) · f4d8f65, b2a8ee5 zip · d17e321, 9f202e4, cf52e5c pool and resume · 70dd654, 7b3caf7 outputs stream (12b) · fd41110, 023ec96 disk and children bounds (12c); 98b5d33 no-stage content released · e89175c, 3ee9173 integration tier · 96797c6, 256e94c finding · release prep 1a74b6c..564cb31 · root slice 16 committed · standards pass 11–15 running · editor — (notes: ~/docs README layout table needs onenote; context/README.md:53 content wording)
+slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged and published · processing: aa71cc8 route; bb315b4, 786a64d picture; b855570, 4836e73, 10241b2 cli contract and convention · standards pass 3–5 done (283298b, d4810c3) · f6fb8fe, aadb24c inspect; 809ce5c onenote contract; d6beab2 typed content; f8512da page media; d51cacc, 5764fd7 dispatch core; a7a9855, 8a0f8c6 adapters · standards pass 6–10 done (4f1f1f4, 2360399) · f4d8f65, b2a8ee5 zip · d17e321, 9f202e4, cf52e5c pool and resume · 70dd654, 7b3caf7 outputs stream (12b) · fd41110, 023ec96 disk and children bounds (12c); 98b5d33 no-stage content released · e89175c, 3ee9173 integration tier · 96797c6, 256e94c finding · release prep 1a74b6c..564cb31 · root slice 16 committed · standards pass 11–15 done (24fab78, bc2a6e7) · spec done (gaps closed: 9b47530, fdbdab0, 05fd32f; pending edits to editor; ink truth to the architect) · editor done
 
 ## Decisions
 
@@ -1776,6 +1776,19 @@ slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged a
 - onenote (r6 q3): OLE2 macro detection deferred to formats. Rejected: oletools (an unmaintained Python dependency is a maintenance liability, unlike a stable Rust crate).
 - onenote (r6 q4): ClamAV excluded; roadmap note as a potential future addition.
 - onenote (r6 q12, q13): the index claims content in flight so concurrent dispatches never duplicate work; processing offers a pool over N workers.
+- onenote (build): mail's `--after` always writes folder lines, accepts a cursor naming a message the whole read skips, exits 3 on an unreadable mbox entry before the cursor, and refuses .msg and .eml after sniffing.
+- onenote (build): `route` changes v0.5.0's "unrouted" to text for two email attachments (отчёт.csv, note-g.txt). A ZIP with neither OOXML nor ODF is archive, ODF is told by its mimetype entry, .pst and mbox are nested, tar is archive, and WordPerfect, .xlsb, and an OLE2 EncryptedPackage named as OOXML or .xlsb are office's, the last coming out encrypted. HTML is unrouted until the capstone takes web content; a text-extension file starting "From " stays text.
+- onenote (build): `picture`'s outputs equal goldens recorded before the move, byte for byte. An SVG inside an office document passes on as stored; only picture.Convert converts SVG. A batch whose pictures share a PNG stem is refused.
+- onenote (build): each adapter keeps its own ExitError type over internal/cli's shared sentinels, so office's code-1 text is now "not written"; one LimitedBuffer replaces document's and picture's copies.
+- onenote (build): `inspect` flags encryption as active, adds /EmbeddedFiles, /EF, an XLM macro-sheet check, and linked-picture relationships (hyperlinks excepted), quarantines a ZIP whose central directory can't be read, skips polyglot checks for container and text kinds, and leaves members to the dispatcher. Unchecked: legacy OLE2 macros, ODF scripts, and PDF names inside compressed object streams.
+- onenote (build): `onenote` keeps ink and ink_text as top-level fields, unknown variants in one shared Unknown, and drops unknown fields inside known kinds; its Float reproduces serde_json's float32 formatting, so the round trip is byte for byte. An ink container is no medium, since page ink draws its strokes. A recording's signature routes before the CLI's type, so an executable typed audio stays unrouted.
+- onenote (build): `dispatch` yields a part's event after its subtree's, so the outcome is final; checks a cycle before the index and gives it its own "cycle" outcome; keeps quarantined parts unrecorded; gives Encrypted when a stage fails on content flagged encrypted; records a part only when its subtree finished, else releases the claim. File-index claims are never renewed, so Stale must outlast the slowest stage. Known limits: two dispatches each holding content the other contains wait on each other until their contexts end; a stale-claim takeover can prepare content twice.
+- onenote (build): the caller fills each adapter's tool version (dispatch.Versions), and the adapter's version is in the configuration hash. office asks for Markdown only; a missing tool is no processor; a failed PDF page fails the part without stopping the others. Each adapter yields a record before its Markdown, and the email stage a message's attachments before both, so a cursor never skips an attachment.
+- onenote (build, the session's call for behaviors 17 and 20): outputs and found parts stream to the caller and the index as each is produced, not held until the part's event. A stage's originals are released once their content is recorded, the dispatcher checking the hash against the CLI's file name. Known limit: a released content's later reference takes the first occurrence's route. FileIndex's format changed with no migration.
+- onenote (build): any encrypted ZIP entry makes the ZIP Encrypted ("n of m entries") after its readable entries are dispatched. The zip stage decompresses from OpenRaw, so a lying declared size shows as a bomb, which becomes a quarantined record on the kept ZIP; under a permissive policy a symlink entry is written as a regular file.
+- onenote (build): MailMinimum stays 0.2.0, 0.3.0 checked only when After is set; a resumed input's own entry isn't recorded; the Threader's save format is versioned and deterministic.
+- onenote (build): the integration tier dispatches every fixture over one index, so shared content is seen as in a real run; its 12 first-run mismatches were wrong expectations. Known limits: Encryption.one fails rather than coming out encrypted, since onenote gives no encryption signal, and a bare RFC 822 file with no extension is unrouted.
+- onenote (build): the ink truth is the session's draft, pending the architect's confirmation. Saving the Threader at every message is quadratic (3.5 ms a save at 25,000 messages), so the docs recommend a checkpoint every N messages.
 
 ## Pending edits
 
@@ -1847,24 +1860,42 @@ slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged a
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.3.0 (this replaces the bullet's v0.1.0 and v0.2.0 drafts, which were never applied):
+  v0.6.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0 and v0.5.0 amendments, which were
+  never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
-  >   and embeddings. It runs mature system tools through adapters it owns (`system-tools.md`),
-  >   with herald's `internal/format` as its prior art. Its `tool` package, on the standard library
-  >   alone, is the contract: a Tool bound to one program, found and version-checked at
-  >   construction, runs an invocation under the caller's context through the exec runner
-  >   (binaries, and scripts through their interpreter) or the container runner (the docker CLI, an
-  >   image pinned by digest, each run locked down), and reports the run's CPU time. Its `document`
-  >   package prepares a PDF's pages: Ghostscript, which won the renderer bake-off against
-  >   pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG and
-  >   reads text layers; ImageMagick corrects page images, lists its corrections as a catalog for a
-  >   prompt, and assesses a page for the defects they fix; and a page stream yields the prepared
-  >   pages in order. Its `office` package runs the spike's Open XML CLI over docx, xlsx, and
-  >   pptx, converts legacy .doc, .xls, and .ppt to OOXML through LibreOffice in a digest-pinned
-  >   container, and converts EMF, WMF, and TIFF pictures to PNG; no stage re-encodes a picture
-  >   lossily. ffmpeg and ffprobe take audio and video, live sources included.
+  >   and embeddings, and processing runs none. It runs mature system tools through adapters it
+  >   owns (`system-tools.md`), with herald's `internal/format` as its prior art. Its `tool`
+  >   package, on the standard library alone, is the contract: a Tool bound to one program, found
+  >   and version-checked at construction, runs an invocation under the caller's context through
+  >   the exec runner (binaries, and scripts through their interpreter) or the container runner
+  >   (the docker CLI, an image pinned by digest, each run locked down), and reports the run's CPU
+  >   time. Its `route` package identifies content by its signature and names the stage it goes to
+  >   next, for every format in the spike's inventory, "no processor yet" where no stage exists.
+  >   Its `picture` package converts TIFF, EMF, WMF, and SVG pictures to PNG, EMF and WMF through
+  >   LibreOffice in a digest-pinned container, and holds ImageMagick's page corrections, their
+  >   catalog for a prompt, and a page assessment; no stage re-encodes a picture lossily. Its
+  >   `document` package prepares a PDF's pages: Ghostscript, which won the renderer bake-off
+  >   against pdftoppm, pdftocairo, vips, and ImageMagick over gs, renders pages and regions as PNG
+  >   and reads text layers, and a page stream yields the prepared pages in order. Its `office`
+  >   package runs the spike's Open XML CLI over docx, xlsx, and pptx, and converts legacy .doc,
+  >   .xls, and .ppt to OOXML through LibreOffice in the same container. Its `email` package runs
+  >   the spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files, streams
+  >   their records as typed values, rebuilds threads by RFC 5256's REFERENCES algorithm with
+  >   conversation-index parents, and resumes a store after a message. Its `onenote` package runs
+  >   the spike's OneNote CLI over sections, notebooks, and packages, streams their records as
+  >   typed values, and lists each page's images, embedded files, and ink with their routes. Each
+  >   format package's text, a Markdown body or a text layer, is complete without inference; only
+  >   pictures and page images go to vision. Its `inspect` package inspects every part before its
+  >   stage: active content, such as macros, scripts, embeddings, and executables, is flagged and
+  >   still prepared, since no stage executes it, and content unsafe to read, such as a ZIP entry
+  >   escaping its directory, a symbolic link, or a bomb, is quarantined. Its `dispatch` package
+  >   walks an input and every part found in it (attachments, embedded messages, media, and ZIP
+  >   entries) to those stages with no default caps, under a content-addressed index that prepares
+  >   each distinct content once across a share's inputs, runs, and workers, removes each part's
+  >   file once the caller has consumed it, and resumes a store by cursor. ffmpeg and ffprobe take
+  >   audio and video, live sources included.
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -1959,11 +1990,6 @@ slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged a
   v0.4.0 is released, and docs/findings/email.md records the threads and routes against hand
   truth, each route carried to its real stage, and the adapter's time and peak memory beside
   mail's."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet: the v0.3.0
-  draft above gains, before its last sentence, "Its `email` package runs the spike's mail CLI over
-  .pst stores and .msg messages, streams their records as typed values, rebuilds threads by RFC
-  5256's REFERENCES algorithm with conversation-index parents, and names each attachment's stage
-  by its content's signature, for the caller to run."
 - coordinator · context/system-tools.md, "First case" (optional): "and the spike's own Open XML
   CLI, built as a system tool" reads "and the spike's own Open XML and mail CLIs, each built as a
   system tool".
@@ -1997,12 +2023,6 @@ slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged a
   processing v0.5.0 is released, and docs/findings/email.md's addendum records the .eml and mbox
   threads and routes against hand truth and the adapter's time and peak memory on the scale mboxrd
   beside mail's."`
-- coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, to v0.5.0: in the
-  pending v0.4.0 sentence, "runs the spike's mail CLI over .pst stores and .msg messages" reads "runs
-  the spike's mail CLI over .pst stores, .msg messages, .eml messages, and mbox files", and "names each
-  attachment's stage by its content's signature, for the caller to run" reads "names each
-  attachment's stage by its content's signature, a by-value .eml by its name or stored type and its
-  header's shape, for the caller to run".
 - coordinator · roadmap, the `gb10-2-align` task (a note for its plan): currency now reports
   llama.cpp b12110 (v0.9.0, 2026-11-04), past the b12063 target. v0.9.0 resizes Gemma 4 images
   without letterbox padding and speeds Gemma 4 E2B/E4B prefill, so the target choice may want a
@@ -2010,32 +2030,82 @@ slices 16/16 committed · mail released: PR #3 merged (eb73407), v0.3.0 tagged a
 - roadmap note · spike-ai-pipeline-mail (its next task): its .claude/marathon.toml still says "No CI runs yet"
   and merges without waiting on checks, though its CI runs; office and onenote chain `gh pr checks --watch`
   before the merge (onenote-cli).
-- coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task `onenote-fixture` after `onenote-cli`, named
-  "An authored OneNote notebook". The architect authors a notebook in OneNote (web, mobile, or desktop) and
-  downloads it from OneDrive; it is committed with hand truth from onenote-cli's round 2 authoring spec (goal
-  record, Decisions, "onenote-cli (round 2, q3)") after a scan for the account email; its package, built through
-  cab, reads equal to its directory; the task tags onenote v0.1.x. OneNote for the web couldn't create a notebook
-  during onenote-cli (2026-11-04).
 - coordinator · roadmap, the `onenote-cli` task's summary: the sentence "Fixtures: onenote.rs's MIT samples, never
   its AGPL ones, and a notebook the architect authors in OneNote, in both variants, with hand truth." reads
   "Fixtures: Interop-TestSuites' OneNote files (MIT) and onenote.rs's maintainer samples (MPL-2.0), never its AGPL
-  ones, with hand-written expectations; .onepkg through packages the tests build." The authored notebook moves to
-  `onenote-fixture`.
+  ones, with hand-written expectations; .onepkg through packages the tests build." The authored notebook goes to the
+  backlog (the note below).
 - roadmap note · spike-ai-pipeline-onenote: OneNote section decryption waits for a specification or an open
   implementation, since [MS-ONESTORE] 2.5.19 leaves the scheme undocumented (onenote-cli, round 2 q7).
-- coordinator · roadmap, the `onenote` task: onenote_parser issue #48 (a 375 MB OneDrive-format section needs over
-  9 GB) bounds what the adapter can read. onenote's finding (spike-ai-pipeline-onenote's
-  docs/findings/onenote-cli.md) measured the 161 MB Large OneDrive.one at 135 MiB, so #48 didn't show at that
-  size, and advises the adapter to bound the CLI's memory all the same.
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-onenote` bullet, to v0.1.0: "Processing routes the
-  pages' media to their stages (evidence 17)." reads "Processing's `onenote` package is to route the pages' media
-  to their stages.", and the bullet ends with: "Its known limits: password-protected sections are refused, since
+  pages' media to their stages (evidence 17)." reads "Processing's `onenote` package runs it as a system tool, and
+  its `dispatch` package carries each page's images, embedded files, and ink to their stages (evidence 17).", and
+  the bullet ends with: "Its known limits: password-protected sections are refused, since
   [MS-ONESTORE] leaves their encryption undocumented; no OneNote-written .onepkg is tested; and onenote_parser
   issue #48 can make a large OneDrive section with a long edit history need gigabytes of memory. Its
   [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md)
   records every expected field recovered against the public fixtures' hand-written expectations, and its time
-  and peak memory per input (evidence 17)."
+  and peak memory per input. Processing's
+  [onenote finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/onenote.md)
+  records each medium routed to its real stage and vision reading page ink at a character error rate of 0.028,
+  against 0.68 for OneNote's stored recognition (evidence 17)."
 - coordinator · roadmap, the `onenote-cli` task (optional): add `proof = "The check passes on ubuntu-24.04 and
   ubuntu-24.04-arm, onenote v0.1.0 is released with both archives and SHA256SUMS, and
   docs/findings/onenote-cli.md records the fields recovered per kind against the public fixtures' expectations
   and each input's time and peak memory."`
+- coordinator · roadmap, the `onenote` task: `repos` becomes `["spike-ai-pipeline-mail",
+  "spike-ai-pipeline-processing", "spike-ai-pipeline"]`, and its summary says what the task
+  delivered:
+
+  ```
+  Mail's record cursor, `--after`, released first as mail v0.3.0. Processing's lower layers
+  cleaned up: `route`, which identifies content by signature and names a route for every format
+  in the inventory, "no processor yet" where no stage exists; `picture`, conversion to PNG (TIFF,
+  EMF, WMF, SVG) with the corrections and assessment; one internal CLI contract; and a written
+  adapter convention. Then `inspect`, every part inspected before its stage, active content
+  flagged and content unsafe to read quarantined; `onenote`, the adapter over the OneNote CLI at
+  v0.1.0, its records typed and each page's media routed; and `dispatch`, which walks an input
+  and every part found in it to the caller's stages, with adapters for document, office, picture,
+  email, onenote, and zip, under a content-addressed index (in memory or a directory) that
+  prepares each content once across inputs, runs, and workers, a pool over N workers, and a
+  store resumed by cursor. Processing runs no inference. A finding; tags processing v0.6.0; the
+  root's evidence 17 links the finding. Evidence 17.
+  ```
+- coordinator · roadmap, the `formats` task's summary: "zip archives recursed within size and
+  depth limits" is cut, since the `onenote` task's dispatcher reads ZIP. It gains processors for
+  text, decoded by its encoding, for .xlsb, WordPerfect, and ODG, and for tar, gzip, zstd, and 7z
+  archives, each a route processing v0.6.0 reports as "no processor yet", and legacy OLE2 macro
+  detection in `inspect`.
+- coordinator · roadmap, the `audio` task's summary: it gains the audio route's processor, a
+  dispatcher stage for `route.Audio`. The summary says processing transcribes windows, which
+  conflicts with the decision that processing runs no inference; audio's plan settles whether
+  processing prepares the windows and a layer above transcribes them.
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline: recorded video files (MP4, MKV, WebM,
+  AVI) route to `route.Video` with no task owning their processor; `streams` or `formats` takes
+  them, settled at the next of their plans.
+- coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: an authored OneNote
+  notebook, committed to spike-ai-pipeline-onenote with hand truth from onenote-cli's round 2
+  authoring spec, needs desktop OneNote on Windows or a Mac, since OneNote for the web can
+  neither download nor export a notebook (onenote, r6 q1).
+- spike-ai-pipeline-onenote · README.md, "Known limits": "No authored hand truth: every
+  expectation comes from the public Interop-TestSuites (MIT) and onenote.rs (MPL-2.0) fixtures. A
+  later release adds an authored notebook." loses its last sentence; the authored notebook is a
+  backlog note, not a planned release.
+- roadmap note · spike-ai-pipeline-processing: ClamAV could become an `inspect` check; v0.6.0
+  excludes it (onenote, r6 q4).
+- roadmap note · spike-ai-pipeline-processing: the `tool` package could bound every run's memory. The
+  OneNote CLI's memory is unbounded: onenote_parser issue #48 (a 375 MB OneDrive-format section
+  needs over 9 GB) didn't show on the 161 MB Large OneDrive.one, which peaks at 135 MiB, but
+  bounds what a large, long-edited section can need (onenote-cli finding; processing's onenote
+  finding, "Known limits").
+- roadmap note · spike-ai-pipeline-mail: mail caps a .msg's nesting at 16 levels; raise or lift the
+  cap if real stores nest deeper.
+- roadmap note · spike-ai-pipeline-office: office could write a huge workbook sheet by sheet, since
+  it reads a whole document into its model before writing it.
+- roadmap note · spike-ai-pipeline-processing: the email `Threader` holds about 60 bytes a message
+  for the whole read, about 60 MB past a million messages; spilling its keys to disk would bound it.
+- roadmap note · spike-ai-pipeline-processing: a bare RFC 822 file with no extension is unrouted,
+  since the nested route needs an .eml name or a message type.
+- roadmap note · spike-ai-pipeline-processing: `Encryption.one`, a password-protected section, is
+  reported failed rather than encrypted, since the OneNote CLI gives no encryption signal; a signal
+  from onenote, or an inspect check for OneNote encryption, would make it Encrypted.
