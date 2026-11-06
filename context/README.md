@@ -60,7 +60,15 @@ stage by stage in real time?
     [office finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/office.md)
     records the legacy conversion's loss and footprint and the vision runs over the pictures.
 13. Live media: a live or real-time-paced audio and video source processed as it arrives, with
-    per-window latency, as an event stream with cancellation.
+    per-window latency, as an event stream with cancellation. Processing's
+    [streams finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/streams.md)
+    records it on Tears of Steel's 180 s clip (3 runs), AMI ES2002a's 21-minute meeting, and NASA's
+    25-minute in-flight event, each read at real time with no window, frame, or request failed. A
+    window is yielded once the stream passes its 30 s limit and any silence open there ends (at
+    most 6.3 s after its last sample on AMI, 65 s on NASA), and transcribed 0.8 to 4.5 s later; a
+    frame is described within 4 s, and neither model ever queued. The live transcript matches
+    audio's file path under the same detector (AMI word error rate 0.322 against 0.323), and a
+    cancellation stops the stream within 0.5 s, leaving only the events yielded.
 14. One tool run through each runner, exec and container, under the same tool contract.
 15. Capstone: the browser's consumption of the event sequence, NATS over WebSocket against a
     backend relay, compared on latency, ordering, auth, ports, and native-tier use.
