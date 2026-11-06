@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** streams
-- **Branch:** streams
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -24,7 +24,7 @@
 16. [x] onenote
 17. [x] gb10-2-align
 18. [x] audio
-19. [ ] streams
+19. [x] streams
 20. [ ] chats
 21. [ ] formats
 
@@ -193,10 +193,6 @@ Door          one-way for the v0.8.0 tag, since a pushed tag reaches
               are local and removable.
 Release       spike-ai-pipeline-processing v0.8.0
 ```
-
-## Progress
-
-slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standards done (4e512be..e3e5753) · spec done (cafd85c) · editor done
 
 ## Decisions
 
@@ -1813,6 +1809,7 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   Prelinger AVI is DivX, not Cinepak (archive.org mislabels it); srt's live mode drops the last
   1.024 s when the sender closes, tested with a tolerance; NASA Epps' captions run about 1,000 s
   late after 7:21.
+- streams (ship): the architect accepted the session brief; processing v0.8.0 released.
 
 ## Pending edits
 
