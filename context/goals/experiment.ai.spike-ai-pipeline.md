@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** streams
+- **Branch:** streams
 
 ## Tasks
 
@@ -27,97 +27,175 @@
 19. [ ] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · audio
+## Task brief · experiment.ai.spike-ai-pipeline · streams
 
 ```
-Problem       Set A's audio model (gemma-4-E4B) takes 30 s at most.
-              Processing routes audio parts to "no processor yet", so
-              a recording past that limit can't be prepared, and
-              evidence 5 is unproven. Processing's LibreOffice image
-              trails a new major (Gotenberg 9.0.0).
+Problem       Processing prepares audio only from finished files, and
+              routes recorded video to "no processor yet". A live or
+              real-time-paced source can't be prepared as it arrives,
+              so evidence 13 is unproven. Live windows also need a
+              silence threshold that survives a level change, which
+              audio's two-pass detection can't give. Processing's
+              ffmpeg image trails a rebuild (linuxserver/ffmpeg
+              9.0.2-cli-ls89).
 
 Behaviors
-  1. Probe: ffprobe gives a source's duration and its audio stream
-     (codec, sample rate, channels). A source with no audio stream is
-     refused before ffmpeg runs.
-  2. Silences: ffmpeg's volumedetect and silencedetect give the
-     source's silence intervals. The threshold defaults to 15 dB below
-     the mean and the minimum silence to 0.3 s; a request may set
-     either, or give a fixed threshold.
-  3. Plan: windows cover the source in order. Each is at most 30 s
-     including its overlap (2 s by default). Each is cut at the middle
-     of the latest silence before the limit, or at the limit when its
-     range has none. The plan lists each window's span and each seam's
-     shared range. The same source and request give the same plan.
-  4. Windows: each window is written as 16 kHz mono 16-bit PCM WAV,
-     named by its SHA-256. They come as a lazy stream in window order,
-     with concurrency set per request (zero meaning 1). Cancelling
-     stops ffmpeg, and a loop that stops early stops the stream.
-  5. Adapter convention: ffmpeg and ffprobe Specs, minimum 9.0, and a
-     default image, linuxserver/ffmpeg 9.0.2-cli-ls88 by digest. A
-     Config holds Tools built through either runner, and construction
-     refuses a missing or outdated tool. Exec and container runs give
-     byte-identical windows.
-  6. Join (released): ordered window transcripts become one transcript
-     through transformers' best-offset merge over each overlap,
-     matched on case- and punctuation-folded words, with the original
-     words kept. A seam with under 2 matching words is concatenated
-     and reported unmatched. Each seam is reported as matched (with
-     its word count) or unmatched. The result is deterministic.
-  7. Dispatch: the audio route gets a stage that yields a WAV, FLAC,
-     MP3, Ogg or M4A part's windows and plan as outputs. It runs no
-     inference, and video stays "no processor yet".
-  8. Harness (test code): windows are transcribed through the client
-     at concurrency 1 and 4 (E4B's slots), greedy (temperature 0
-     through Native), language en, then joined. A committed fixture of
-     about 50 s, built from LibriSpeech dev-clean utterances with known
-     silences, meets its truth in the integration tier.
-  9. Finding: AMI ES2002a, Earnings-21 4330115, Earnings-22 4479944
-     and the LibriVox M4B (approximate truth), 3 greedy runs each. It
-     reports WER normalized in textscore (lowercase, punctuation
-     stripped, hyphens split, fillers dropped, no number
-     normalization), seam accuracy (edits within 5 words of each seam
-     in one alignment against the whole truth) and total time. Each is
-     windowed and set against one unsplit request over each source's
-     first 10 minutes. It adds a gpt-oss-120b pass over the ~10 words
-     around each seam, with and without. Results are committed beside
-     the finding, and the root's evidence 5 links it.
- 10. Processing's currency exits 0: picture's LibreOffice image is on
-     Gotenberg 9.0.0, adapted where 9.0.0 breaks the direct soffice
-     runs, and picture's and office's LibreOffice tiers (legacy
-     conversion, metafiles) pass on it.
+  1. Upgrade: ffmpeg and ffprobe run in linuxserver/ffmpeg
+     9.0.2-cli-ls89 by digest. Exec and container runs give
+     byte-identical windows. scdet, select, showinfo and the srt,
+     rtmp, http, https, hls and udp protocols work in the pinned
+     image. Currency exits 0.
+  2. Sources: a media request names one source. It is a reader the
+     caller holds, fed to ffmpeg's stdin; a file read at real time;
+     a file read unpaced; or an input URL whose scheme is srt, rtmp,
+     http, https (live HLS included) or udp. rtsp, any other scheme,
+     or a request naming no source or more than one is refused
+     before ffmpeg runs. Each URL run allows only its own scheme's
+     protocols, so a playlist can't open another protocol or a local
+     file. Through the container runner a URL run joins the docker
+     network the caller names, and one with no network named is
+     refused.
+  3. One run, one stream: each source is read by one ffmpeg run, and
+     its events come as one lazy stream: window events for its audio
+     and frame events for its video. Each event carries its source
+     time and the wall-clock time its last sample or frame arrived.
+     Window events come in plan order and frame events in
+     source-time order, each yielded as soon as it is complete. An
+     audio-only source yields windows only, and a video-only source
+     frames only. A video with an audio track yields both.
+  4. Incremental plan: the stream's windows follow PlanWindows'
+     policy: at most 30 s including the 2 s default overlap, each cut
+     at the middle of the latest silence before the limit, or at the
+     limit. Each window is fixed once the stream passes its limit or
+     the source ends. Fed the same duration and silences, audio's
+     incremental planner gives exactly PlanWindows' plan (a property
+     test).
+  5. Live silences: the live path finds silences with a noise-floor
+     tracker over the PCM the run writes: a rolling low percentile of
+     10 ms frame energy plus a margin. The percentile, the rolling
+     window and the margin are request fields, defaulted to the
+     values the build tunes. A request may give a fixed threshold
+     instead. No silencedetect runs on the live path. The tracker is
+     deterministic over the same PCM. Each window event names the
+     threshold it was cut under. On the committed fixture's variants,
+     a 12 dB gain step and pink noise added partway through, the
+     tracker finds the known silences after the change, where a
+     threshold fixed from the first 30 s finds none.
+  6. Windows: each window is 16 kHz mono 16-bit PCM WAV with the
+     canonical 44-byte header, named by its SHA-256 in the caller's
+     media directory. Its event carries its index, span, cut (silence,
+     limit or end), seams, samples and threshold.
+  7. Frames: a frame is taken at the first frame, at each scene
+     change past the request's scene threshold, and after the
+     request's maximum gap with no frame (10 s by default). Each is
+     PNG named by its SHA-256, at the source's resolution or scaled
+     losslessly to a largest side the request sets. Its event carries
+     its reason (first, scene or interval), source time, and the
+     width and height written. On the committed fixture the frame
+     reasons and times are exactly its known cuts and gaps.
+  8. File detector: audio's file request chooses its silence
+     detector: volumedetect and silencedetect (the default and
+     unchanged), or the tracker. With the tracker, the file path's
+     plan equals the live path's over the same PCM and request (a
+     property test).
+  9. Join's settled prefix: re-running audio's Join over the
+     transcripts received so far leaves every word before the latest
+     seam unchanged. This is documented and tested, with no new API.
+ 10. Cancellation: a context that ends stops ffmpeg through either
+     runner, and the stream yields the context's error once and ends.
+     A loop that stops early stops the run. The media directory keeps
+     only the windows and frames the stream yielded. A source error
+     ends the stream with its error, after the events already
+     complete.
+ 11. Protocols: in the integration tier, each of srt, rtmp, http,
+     live HLS and udp carries the committed fixture from ffmpeg as
+     sender over loopback. The stream yields the fixture's windows
+     and frames, with no outside service. A reader source does the
+     same.
+ 12. Dispatch: route.Video's parts (MP4, MKV, WebM, AVI) get a video
+     stage over media's unpaced run. It yields sampled frames as image
+     outputs and the audio track's windows as audio outputs, after a
+     plan record. A video with no audio track yields frames only. The
+     stage's identity hashes the sampling and detection settings, not
+     its concurrency. With no ffmpeg, no video stage is registered.
+     Processing runs no inference.
+ 13. Harness (test code): through the client on gb10-2, E4B
+     transcribes the windows and Gemma 4 26B-A4B reads the frames as
+     they arrive. The settled transcript is shown as each window
+     lands, and the committed fixture meets its truth in the
+     integration tier.
+ 14. Corpus: fetched into ~/docs/video, each with its SHA-256,
+     manifest entry (source URL, license and its status,
+     redistributable, truth, covers) and the README's video row:
+       - AMI ES2002d Corner, Closeup1 and its headset mix
+       - NASA's ISS in-flight event and Jeanette Epps interviews,
+         at 640x360
+       - Prelinger's "Duck and Cover" as Cinepak AVI, MPEG-2 and
+         Ogg Theora
+     None of it is committed.
+ 15. Finding: Tears of Steel's 180 s MP4 (3 runs, its English .srt as
+     approximate truth) and AMI ES2002a's overhead camera muxed with
+     its headset mix (about 21 min, 1 run), each read at real time.
+     For each window and frame it reports the lag from the last
+     sample's or frame's arrival to its event, and from the event to
+     the model's answer. It reports AMI's word error rate against
+     audio's file path, and a cancellation midway through each run.
+     It may add the NASA in-flight event. Results are committed
+     beside the finding, and the root's evidence 13 links it.
 
-Test seams    the audio package's API (probe, silences, plan, windows
-              stream, join) in the unit and integration tiers;
-              dispatch's Stage for the audio route; picture's existing
-              LibreOffice tiers
+Test seams    media's event stream (sources, windows, frames,
+              cancellation) in the unit and integration tiers;
+              audio's incremental planner, tracker, file detector
+              choice and Join prefix property in the unit tier;
+              dispatch's Stage for the video route
 
 Slices
-  1. Upgrade: Gotenberg 9.0.0 for picture's LibreOffice image,
-     adapted; the LibreOffice tiers pass; currency exits 0.
-  2. Probe, silences and plan on the committed fixture (the plan
-     printed).
-  3. Window stream through both runners.
-  4. Join and the seam report; textscore's normalizer.
-  5. Dispatch's audio stage.
-  6. Harness: the fixture transcribed concurrently on gb10-2 and
-     joined against its truth.
-  7. Corpora and findings: Earnings-22 4479944 fetched to ~/docs
-     (SHA-recorded), the unsplit baseline, the gpt-oss seam pass, the
-     finding, evidence 5's link.
-  8. Release: CHANGELOG v0.7.0, tag.
+  1. Upgrade: linuxserver/ffmpeg 9.0.2-cli-ls89 by digest. Runners
+     byte-identical, scdet, select, showinfo and the protocols
+     confirmed in the image, currency exits 0.
+  2. Fixture: audio's LibriSpeech fixture with a generated test
+     pattern of known scene cuts, plus its gain-step and added-noise
+     variants. Rebuilt by a fixtures task, SHA-256s recorded, the
+     truth printed.
+  3. Audio: the incremental planner held equal to PlanWindows, the
+     tracker on the level-change variants, the file path's detector
+     choice and Join's settled prefix.
+  4. Media over files: one run, paced and unpaced, yielding
+     interleaved windows and frames with exact reasons, through both
+     runners, with cancellation.
+  5. Live sources: the reader and the srt, rtmp, http(s) with live
+     HLS and udp URLs over loopback; protocol allow-lists; the named
+     network; rtsp refused.
+  6. Dispatch's video stage.
+  7. Harness: the fixture read live, with windows transcribed and
+     frames read on gb10-2, and the settled transcript against its
+     truth.
+  8. Corpus: the new videos fetched into ~/docs with manifest
+     entries and the README's video row.
+  9. Findings: the evidence 13 runs, the finding and the root's
+     evidence 13 link.
+ 10. Release: CHANGELOG v0.8.0, tag.
 
-Out of scope  live or real-time audio and video frames (streams); a
-              video file's audio track; M4B chapters; diarization;
-              server timestamps; number normalization; any preset
-              change (escalation); llama.cpp past b12098 (held)
+Out of scope  chat streams and exports (task chats, evidence 6);
+              capture devices (v4l2, pulse/alsa, x11grab) and rtsp
+              (backlog); http(s) reconnect options; voice-activity
+              models; dynaudnorm or any other level normalization
+              ahead of detection; inference in processing; an LLM
+              seam pass; a video's subtitle tracks as outputs;
+              diarization; M4B chapters; server timestamps; any
+              preset change (escalation); llama.cpp past b12098
+              (held)
 
-Door          one-way for the v0.7.0 tag, since a pushed tag reaches
+Door          one-way for the v0.8.0 tag, since a pushed tag reaches
               consumers. The rest is two-way: code on a branch, the
-              Gotenberg pin reverts by digest, corpora in ~/docs and
-              not committed.
-Release       spike-ai-pipeline-processing v0.7.0
+              image pin reverts by digest, and the ~/docs additions
+              are local and removable.
+Release       spike-ai-pipeline-processing v0.8.0
 ```
+
+## Progress
+
+slices 0/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1667,6 +1745,49 @@ Release       spike-ai-pipeline-processing v0.7.0
 - audio (build): falsified: evidence 5's "an optional gpt-oss pass smooths the seams"; a pass over the 10 words around each seam, allowed only to remove words, made WER and seam edits worse in all 12 runs. Windowing is less accurate than one unsplit request on the 4-speaker meeting and the 8-speaker call, a measured cost, not a contradiction: evidence 5 claims no accuracy parity.
 - audio (build): E4B answered a window a few seconds long with its own instruction in 2 of 3 LibriVox runs; the join can't tell it from speech, and a guard belongs to the inference layer, not processing.
 - audio (accept): re-recording golden sums after a pinned-image bump, with the renders compared first and the reason recorded in the testdata README, is accepted as the exception to office's never-re-record rule (session brief, Needs you 1, rec taken).
+- streams (r1 q1): chat streams split into their own task, chats, after streams (evidence 6, tags
+  processing v0.9.0; formats re-tags v0.10.0); streams covers evidence 13 only.
+- streams (r1 q3): one ffmpeg run per source gives one lazy stream of window and frame events,
+  interleaved in source time; audio as PCM on stdout, frames as PNG in the working directory, filter
+  reports on stderr. It covers a video's audio track.
+- streams (r1 q4): live windows follow PlanWindows' cut policy; audio gains an incremental planner
+  held equal to PlanWindows.
+- streams (r1 q6): frames at scene changes, the first frame, and at least every 10 s, as PNG; each
+  frame event names its reason.
+- streams (r1 q7): no new join API; re-running Join leaves the words before the latest seam
+  unchanged, documented and tested.
+- streams (r1 q8): streams takes recorded video (MP4, MKV, WebM, AVI) through a dispatch video stage
+  over media; settles the two pending video notes.
+- streams (r1 q9): evidence 13's proof is Tears of Steel 180 s (3 runs) and AMI ES2002a's overhead
+  camera with its headset mix (1 run), real-time paced, with per-window and per-frame lag, AMI WER
+  against the file path, and a cancellation midway.
+- streams (r1 q10): the committed audio-and-video fixture is built from audio's LibriSpeech fixture
+  and a generated pattern with known scene cuts; the architect asked to expand ~/docs's video
+  catalog.
+- streams (r2 q1): live sources are a reader, a file paced at real time, and srt, rtmp, http(s) with
+  live HLS, and udp URLs, each run allowing only its scheme's protocols; rtsp goes to the backlog
+  (ffmpeg 9.0.2 can't listen as an rtsp server).
+- streams (r2 q2): capture devices are out. On Wayland (the architect's Omarchy laptop has no X11),
+  ffmpeg has no screen input; a portal capture tool such as gpu-screen-recorder feeds a URL or the
+  reader, pw-record feeds audio, and x11grab applies only to X11 hosts. v4l2loopback is the camera
+  test seam.
+- streams (r2 q3): the live path finds silences with a noise-floor tracker in Go over the PCM,
+  against processing's rule that a mature tool is never reimplemented in Go. Reason: silencedetect's
+  threshold is fixed for a run, and with noise added at 600 s a threshold fixed from the first 30 s
+  cut 66 of 92 Earnings-21 windows and 25 of 51 AMI windows at the 30 s limit, where an untuned
+  tracker cut 0 and 3. dynaudnorm handled gain steps but not noise and added about 15 s of lag.
+- streams (r2 q4, q5): a build slice adds AMI ES2002d (Corner, Closeup1, headset mix), NASA's ISS
+  in-flight event and Jeanette Epps interviews at 640x360, and Prelinger's "Duck and Cover" (Cinepak
+  AVI, MPEG-2, Ogg Theora) to ~/docs/video, about 1.1 GB, uncommitted.
+- streams (r2 q6): frames at the source's resolution, with an optional largest side per request.
+- streams (r2 q7): a new package, media, runs the single ffmpeg run; audio keeps its planner, WAV
+  writer, and Join.
+- streams (r3 q1): audio's file path gains a detector choice, silencedetect by default or the
+  tracker, with a property test that live and file plans are equal over the same PCM and request.
+- streams (brief): a URL run through the container runner with no docker network named is refused;
+  http(s) reconnect is out of scope (defaults the architect accepted with the brief).
+- streams (currency): linuxserver/ffmpeg 9.0.2-cli-ls88 -> ls89, a base-image rebuild with nothing
+  to adapt; the upgrade slice takes it.
 
 ## Pending edits
 
