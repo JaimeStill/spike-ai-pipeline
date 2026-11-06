@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** audio
-- **Branch:** audio
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -23,7 +23,7 @@
 15. [x] onenote-cli
 16. [x] onenote
 17. [x] gb10-2-align
-18. [ ] audio
+18. [x] audio
 19. [ ] streams
 20. [ ] formats
 
@@ -1666,67 +1666,7 @@ Release       spike-ai-pipeline-processing v0.7.0
 - audio (build): r1 q2 held: processing prepares (plan, windows, released join) and runs no inference; transcription stays test code (internal/audiotest), and the dispatcher's audio stage yields windows for a layer above.
 - audio (build): falsified: evidence 5's "an optional gpt-oss pass smooths the seams"; a pass over the 10 words around each seam, allowed only to remove words, made WER and seam edits worse in all 12 runs. Windowing is less accurate than one unsplit request on the 4-speaker meeting and the 8-speaker call, a measured cost, not a contradiction: evidence 5 claims no accuracy parity.
 - audio (build): E4B answered a window a few seconds long with its own instruction in 2 of 3 LibriVox runs; the join can't tell it from speech, and a guard belongs to the inference layer, not processing.
-
-## Progress
-
-- slice 1 (87155ae, processing): Gotenberg 9.0.0-libreoffice by digest; soffice runs unchanged;
-  check, currency, and the office/picture/email/dispatch integration tiers pass.
-- decided without the architect, slice 1: the 12 EMF/WMF golden PNG sums were re-recorded on 9.0.0
-  (LibreOffice 26.8.2.2 rasterizes metafiles slightly differently: EMF 1.6-3.3% of pixels differ by
-  anti-aliasing, WMF 5e-6). The renders were compared first; all Markdown sums, the legacy ones
-  included, still match. The testdata README records why.
-- slice 2 (d20558c, processing): package audio: Splitter (Probe, Detect, Plan), pure PlanWindows,
-  ffmpeg/ffprobe Specs, FFmpegImage by digest; fixture audio/testdata/speech.flac (49.82 s,
-  LibriSpeech dev-clean 0000-0003 twice with 1 s gaps) and its truth, rebuilt by
-  `mise run fixtures:audio`. Plan: 0-24.979 s (silence), 22.979-49.820 s (end); runners agree.
-- decided without the architect, slice 2: WindowLimit 30 s is a constant; overlap must be under
-  15 s; Below (dB under the mean) and a fixed Threshold are exclusive. A silence ends a window only
-  if it began inside the window and leaves the window audio outside its seams, so seams never
-  overlap; a silence crossing the limit counts only up to it.
-- slice 3 (3187e29, processing): Splitter.Windows(ctx, WindowsRequest{Path, Dir, Concurrency},
-  Plan) yields WindowFile (Index, Count, Window, Path, SHA256, Samples) lazily in order; 16 kHz mono
-  s16 WAV named <sha>.wav; fixture windows byte-identical on both runners, within one sample of
-  the plan.
-- decided without the architect, slice 3: ffmpeg writes raw PCM to stdout and the package writes
-  the 44-byte WAV header (the container mounts only the source's directory; a piped WAV can't fill
-  its sizes), identical to ffmpeg's bitexact WAV. Only yielded windows stay in the media
-  directory. Windows re-probes and refuses a plan of another file. A failed window yields its
-  error and the stream goes on, as document does.
-- slice 4 (d9c7f76, processing): audio.Join(transcripts, JoinRequest{SeamWords}) returns
-  Transcript{Words, Seams[]{Matched, Matches, Overlap, Position}}, reproducing transformers'
-  whisper `_find_longest_common_sequence` (score matches/i + i/10000, earliest tie wins, midpoint
-  splice) and checked against it on the table cases; textscore gains NormalizeWords,
-  NormalizedWordErrors, Align, SeamErrors (radius 5).
-- decided without the architect, slice 4: the search is bounded by SeamWords (default 16 words);
-  a failed or silent window is an empty string and leaves both its seams unmatched; fillers are
-  um, umm, uh, uhm, er, erm, hm, hmm, mm, mmm, mhm, mm-hmm, uh-huh. Align keeps a full n×m table,
-  too large for the 4.4 h source; slice 7 must score long sources in linear memory.
-- slice 5 (e7075b7, processing): dispatch.AudioStage (NewAudioStage(AudioConfig{Splitter, Version,
-  Request, Concurrency})) yields a `plan` record (JSON, with the detection) first, then `window N`
-  audio outputs whose Meta carries index, count, span, cut, and seams; video stays no stage; a
-  source with no audio stream fails with ErrNoAudio. Wired into the integration tier: tone.wav
-  and onenote's embedded MP3 now prepared. Capability map: audio is preparation.
-- decided without the architect, slice 5: no ffmpeg means no audio stage registered ("no stage for
-  route audio"), as every adapter requires its tools; windows number from 0 to match the plan's
-  seams; a failed window fails the part after the others are yielded, as a document's pages do.
-- slice 6 (c616286, processing): internal/audiotest (integration or findings tags): Run plans,
-  streams windows under slot backpressure, transcribes greedy through the client, joins. Fixture
-  on gb10-2: WER 0.000 (134 words), seam matched on 2 words with 0 seam errors, wall 3.95-4.41 s
-  at concurrency 1 and 2.17 s at 4; bounds WER 0.05, seam errors 1.
-- decided without the architect, slice 6: window files are deleted after transcription unless
-  Keep; a failed window joins as an empty string and the run goes on; Wall excludes planning.
-- slice 7 (processing 6e4e70f, e422b36; root 4b5f149): Earnings-22 4479944 fetched to ~/docs
-  (Rev speech-datasets c05ab6f; audio unlicensed, transcripts CC BY-SA 4.0). findings-audio over
-  AMI, Earnings-21, Earnings-22, LibriVox, 3 runs each, no failed window: whole-source windowed WER
-  0.308, 0.087, 0.142, 0.047; 10-min excerpt unsplit vs windowed WER 0.258/0.298, 0.053/0.069,
-  0.101/0.101, 0.06/0.057 at about a third of the time. Unmatched seams cost 3-5 edits; matched sit
-  near the control rate. The gpt-oss seam pass made every run worse (WER +0.001-0.004, seam edits
-  +7-34%). Evidence 5 states the contradiction (the pass) and the multi-speaker cost. textscore.Align now runs in sqrt memory.
-- decided without the architect, slice 7: untimed truths are cut to the excerpt by the median best
-  prefix over the 6 excerpt transcripts (checked against Earnings-22's force-aligned times);
-  control positions mid-window measure the base error rate; Earnings transcripts are not
-  committed, only metrics and the 10-word seam spans; the unsplit baseline ran in each run.
-- slice 8 (93f50b8, processing): CHANGELOG v0.7.0, 2026-11-05; tagged at SHIP.
+- audio (accept): re-recording golden sums after a pinned-image bump, with the renders compared first and the reason recorded in the testdata README, is accepted as the exception to office's never-re-record rule (session brief, Needs you 1, rec taken).
 
 ## Pending edits
 
