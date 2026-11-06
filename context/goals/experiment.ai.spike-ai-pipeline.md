@@ -195,7 +195,7 @@ Release       spike-ai-pipeline-processing v0.8.0
 
 ## Progress
 
-slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standards — · spec — · editor —
+slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standards done (4e512be..e3e5753) · spec done (cafd85c) · editor —
 
 ## Decisions
 
@@ -1796,6 +1796,22 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   window lags a change by about its length and missed every gap after it. Both level-change
   fixtures: the defaults find 7/7 gaps after the change. The round-2 simulation's 66/92 on
   Earnings-21 didn't reproduce (0/101 here); the finding cites measured numbers only.
+- streams (build): an open silence held windows past their limit (NASA's window 6 by 65.3 s), against
+  behavior 4; fixed by Tracker.Open and Planner.Open (5a8f16c), keeping equality with PlanWindows,
+  so a silent run shorter than MinSilence at a limit can hold its window up to 0.3 s more. Tears
+  and NASA were re-measured after the fix (NASA max 65.3 -> 15.0 s, Tears 21.2 -> 3.7 s, the same
+  windows by SHA-256); AMI's figures stand, since no AMI window was held.
+- streams (spec review): behavior 11's protocols carry a 36 s excerpt of the committed fixture,
+  compared with the same excerpt read as a file, which keeps the integration tier short; behavior
+  15's "cancellation midway through each run" is one separate paced cancellation run per source,
+  so the measured runs complete; media.Source.Tracks (auto, both, audio, video) stays, since
+  readers and URLs can't be probed and behavior 3's audio-only and video-only cases need it.
+- streams (spec review): jdx/mise-action v5.2.7, released mid-session, taken so currency exits 0;
+  the root's currency reports only llama.cpp b12169, held at b12098 by gb10-2-align.
+- streams (build): HLS is ffmpeg's hls format, not a protocol (behavior 1's wording); the corpus's
+  Prelinger AVI is DivX, not Cinepak (archive.org mislabels it); srt's live mode drops the last
+  1.024 s when the sender closes, tested with a tolerance; NASA Epps' captions run about 1,000 s
+  late after 7:21.
 
 ## Pending edits
 
