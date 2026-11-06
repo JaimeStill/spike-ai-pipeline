@@ -38,7 +38,8 @@ stage by stage in real time?
    contradicts the evidence: the gpt-oss pass, sent only the 10 words around each seam, made every
    run worse, so it doesn't smooth the seams. Gemma 4 E4B also answered one window a few seconds
    long with its own instruction in 2 of 3 runs, which the join can't tell from speech.
-6. A chat stream passes through processing as events, with cancellation.
+6. Chat history: Skype for Business conversation history, archived from Exchange's Conversation
+   History folder into a PST, passes through processing as conversation records.
 7. Capstone, after its gates: metadata capture, inference extraction, and embeddings in pgvector
    with a semantic search, each stage transactional. The event layer tracks every stage event in
    sequence, in real time, and the UI shows each stage as it runs.
@@ -108,7 +109,7 @@ stage by stage in real time?
 ## Gates
 
 The host, client, and processing tasks run now. The capstone waits for those tasks
-(chats and formats remain) and for two answers: experiment.hosting's
+(formats remains) and for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
 spike-html-apps have answered, and neither experiment's intake is a gate. The spike returns to
 `planned` in between.
