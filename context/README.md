@@ -27,7 +27,15 @@ stage by stage in real time?
 5. Audio longer than the model's limit is cut at silences (ffmpeg silencedetect) into windows
    under 30 s that overlap by 1 to 2 s, transcribed concurrently within set A's audio slots, and
    joined by aligning the overlapping words at each seam; an optional gpt-oss pass smooths the
-   seams. Seam accuracy and total time, against one unsplit pass, are recorded.
+   seams. Seam accuracy and total time, against one unsplit pass, are recorded. Processing's
+   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md)
+   records it on four long sources, up to a 4.4 h audiobook, 3 runs each with no window failed.
+   Windowed is 2.6 to 3.4 times faster than one unsplit pass over the first 10 minutes. Its word
+   error rate is the same or slightly better on read speech and an accented call, and worse on a
+   4-speaker meeting (0.298 against 0.258) and an 8-speaker call (0.069 against 0.053). Seams
+   carry more edits than the rest of a transcript, most of them at seams with no words to align.
+   The gpt-oss pass, sent only the 10 words around each seam, made every run worse, so it doesn't
+   smooth the seams.
 6. A chat stream passes through processing as events, with cancellation.
 7. Capstone, after its gates: metadata capture, inference extraction, and embeddings in pgvector
    with a semantic search, each stage transactional. The event layer tracks every stage event in
