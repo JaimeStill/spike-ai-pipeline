@@ -25,8 +25,7 @@
 17. [x] gb10-2-align
 18. [x] audio
 19. [x] streams
-20. [ ] chats
-21. [ ] formats
+20. [ ] formats
 
 ## Task brief · experiment.ai.spike-ai-pipeline · streams
 
@@ -1810,6 +1809,12 @@ Release       spike-ai-pipeline-processing v0.8.0
   1.024 s when the sender closes, tested with a tolerance; NASA Epps' captions run about 1,000 s
   late after 7:21.
 - streams (ship): the architect accepted the session brief; processing v0.8.0 released.
+- plan 2026-11-06 (r1 q1): task chats dropped. The deployment has no chat exports: its domain uses
+  Skype for Business against Exchange, which archives conversation history into the mailbox, so it
+  reaches the share drives only inside PSTs (architect).
+- plan 2026-11-06 (r1 q2): evidence 6 reworded to Skype for Business conversation history in a PST
+  passing through processing as conversation records, proven in formats; the roadmap's formats
+  summary gains it, and formats keeps processing v0.9.0.
 
 ## Pending edits
 
@@ -2138,8 +2143,8 @@ Release       spike-ai-pipeline-processing v0.8.0
   evidence 5."`
 - coordinator · roadmap, the `streams` task: name "Live media", `repos` gains
   `"spike-ai-pipeline"`, for evidence 13's link, and its summary says what the task delivered
-  (this replaces the earlier pending rewrite of its summary; chat streams move to `chats`,
-  streams r1 q1):
+  (this replaces the earlier pending rewrite of its summary; chat streams leave the roadmap,
+  plan 2026-11-06):
 
   ```
   Package `media`: one ffmpeg run over a live or recorded source, a reader, a file paced at real
@@ -2154,11 +2159,6 @@ Release       spike-ai-pipeline-processing v0.8.0
   transcript's accuracy against audio's file path, and a cancellation midway. ffmpeg's image moves
   to linuxserver/ffmpeg 9.0.2-cli-ls89. Tags processing v0.8.0. Evidence 13.
   ```
-- coordinator · roadmap: add task `chats` to experiment.ai.spike-ai-pipeline after `streams`
-  ("Chat streams": chat streams through processing as cancellable events, including chat exports
-  generated synthetically in each tool's real export format, since no openly licensed dataset
-  exists; repos spike-ai-pipeline-processing; tags processing v0.9.0; evidence 6), and the
-  `formats` task's summary reads "Tags processing v0.10.0" where it reads v0.9.0 (streams r1 q1).
 - coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: rtsp sources in
   processing's `media` need an rtsp server, such as MediaMTX in a container, as the integration
   tier's loopback sender, since ffmpeg 9.0.2's rtsp listener fails (streams r2 q1).
