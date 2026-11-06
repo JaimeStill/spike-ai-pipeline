@@ -22,9 +22,11 @@ each released by tag:
   such as a PDF's pages as corrected images, regions, and text layers, an office document's
   model or Markdown with its pictures, a mail store's records, threads, and attachment routes, a
   OneNote page's Markdown and media, or a recording cut at its silences into windows a speech
-  model takes whole. Its `dispatch` package walks an input and every part found in it,
-  attachments, media, and ZIP entries, to those stages, inspecting each part first and preparing
-  each distinct content once. A layer above runs the inference.
+  model takes whole. Its `media` package reads a live or recorded source's audio and video
+  through one ffmpeg run and streams its windows and frames as they arrive. Its `dispatch` package
+  walks an input and every part found in it, attachments, media, and ZIP entries, to those stages,
+  a video among them, inspecting each part first and preparing each distinct content once. A layer
+  above runs the inference.
 - [spike-ai-pipeline-office](https://github.com/JaimeStill/spike-ai-pipeline-office): the Open XML
   CLI, a NativeAOT binary that turns docx, xlsx, and pptx files into a JSON document model and
   Markdown, with chart data and embedded media in place of page images. It is built for
