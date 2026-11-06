@@ -65,11 +65,10 @@ stage by stage in real time?
     records it on Tears of Steel's 180 s clip (3 runs), AMI ES2002a's 21-minute meeting, and NASA's
     25-minute in-flight event, each read at real time with no window, frame, or request failed. A
     window is yielded once the stream passes its 30 s limit, inside a silence or not (at most
-    6.3 s after its last sample on AMI, 15 s on NASA, which an open silence held 65 s before
-    processing fixed it), and transcribed 0.8 to 4.6 s later; a frame is described within 4 s,
-    and neither model ever queued. The live transcript matches audio's file path under the same
-    detector (AMI word error rate 0.322 against 0.323), and a cancellation stops the stream
-    within 0.5 s, leaving only the events yielded.
+    6.3 s after its last sample on AMI and 15 s on NASA), and transcribed 0.8 to 4.6 s later; a
+    frame is described within 4 s, and neither model ever queued. The live transcript matches
+    audio's file path under the same detector (AMI word error rate 0.322 against 0.323), and a
+    cancellation stops the stream within 0.5 s, leaving only the events yielded.
 14. One tool run through each runner, exec and container, under the same tool contract.
 15. Capstone: the browser's consumption of the event sequence, NATS over WebSocket against a
     backend relay, compared on latency, ordering, auth, ports, and native-tier use.
@@ -109,7 +108,7 @@ stage by stage in real time?
 ## Gates
 
 The host, client, and processing tasks run now. The capstone waits for those tasks
-(streams and formats remain) and for two answers: experiment.hosting's
+(chats and formats remain) and for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
 spike-html-apps have answered, and neither experiment's intake is a gate. The spike returns to
 `planned` in between.

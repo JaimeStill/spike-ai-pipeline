@@ -25,7 +25,8 @@
 17. [x] gb10-2-align
 18. [x] audio
 19. [ ] streams
-20. [ ] formats
+20. [ ] chats
+21. [ ] formats
 
 ## Task brief · experiment.ai.spike-ai-pipeline · streams
 
@@ -195,7 +196,7 @@ Release       spike-ai-pipeline-processing v0.8.0
 
 ## Progress
 
-slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standards done (4e512be..e3e5753) · spec done (cafd85c) · editor —
+slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standards done (4e512be..e3e5753) · spec done (cafd85c) · editor done
 
 ## Decisions
 
@@ -1883,8 +1884,8 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.7.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0, v0.5.0, and v0.6.0 amendments,
-  which were never applied):
+  v0.8.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0, v0.5.0, v0.6.0, and v0.7.0
+  amendments, which were never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
@@ -1921,11 +1922,21 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   >   runs ffmpeg and ffprobe: it cuts a recording at its silences into windows of at most 30 s
   >   that overlap by 2 s, as 16 kHz mono WAV, and joins their transcripts by aligning the
   >   overlapping words at each seam, and the dispatcher's audio stage yields a part's plan and
-  >   windows for a layer above to transcribe. Video and live sources are planned. Its
+  >   windows for a layer above to transcribe. Its
   >   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md)
   >   records windowed transcription 2.6 to 3.4 times faster than one unsplit request and less
   >   accurate on multi-speaker audio, and a gpt-oss pass over the seams making every run worse
-  >   (evidence 5).
+  >   (evidence 5). Its `media` package reads a live or recorded source through one ffmpeg run, a
+  >   reader, a file paced at real time or read unpaced, or an srt, rtmp, http(s), live HLS, or
+  >   udp URL, each run confined to its source's protocols, and streams cancellable events as they
+  >   arrive: audio windows cut at silences a noise-floor tracker finds as the samples come, and
+  >   frames taken at the first frame, at each scene change, and after 10 s without one. The
+  >   dispatcher's video stage yields a recorded video's frames and windows the same way. Its
+  >   [streams finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/streams.md)
+  >   records three videos read at real time with no window, frame, or request failed: each
+  >   window came once the stream passed its 30 s limit and was transcribed 0.8 to 4.6 s later,
+  >   each frame was described within 4 s, and the live transcript matched audio's file path
+  >   under the same detector (evidence 13).
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -2128,12 +2139,38 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   v0.7.0 is released, and docs/findings/audio.md records seam accuracy and total time against one
   unsplit request on four long sources, with the gpt-oss seam pass, linked from the root's
   evidence 5."`
-- coordinator · roadmap, the `streams` task's summary: "audio windows transcribed as they arrive"
-  reads "audio windows cut at silences as they arrive and joined by audio's released Join, with
-  transcription as test code", since processing runs no inference (audio r1 q2), and "video frames
-  sampled to vision" reads "video frames sampled for vision". A note for its plan: evidence 5 found
-  windowing less accurate than one unsplit request on multi-speaker audio and a gpt-oss seam pass
-  harmful, so live windows carry the same seam cost and no LLM pass smooths them.
+- coordinator · roadmap, the `streams` task: name "Live media", `repos` gains
+  `"spike-ai-pipeline"`, for evidence 13's link, and its summary says what the task delivered
+  (this replaces the earlier pending rewrite of its summary; chat streams move to `chats`,
+  streams r1 q1):
+
+  ```
+  Package `media`: one ffmpeg run over a live or recorded source, a reader, a file paced at real
+  time or read unpaced, or an srt, rtmp, http(s), live HLS, or udp URL, each run confined to its
+  source's protocols, streams cancellable events as they arrive: audio windows cut at silences a
+  noise-floor tracker finds as the samples come, planned by audio's incremental planner, and video
+  frames taken at the first frame, at each scene change, and after 10 s without one. Audio gains
+  the tracker as the file path's detector choice and Join's settled prefix; dispatch gains a video
+  stage for MP4, MKV, WebM, and AVI. Processing runs no inference: a test harness sends the windows
+  to Gemma 4 E4B and the frames to Gemma 4 26B-A4B. A finding over Tears of Steel, AMI ES2002a, and
+  NASA's in-flight event read at real time records each window's and frame's lag, the live
+  transcript's accuracy against audio's file path, and a cancellation midway. ffmpeg's image moves
+  to linuxserver/ffmpeg 9.0.2-cli-ls89. Tags processing v0.8.0. Evidence 13.
+  ```
+- coordinator · roadmap: add task `chats` to experiment.ai.spike-ai-pipeline after `streams`
+  ("Chat streams": chat streams through processing as cancellable events, including chat exports
+  generated synthetically in each tool's real export format, since no openly licensed dataset
+  exists; repos spike-ai-pipeline-processing; tags processing v0.9.0; evidence 6), and the
+  `formats` task's summary reads "Tags processing v0.10.0" where it reads v0.9.0 (streams r1 q1).
+- coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: rtsp sources in
+  processing's `media` need an rtsp server, such as MediaMTX in a container, as the integration
+  tier's loopback sender, since ffmpeg 9.0.2's rtsp listener fails (streams r2 q1).
+- coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: capture devices in
+  processing's `media`. v4l2loopback, a kernel module the architect loads as root, is the camera
+  test seam. On Wayland, as on the architect's Omarchy laptop, which has no X11, ffmpeg has no
+  screen input: a portal capture tool such as gpu-screen-recorder streams the screen to a URL or
+  the reader, and pw-record feeds audio; x11grab applies only to X11 hosts. The container runner
+  would need device passthrough, the device's group, and socket mounts (streams r2 q2).
 - coordinator · context/ai-strategy.md, "Experiment: spike-ai-pipeline", for experiment.ai's
   intake (a sentence after the processing bullet or under "Decision it changes"): evidence 5 bears
   on go-ai's layering. Long audio is prepared in processing, windows cut at silences and the join
@@ -2147,9 +2184,6 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
   16 kHz mono WAV is 15,028 input tokens through `/v1/audio/transcriptions`, against its
   32,768-token context, an input to sizing set A's audio slot; processing's docs/findings/audio.md
   has the measurements.
-- coordinator · roadmap, experiment.ai.spike-ai-pipeline: recorded video files (MP4, MKV, WebM,
-  AVI) route to `route.Video` with no task owning their processor; `streams` or `formats` takes
-  them, settled at the next of their plans.
 - coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: an authored OneNote
   notebook, committed to spike-ai-pipeline-onenote with hand truth from onenote-cli's round 2
   authoring spec, needs desktop OneNote on Windows or a Mac, since OneNote for the web can
@@ -2183,5 +2217,8 @@ slices 10/10 committed (8: ~/docs only; fix 5a8f16c for held windows) · standar
 - coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. In the summary, "the router's leases cleared only if a gb10-2.lan record remains" reads that the records remained after the hostname send stopped, so the architect cleared the router's leases. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes after the lease clearing. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
 - coordinator · context/ai-hosting.md, "Hosts and access": the pending gb10-2 sentence names server-cuda13-b12098, not b11669.
 - roadmap note · spike-ai-pipeline: once spike-model-engines' gb10 pin reaches the root's (its screen branch, at 4d5e114, sets b12098), re-copy host/ from that merge commit so llama.env is a copy again.
-- coordinator · roadmap (note for plan): no task covers a video file's audio track; streams covers
-  live video and formats doesn't name it.
+- architecture · a retro candidate: processing's STANDARDS.md says a mature tool is never
+  reimplemented in Go, and audio's `Tracker` is the recorded exception, its reason in
+  `audio/doc.go` (streams r2 q3). Should the standard name it, so later reviews don't flag it?
+- architecture · a retro candidate: processing's findings cite the goal record
+  (`context/goals/…`), which sync deletes; the links break once the spike syncs.
