@@ -1655,6 +1655,17 @@ Release       spike-ai-pipeline-processing v0.7.0
 - audio (r1 q9): WER normalization is in-house in textscore. Rejected: Whisper's normalizer (Python), fstalign (C++, .nlp only).
 - audio (r1 q10): seam accuracy counts edits within 5 words of each seam in one whole-truth alignment.
 - audio (r1 q11): the gpt-oss seam pass is measured on the seam words only, never a whole-transcript rewrite.
+- audio (build): the 12 EMF/WMF golden PNG sums were re-recorded on Gotenberg 9.0.0 after the renders were compared: LibreOffice 26.8.2.2 anti-aliases metafiles differently (EMF 1.6-3.3% of pixels, WMF 5e-6); every Markdown sum still matched, and the soffice runs needed no change.
+- audio (build): WindowLimit 30 s is a constant; overlap must be under 15 s; Below and a fixed Threshold are exclusive. A silence ends a window only if it began inside the window and leaves window audio outside its seams, so seams never overlap; a silence crossing the limit counts only up to it.
+- audio (build): ffmpeg writes raw PCM to stdout and the package writes the 44-byte WAV header, identical to ffmpeg's bitexact WAV, since the container mounts only the source's directory and a piped WAV can't fill its sizes. Windows re-probes and refuses a plan of another file; a failed window yields its error and the stream goes on, as document's pages do.
+- audio (build): Join's search is bounded by SeamWords (default 16); a failed or silent window is an empty string and leaves both its seams unmatched. textscore's fillers are um, umm, uh, uhm, er, erm, hm, hmm, mm, mmm, mhm, mm-hmm, uh-huh.
+- audio (build): with no ffmpeg no audio stage is registered, as every adapter requires its tools; windows number from 0, matching the plan's seams; a failed window fails the part after the others are yielded.
+- audio (build): the speech harness deletes each window file once transcribed unless Keep; a failed window joins as an empty string and the run goes on; Wall excludes planning.
+- audio (build): untimed truths are cut to the excerpt by the median best prefix over the 6 excerpt transcripts, checked against Earnings-22's force-aligned times; control positions mid-window measure the base error rate; Earnings transcripts are not committed, only metrics and 10-word seam spans; the unsplit baseline runs in each run.
+- audio (build): textscore.Align keeps every b-th row (b about √n) and recomputes blocks on traceback, since the whole table needed about 14 GB for the 4.4 h source; it is held to the whole-table traceback step for step.
+- audio (build): r1 q2 held: processing prepares (plan, windows, released join) and runs no inference; transcription stays test code (internal/audiotest), and the dispatcher's audio stage yields windows for a layer above.
+- audio (build): falsified: evidence 5's "an optional gpt-oss pass smooths the seams"; a pass over the 10 words around each seam, allowed only to remove words, made WER and seam edits worse in all 12 runs. Windowing is less accurate than one unsplit request on the 4-speaker meeting and the 8-speaker call, a measured cost, not a contradiction: evidence 5 claims no accuracy parity.
+- audio (build): E4B answered a window a few seconds long with its own instruction in 2 of 3 LibriVox runs; the join can't tell it from speech, and a guard belongs to the inference layer, not processing.
 
 ## Progress
 
@@ -1710,7 +1721,7 @@ Release       spike-ai-pipeline-processing v0.7.0
   0.308, 0.087, 0.142, 0.047; 10-min excerpt unsplit vs windowed WER 0.258/0.298, 0.053/0.069,
   0.101/0.101, 0.06/0.057 at about a third of the time. Unmatched seams cost 3-5 edits; matched sit
   near the control rate. The gpt-oss seam pass made every run worse (WER +0.001-0.004, seam edits
-  +7-34%). Evidence 5 states both contradictions. textscore.Align now runs in sqrt memory.
+  +7-34%). Evidence 5 states the contradiction (the pass) and the multi-speaker cost. textscore.Align now runs in sqrt memory.
 - decided without the architect, slice 7: untimed truths are cut to the excerpt by the median best
   prefix over the 6 excerpt transcripts (checked against Earnings-22's force-aligned times);
   control positions mid-window measure the base error rate; Earnings transcripts are not
@@ -1787,8 +1798,8 @@ Release       spike-ai-pipeline-processing v0.7.0
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.6.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0 and v0.5.0 amendments, which were
-  never applied):
+  v0.7.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0, v0.5.0, and v0.6.0 amendments,
+  which were never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
@@ -1821,8 +1832,15 @@ Release       spike-ai-pipeline-processing v0.7.0
   >   walks an input and every part found in it (attachments, embedded messages, media, and ZIP
   >   entries) to those stages with no default caps, under a content-addressed index that prepares
   >   each distinct content once across a share's inputs, runs, and workers, removes each part's
-  >   file once the caller has consumed it, and resumes a store by cursor. ffmpeg and ffprobe take
-  >   audio and video, live sources included.
+  >   file once the caller has consumed it, and resumes a store by cursor. Its `audio` package
+  >   runs ffmpeg and ffprobe: it cuts a recording at its silences into windows of at most 30 s
+  >   that overlap by 2 s, as 16 kHz mono WAV, and joins their transcripts by aligning the
+  >   overlapping words at each seam, and the dispatcher's audio stage yields a part's plan and
+  >   windows for a layer above to transcribe. Video and live sources are planned. Its
+  >   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md)
+  >   records windowed transcription 2.6 to 3.4 times faster than one unsplit request and less
+  >   accurate on multi-speaker audio, and a gpt-oss pass over the seams making every run worse
+  >   (evidence 5).
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -2003,10 +2021,47 @@ Release       spike-ai-pipeline-processing v0.7.0
   text, decoded by its encoding, for .xlsb, WordPerfect, and ODG, and for tar, gzip, zstd, and 7z
   archives, each a route processing v0.6.0 reports as "no processor yet", and legacy OLE2 macro
   detection in `inspect`.
-- coordinator · roadmap, the `audio` task's summary: it gains the audio route's processor, a
-  dispatcher stage for `route.Audio`. The summary says processing transcribes windows, which
-  conflicts with the decision that processing runs no inference; audio's plan settles whether
-  processing prepares the windows and a layer above transcribes them.
+- coordinator · roadmap, the `audio` task: `repos` gains `"spike-ai-pipeline"`, for evidence 5's
+  result, and its summary says what the task delivered (this replaces the earlier pending edits to
+  the summary, the audio route's processor and the LibriVox audiobook, audio r1 q2 and q7):
+
+  ```
+  Pre-inference preparation of speech in processing's `audio` package: ffmpeg and ffprobe
+  adapters, minimum 9.0, through either runner (linuxserver/ffmpeg 9.0.2 by digest); a source
+  probed, its silences found (15 dB below the mean, at least 0.3 s), and planned into windows of
+  at most 30 s ending at the middle of a silence, overlapping by 2 s; the windows cut concurrently
+  as 16 kHz mono WAV named by SHA-256; and the released join, transformers' best-offset merge over
+  each overlap, each seam reported matched or unmatched. Dispatch's audio stage yields a part's
+  plan and windows; processing runs no inference. Transcription is test code: a speech harness
+  sends the windows to set A's E4B within its 4 slots. A finding over AMI ES2002a, Earnings-21
+  4330115, Earnings-22 4479944, and a LibriVox audiobook records seam accuracy and total time
+  against one unsplit request over each source's first 10 minutes, and a gpt-oss pass over the
+  seam words. Picture's LibreOffice image moves to Gotenberg 9.0.0. Tags processing v0.7.0.
+  Evidence 5.
+  ```
+- coordinator · roadmap, the `audio` task (optional): add `proof = "The check passes, processing
+  v0.7.0 is released, and docs/findings/audio.md records seam accuracy and total time against one
+  unsplit request on four long sources, with the gpt-oss seam pass, linked from the root's
+  evidence 5."`
+- coordinator · roadmap, the `streams` task's summary: "audio windows transcribed as they arrive"
+  reads "audio windows cut at silences as they arrive and joined by audio's released Join, with
+  transcription as test code", since processing runs no inference (audio r1 q2), and "video frames
+  sampled to vision" reads "video frames sampled for vision". A note for its plan: evidence 5 found
+  windowing less accurate than one unsplit request on multi-speaker audio and a gpt-oss seam pass
+  harmful, so live windows carry the same seam cost and no LLM pass smooths them.
+- coordinator · context/ai-strategy.md, "Experiment: spike-ai-pipeline", for experiment.ai's
+  intake (a sentence after the processing bullet or under "Decision it changes"): evidence 5 bears
+  on go-ai's layering. Long audio is prepared in processing, windows cut at silences and the join
+  released, and transcribed by the layer above, which also owns inference guards: Gemma 4 E4B
+  answered a short window with its own instruction, and the join can't tell that from speech. No
+  LLM pass smooths the seams, since a gpt-oss pass over the seam words made every run worse. And
+  windowing costs accuracy on multi-speaker audio (word error rate 0.298 against 0.258 unsplit on
+  a 4-speaker meeting, 0.069 against 0.053 on an 8-speaker call), so the intake weighs whether
+  audio that fits one request goes unsplit.
+- coordinator · roadmap, spike-model-layout (optional, audio): on gb10-2's E4B Q8_0, a 10-minute
+  16 kHz mono WAV is 15,028 input tokens through `/v1/audio/transcriptions`, against its
+  32,768-token context, an input to sizing set A's audio slot; processing's docs/findings/audio.md
+  has the measurements.
 - coordinator · roadmap, experiment.ai.spike-ai-pipeline: recorded video files (MP4, MKV, WebM,
   AVI) route to `route.Video` with no task owning their processor; `streams` or `formats` takes
   them, settled at the next of their plans.
@@ -2043,7 +2098,5 @@ Release       spike-ai-pipeline-processing v0.7.0
 - coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. In the summary, "the router's leases cleared only if a gb10-2.lan record remains" reads that the records remained after the hostname send stopped, so the architect cleared the router's leases. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes after the lease clearing. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
 - coordinator · context/ai-hosting.md, "Hosts and access": the pending gb10-2 sentence names server-cuda13-b12098, not b11669.
 - roadmap note · spike-ai-pipeline: once spike-model-engines' gb10 pin reaches the root's (its screen branch, at 4d5e114, sets b12098), re-copy host/ from that merge commit so llama.env is a copy again.
-- coordinator · roadmap, the `audio` task's summary: "LibriSpeech's original MP3s" becomes "a
-  LibriVox audiobook" (audio r1 q7: the original MP3s are one 87 GB archive).
 - coordinator · roadmap (note for plan): no task covers a video file's audio track; streams covers
   live video and formats doesn't name it.
