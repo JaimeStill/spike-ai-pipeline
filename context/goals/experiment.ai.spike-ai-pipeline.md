@@ -195,7 +195,7 @@ Release       spike-ai-pipeline-processing v0.8.0
 
 ## Progress
 
-slices 1/10 committed · standards — · spec — · editor —
+slices 3/10 committed · standards — · spec — · editor —
 
 ## Decisions
 
@@ -1788,6 +1788,14 @@ slices 1/10 committed · standards — · spec — · editor —
   http(s) reconnect is out of scope (defaults the architect accepted with the brief).
 - streams (currency): linuxserver/ffmpeg 9.0.2-cli-ls88 -> ls89, a base-image rebuild with nothing
   to adapt; the upgrade slice takes it.
+- streams (slice 3): the tracker's defaults are the 10th percentile over 4 s plus 12 dB, tuned
+  by `mise run findings-floor` on AMI ES2002a, Earnings-21, and Earnings-22, each unchanged, with
+  a +12 dB step, and with pink noise from 600 s. Windows cut at the 30 s limit: defaults 0/0/2
+  unchanged, 0/0/2 gain, 0/0/1 noise, matching silencedetect's default; a threshold fixed from
+  the first 30 s cut 25/51 (AMI gain), 26/51 (AMI noise), and 87/162 (E22 gain). A 30 s floor
+  window lags a change by about its length and missed every gap after it. Both level-change
+  fixtures: the defaults find 7/7 gaps after the change. The round-2 simulation's 66/92 on
+  Earnings-21 didn't reproduce (0/101 here); the finding cites measured numbers only.
 
 ## Pending edits
 
