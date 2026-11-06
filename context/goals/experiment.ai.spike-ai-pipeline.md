@@ -1704,6 +1704,18 @@ Release       spike-ai-pipeline-processing v0.7.0
   at concurrency 1 and 2.17 s at 4; bounds WER 0.05, seam errors 1.
 - decided without the architect, slice 6: window files are deleted after transcription unless
   Keep; a failed window joins as an empty string and the run goes on; Wall excludes planning.
+- slice 7 (processing 6e4e70f, e422b36; root 4b5f149): Earnings-22 4479944 fetched to ~/docs
+  (Rev speech-datasets c05ab6f; audio unlicensed, transcripts CC BY-SA 4.0). findings-audio over
+  AMI, Earnings-21, Earnings-22, LibriVox, 3 runs each, no failed window: whole-source windowed WER
+  0.308, 0.087, 0.142, 0.047; 10-min excerpt unsplit vs windowed WER 0.258/0.298, 0.053/0.069,
+  0.101/0.101, 0.06/0.057 at about a third of the time. Unmatched seams cost 3-5 edits; matched sit
+  near the control rate. The gpt-oss seam pass made every run worse (WER +0.001-0.004, seam edits
+  +7-34%). Evidence 5 states both contradictions. textscore.Align now runs in sqrt memory.
+- decided without the architect, slice 7: untimed truths are cut to the excerpt by the median best
+  prefix over the 6 excerpt transcripts (checked against Earnings-22's force-aligned times);
+  control positions mid-window measure the base error rate; Earnings transcripts are not
+  committed, only metrics and the 10-word seam spans; the unsplit baseline ran in each run.
+- slice 8 (93f50b8, processing): CHANGELOG v0.7.0, 2026-11-05; tagged at SHIP.
 
 ## Pending edits
 
