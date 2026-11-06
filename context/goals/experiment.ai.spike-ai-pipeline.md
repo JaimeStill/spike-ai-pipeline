@@ -195,7 +195,7 @@ Release       spike-ai-pipeline-processing v0.8.0
 
 ## Progress
 
-slices 7/10 committed · standards — · spec — · editor —
+slices 9/10 committed (8: ~/docs only) · standards — · spec — · editor —
 
 ## Decisions
 
