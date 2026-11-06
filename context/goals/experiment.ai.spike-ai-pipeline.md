@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** handoff
 - **Task:** streams
 - **Branch:** streams
 
@@ -195,7 +195,29 @@ Release       spike-ai-pipeline-processing v0.8.0
 
 ## Progress
 
-slices 0/10 committed · standards — · spec — · editor —
+slices 1/10 committed · standards — · spec — · editor —
+
+## Handoff
+
+Paused by the architect (2026-11-06, travelling) during slice 2.
+
+- Processing: branch `streams`, clean tree; slice 1 committed (a3bc6e1, ls89 by digest
+  `sha256:822d04f0…5361`, check and currency exit 0). Slice 2 was stopped before it committed or
+  left any file; restart it from scratch.
+- Next move: slice 2, the fixture. Audio's LibriSpeech fixture muxed with a generated pattern
+  with known hard scene cuts and at least one span over 10 s without a cut (first, scene, and
+  interval frames all exercised); a deterministic container and encoder; a truth file (cut
+  times, expected frame reasons and times, silences); audio variants with a +12 dB gain step and
+  with pink noise partway, the noise above a threshold fixed from the first 30 s and below
+  speech, at least ~60 s long; a fixtures task mirroring audio's, SHA-256s recorded, and a test
+  that the hashes and truth hold. Then slices 3 to 10 as briefed.
+- Behavior 1's "hls protocol": ffmpeg reads HLS through its `hls` format (DE in the image, a
+  round trip passed), not a protocol; slice 1's test checks the format. Read behavior 1 that way.
+- gb10-2: `mise run host-update` stopped on 16 pending apt upgrades (kernel 7.0.0-1025-nvidia).
+  The architect is running `sudo apt update && sudo apt upgrade`, then
+  `sudo nvidia-ctk cdi generate --output=/var/run/cdi/nvidia.yaml` and a reboot. Run
+  host-update again before slice 7; slices 2 to 6 don't need gb10-2.
+- No escalation waits.
 
 ## Decisions
 
