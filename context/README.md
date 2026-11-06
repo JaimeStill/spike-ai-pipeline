@@ -27,7 +27,17 @@ stage by stage in real time?
 5. Audio longer than the model's limit is cut at silences (ffmpeg silencedetect) into windows
    under 30 s that overlap by 1 to 2 s, transcribed concurrently within set A's audio slots, and
    joined by aligning the overlapping words at each seam; an optional gpt-oss pass smooths the
-   seams. Seam accuracy and total time, against one unsplit pass, are recorded.
+   seams. Seam accuracy and total time, against one unsplit pass, are recorded. Processing's
+   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md)
+   records it on four long sources, up to a 4.4 h audiobook, with 2 s overlaps, 3 runs each, and
+   no window failed. Windowed transcription is 2.6 to 3.4 times faster than one unsplit pass over
+   each source's first 10 minutes, and its seams carry more edits than the rest of a transcript,
+   most at seams with no words to align. Windowing is less accurate than the unsplit pass on a
+   4-speaker meeting (word error rate 0.298 against 0.258) and an 8-speaker call (0.069 against
+   0.053), and the same or slightly better on read speech and an accented call. One result
+   contradicts the evidence: the gpt-oss pass, sent only the 10 words around each seam, made every
+   run worse, so it doesn't smooth the seams. Gemma 4 E4B also answered one window a few seconds
+   long with its own instruction in 2 of 3 runs, which the join can't tell from speech.
 6. A chat stream passes through processing as events, with cancellation.
 7. Capstone, after its gates: metadata capture, inference extraction, and embeddings in pgvector
    with a semantic search, each stage transactional. The event layer tracks every stage event in
@@ -90,7 +100,7 @@ stage by stage in real time?
 ## Gates
 
 The host, client, and processing tasks run now. The capstone waits for those tasks
-(audio, streams, and formats remain) and for two answers: experiment.hosting's
+(streams and formats remain) and for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
 spike-html-apps have answered, and neither experiment's intake is a gate. The spike returns to
 `planned` in between.

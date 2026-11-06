@@ -23,65 +23,100 @@
 15. [x] onenote-cli
 16. [x] onenote
 17. [x] gb10-2-align
-18. [ ] audio
+18. [x] audio
 19. [ ] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · gb10-2-align
+## Task brief · experiment.ai.spike-ai-pipeline · audio
 
 ```
-Problem       gb10-2 serves set A on llama.cpp b11669 and still sends its
-              DHCP hostname; gb10-1 runs b12098 with routing aligned.
-              The root's scripts read pin names upstream no longer has.
+Problem       Set A's audio model (gemma-4-E4B) takes 30 s at most.
+              Processing routes audio parts to "no processor yet", so
+              a recording past that limit can't be prepared, and
+              evidence 5 is unproven. Processing's LibreOffice image
+              trails a new major (Gotenberg 9.0.0).
 
 Behaviors
-  1. gb10-2's router reports b12098 and serves every set A capability
-     (the integration probe passes).
-  2. The 7 copied host scripts are byte-identical to spike-model-engines'
-     verify-gb10 merge commit (dfc1d3d); the host README's diff check
-     prints nothing. The root's own llama.env gives gb10 b12098 and says
-     why it's held below b12100 (#31620, #31639).
-  3. host-update computes the router image from gb10's class pin through
-     the copied functions; a run moves b11669 to b12098, and a second run
-     changes nothing.
-  4. currency compares gb10's pin with the newest b-build that has a
-     server-cuda13 image on ghcr.io and reports only when the pin is lower.
-  5. The probe's build floor is gb10's class pin (LLAMA_BUILD_GB10).
-  6. Set A's gpt-oss section serves with cache-ram = 0 and
-     cache-idle-slots = false: the router's arguments show cache-ram 0,
-     and its log shows no idle-slot saves under load.
-  7. gb10-2's DHCP connections send no hostname (IPv4 and IPv6).
-  8. The routing check (spike-hosting-upgrades
-     docs/findings/gb10-2-upgrade.md, "The routing check") passes before
-     and after: no gb10-2.lan A or AAAA record, bare name tailnet-only,
-     50 connects with none failed and none over 50 ms. The router's
-     leases are cleared only if a record remains.
-  9. The host finding records build, stack, network path, MemAvailable
-     after set A loads and after the integration run (no threshold), and
-     the routing check's lines.
+  1. Probe: ffprobe gives a source's duration and its audio stream
+     (codec, sample rate, channels). A source with no audio stream is
+     refused before ffmpeg runs.
+  2. Silences: ffmpeg's volumedetect and silencedetect give the
+     source's silence intervals. The threshold defaults to 15 dB below
+     the mean and the minimum silence to 0.3 s; a request may set
+     either, or give a fixed threshold.
+  3. Plan: windows cover the source in order. Each is at most 30 s
+     including its overlap (2 s by default). Each is cut at the middle
+     of the latest silence before the limit, or at the limit when its
+     range has none. The plan lists each window's span and each seam's
+     shared range. The same source and request give the same plan.
+  4. Windows: each window is written as 16 kHz mono 16-bit PCM WAV,
+     named by its SHA-256. They come as a lazy stream in window order,
+     with concurrency set per request (zero meaning 1). Cancelling
+     stops ffmpeg, and a loop that stops early stops the stream.
+  5. Adapter convention: ffmpeg and ffprobe Specs, minimum 9.0, and a
+     default image, linuxserver/ffmpeg 9.0.2-cli-ls88 by digest. A
+     Config holds Tools built through either runner, and construction
+     refuses a missing or outdated tool. Exec and container runs give
+     byte-identical windows.
+  6. Join (released): ordered window transcripts become one transcript
+     through transformers' best-offset merge over each overlap,
+     matched on case- and punctuation-folded words, with the original
+     words kept. A seam with under 2 matching words is concatenated
+     and reported unmatched. Each seam is reported as matched (with
+     its word count) or unmatched. The result is deterministic.
+  7. Dispatch: the audio route gets a stage that yields a WAV, FLAC,
+     MP3, Ogg or M4A part's windows and plan as outputs. It runs no
+     inference, and video stays "no processor yet".
+  8. Harness (test code): windows are transcribed through the client
+     at concurrency 1 and 4 (E4B's slots), greedy (temperature 0
+     through Native), language en, then joined. A committed fixture of
+     about 50 s, built from LibriSpeech dev-clean utterances with known
+     silences, meets its truth in the integration tier.
+  9. Finding: AMI ES2002a, Earnings-21 4330115, Earnings-22 4479944
+     and the LibriVox M4B (approximate truth), 3 greedy runs each. It
+     reports WER normalized in textscore (lowercase, punctuation
+     stripped, hyphens split, fillers dropped, no number
+     normalization), seam accuracy (edits within 5 words of each seam
+     in one alignment against the whole truth) and total time. Each is
+     windowed and set against one unsplit request over each source's
+     first 10 minutes. It adds a gpt-oss-120b pass over the ~10 words
+     around each seam, with and without. Results are committed beside
+     the finding, and the root's evidence 5 links it.
+ 10. Processing's currency exits 0: picture's LibreOffice image is on
+     Gotenberg 9.0.0, adapted where 9.0.0 breaks the direct soffice
+     runs, and picture's and office's LibreOffice tiers (legacy
+     conversion, metafiles) pass on it.
 
-Test seams    the router's HTTP API via the integration probe; the check
-              and currency output
+Test seams    the audio package's API (probe, silences, plan, windows
+              stream, join) in the unit and integration tiers;
+              dispatch's Stage for the audio route; picture's existing
+              LibreOffice tiers
 
 Slices
-  1. Routing aligned: routing check before; DHCP connections listed;
-     the architect's one sitting (hostname send off and re-up, apt
-     update and upgrade, CDI spec regenerated and a reboot if asked);
-     routing check after; lease clearing only if a record remains.
-  2. Per-class pins: the 7 scripts re-copied from dfc1d3d, the root's
-     llama.env at b12098, the three readers on the class pin, currency
-     on image builds.
-  3. gpt-oss without the host prompt cache (preset, that one section).
-  4. gb10-2 on b12098: host-update, /props, integration probe, memory
-     reads, routing check, finding written.
+  1. Upgrade: Gotenberg 9.0.0 for picture's LibreOffice image,
+     adapted; the LibreOffice tiers pass; currency exits 0.
+  2. Probe, silences and plan on the committed fixture (the plan
+     printed).
+  3. Window stream through both runners.
+  4. Join and the seam report; textscore's normalizer.
+  5. Dispatch's audio stage.
+  6. Harness: the fixture transcribed concurrently on gb10-2 and
+     joined against its truth.
+  7. Corpora and findings: Earnings-22 4479944 fetched to ~/docs
+     (SHA-recorded), the unsplit baseline, the gpt-oss seam pass, the
+     finding, evidence 5's link.
+  8. Release: CHANGELOG v0.7.0, tag.
 
-Out of scope  spike-model-engines changes (screen's merge, its currency);
-              the Gemma sections' cache settings; builds past b12098; any
-              other preset change
+Out of scope  live or real-time audio and video frames (streams); a
+              video file's audio track; M4B chapters; diarization;
+              server timestamps; number normalization; any preset
+              change (escalation); llama.cpp past b12098 (held)
 
-Door          two-way: pin rollback is a re-copy from d285b06 plus
-              host-update; DHCP rollback is the same nmcli command with
-              yes; cleared leases renew on their own.
+Door          one-way for the v0.7.0 tag, since a pushed tag reaches
+              consumers. The rest is two-way: code on a branch, the
+              Gotenberg pin reverts by digest, corpora in ~/docs and
+              not committed.
+Release       spike-ai-pipeline-processing v0.7.0
 ```
 
 ## Decisions
@@ -1609,12 +1644,35 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 - gb10-2-align (build): currency's hold note names b12098 literally. When the pin moves, the note goes visibly stale, and that is accepted.
 - gb10-2-align (build): the preset's vision section comment reads "as read at b11669". The change is to the comment only, and it is kept.
 - gb10-2-align (build): the clone on gb10-2 stays on gb10-2-align until the merge; the session switches it back to main at SHIP.
+- audio (r1 q1): Gotenberg 9.0.0 adopted now and adapted, not held: no technical debt accumulates (architect).
+- audio (r1 q2): the seam join is released in processing v0.7.0; concurrent transcription stays test code.
+- audio (r1 q3): overlap defaults to 2 s, a request field.
+- audio (r1 q4): the silence threshold is relative, 15 dB below volumedetect's mean, with 0.3 s minimum silence; a fixed level is allowed.
+- audio (r1 q5): the join is transformers' best-offset merge; under 2 matches it concatenates and reports the seam unmatched. Rejected: a full edit-distance alignment.
+- audio (r1 q6): the unsplit baseline is one request over each source's first 10 min; whole sources exceed E4B's 32768 tokens.
+- audio (r1 q7): the LibriVox M4B stands in for LibriSpeech's original MP3s (one 87 GB archive); pending roadmap edit.
+- audio (r1 q8): the Earnings-22 call is 4479944.
+- audio (r1 q9): WER normalization is in-house in textscore. Rejected: Whisper's normalizer (Python), fstalign (C++, .nlp only).
+- audio (r1 q10): seam accuracy counts edits within 5 words of each seam in one whole-truth alignment.
+- audio (r1 q11): the gpt-oss seam pass is measured on the seam words only, never a whole-transcript rewrite.
+- audio (build): the 12 EMF/WMF golden PNG sums were re-recorded on Gotenberg 9.0.0 after the renders were compared: LibreOffice 26.8.2.2 anti-aliases metafiles differently (EMF 1.6-3.3% of pixels, WMF 5e-6); every Markdown sum still matched, and the soffice runs needed no change.
+- audio (build): WindowLimit 30 s is a constant; overlap must be under 15 s; Below and a fixed Threshold are exclusive. A silence ends a window only if it began inside the window and leaves window audio outside its seams, so seams never overlap; a silence crossing the limit counts only up to it.
+- audio (build): ffmpeg writes raw PCM to stdout and the package writes the 44-byte WAV header, identical to ffmpeg's bitexact WAV, since the container mounts only the source's directory and a piped WAV can't fill its sizes. Windows re-probes and refuses a plan of another file; a failed window yields its error and the stream goes on, as document's pages do.
+- audio (build): Join's search is bounded by SeamWords (default 16); a failed or silent window is an empty string and leaves both its seams unmatched. textscore's fillers are um, umm, uh, uhm, er, erm, hm, hmm, mm, mmm, mhm, mm-hmm, uh-huh.
+- audio (build): with no ffmpeg no audio stage is registered, as every adapter requires its tools; windows number from 0, matching the plan's seams; a failed window fails the part after the others are yielded.
+- audio (build): the speech harness deletes each window file once transcribed unless Keep; a failed window joins as an empty string and the run goes on; Wall excludes planning.
+- audio (build): untimed truths are cut to the excerpt by the median best prefix over the 6 excerpt transcripts, checked against Earnings-22's force-aligned times; control positions mid-window measure the base error rate; Earnings transcripts are not committed, only metrics and 10-word seam spans; the unsplit baseline runs in each run.
+- audio (build): textscore.Align keeps every b-th row (b about √n) and recomputes blocks on traceback, since the whole table needed about 14 GB for the 4.4 h source; it is held to the whole-table traceback step for step.
+- audio (build): r1 q2 held: processing prepares (plan, windows, released join) and runs no inference; transcription stays test code (internal/audiotest), and the dispatcher's audio stage yields windows for a layer above.
+- audio (build): falsified: evidence 5's "an optional gpt-oss pass smooths the seams"; a pass over the 10 words around each seam, allowed only to remove words, made WER and seam edits worse in all 12 runs. Windowing is less accurate than one unsplit request on the 4-speaker meeting and the 8-speaker call, a measured cost, not a contradiction: evidence 5 claims no accuracy parity.
+- audio (build): E4B answered a window a few seconds long with its own instruction in 2 of 3 LibriVox runs; the join can't tell it from speech, and a guard belongs to the inference layer, not processing.
+- audio (accept): re-recording golden sums after a pinned-image bump, with the renders compared first and the reason recorded in the testdata README, is accepted as the exception to office's never-re-record rule (session brief, Needs you 1, rec taken).
 
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
   sessions keep gb10-2 current; add that it serves set A from llama.cpp's router at
-  server-cuda13-b11669, kept current by the root's `mise run host-update` at each session's
+  server-cuda13-b12098 (the root's llama.env gb10 pin), kept current by the root's `mise run host-update` at each session's
   start, and that a borrowing session restores the pipeline engine by leaving the llama container
   running, since host-update fails on a stopped one rather than starting it.
 - coordinator · roadmap, the `host` task's summary: the router runs --no-models-autoload, and
@@ -1680,8 +1738,8 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
   runners, exec on the host and container in a digest-pinned image, under the same tool contract
   with equal results, and processing v0.1.0 is released."`
 - coordinator · context/ai-strategy.md, the `spike-ai-pipeline-processing` bullet, rewritten to
-  v0.6.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0 and v0.5.0 amendments, which were
-  never applied):
+  v0.7.0 (this replaces the bullet's v0.3.0 draft and its v0.4.0, v0.5.0, and v0.6.0 amendments,
+  which were never applied):
 
   > - **`spike-ai-pipeline-processing`** prepares messages, documents, and streams for native
   >   model capabilities before inference; a layer above defines and orchestrates the inference
@@ -1714,8 +1772,15 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
   >   walks an input and every part found in it (attachments, embedded messages, media, and ZIP
   >   entries) to those stages with no default caps, under a content-addressed index that prepares
   >   each distinct content once across a share's inputs, runs, and workers, removes each part's
-  >   file once the caller has consumed it, and resumes a store by cursor. ffmpeg and ffprobe take
-  >   audio and video, live sources included.
+  >   file once the caller has consumed it, and resumes a store by cursor. Its `audio` package
+  >   runs ffmpeg and ffprobe: it cuts a recording at its silences into windows of at most 30 s
+  >   that overlap by 2 s, as 16 kHz mono WAV, and joins their transcripts by aligning the
+  >   overlapping words at each seam, and the dispatcher's audio stage yields a part's plan and
+  >   windows for a layer above to transcribe. Video and live sources are planned. Its
+  >   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md)
+  >   records windowed transcription 2.6 to 3.4 times faster than one unsplit request and less
+  >   accurate on multi-speaker audio, and a gpt-oss pass over the seams making every run worse
+  >   (evidence 5).
 - coordinator · roadmap, the `documents` task: name "PDF pages prepared for vision" where it reads
   "PDF pages through vision", and its summary says what the task delivered:
 
@@ -1896,10 +1961,47 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
   text, decoded by its encoding, for .xlsb, WordPerfect, and ODG, and for tar, gzip, zstd, and 7z
   archives, each a route processing v0.6.0 reports as "no processor yet", and legacy OLE2 macro
   detection in `inspect`.
-- coordinator · roadmap, the `audio` task's summary: it gains the audio route's processor, a
-  dispatcher stage for `route.Audio`. The summary says processing transcribes windows, which
-  conflicts with the decision that processing runs no inference; audio's plan settles whether
-  processing prepares the windows and a layer above transcribes them.
+- coordinator · roadmap, the `audio` task: `repos` gains `"spike-ai-pipeline"`, for evidence 5's
+  result, and its summary says what the task delivered (this replaces the earlier pending edits to
+  the summary, the audio route's processor and the LibriVox audiobook, audio r1 q2 and q7):
+
+  ```
+  Pre-inference preparation of speech in processing's `audio` package: ffmpeg and ffprobe
+  adapters, minimum 9.0, through either runner (linuxserver/ffmpeg 9.0.2 by digest); a source
+  probed, its silences found (15 dB below the mean, at least 0.3 s), and planned into windows of
+  at most 30 s ending at the middle of a silence, overlapping by 2 s; the windows cut concurrently
+  as 16 kHz mono WAV named by SHA-256; and the released join, transformers' best-offset merge over
+  each overlap, each seam reported matched or unmatched. Dispatch's audio stage yields a part's
+  plan and windows; processing runs no inference. Transcription is test code: a speech harness
+  sends the windows to set A's E4B within its 4 slots. A finding over AMI ES2002a, Earnings-21
+  4330115, Earnings-22 4479944, and a LibriVox audiobook records seam accuracy and total time
+  against one unsplit request over each source's first 10 minutes, and a gpt-oss pass over the
+  seam words. Picture's LibreOffice image moves to Gotenberg 9.0.0. Tags processing v0.7.0.
+  Evidence 5.
+  ```
+- coordinator · roadmap, the `audio` task (optional): add `proof = "The check passes, processing
+  v0.7.0 is released, and docs/findings/audio.md records seam accuracy and total time against one
+  unsplit request on four long sources, with the gpt-oss seam pass, linked from the root's
+  evidence 5."`
+- coordinator · roadmap, the `streams` task's summary: "audio windows transcribed as they arrive"
+  reads "audio windows cut at silences as they arrive and joined by audio's released Join, with
+  transcription as test code", since processing runs no inference (audio r1 q2), and "video frames
+  sampled to vision" reads "video frames sampled for vision". A note for its plan: evidence 5 found
+  windowing less accurate than one unsplit request on multi-speaker audio and a gpt-oss seam pass
+  harmful, so live windows carry the same seam cost and no LLM pass smooths them.
+- coordinator · context/ai-strategy.md, "Experiment: spike-ai-pipeline", for experiment.ai's
+  intake (a sentence after the processing bullet or under "Decision it changes"): evidence 5 bears
+  on go-ai's layering. Long audio is prepared in processing, windows cut at silences and the join
+  released, and transcribed by the layer above, which also owns inference guards: Gemma 4 E4B
+  answered a short window with its own instruction, and the join can't tell that from speech. No
+  LLM pass smooths the seams, since a gpt-oss pass over the seam words made every run worse. And
+  windowing costs accuracy on multi-speaker audio (word error rate 0.298 against 0.258 unsplit on
+  a 4-speaker meeting, 0.069 against 0.053 on an 8-speaker call), so the intake weighs whether
+  audio that fits one request goes unsplit.
+- coordinator · roadmap, spike-model-layout (optional, audio): on gb10-2's E4B Q8_0, a 10-minute
+  16 kHz mono WAV is 15,028 input tokens through `/v1/audio/transcriptions`, against its
+  32,768-token context, an input to sizing set A's audio slot; processing's docs/findings/audio.md
+  has the measurements.
 - coordinator · roadmap, experiment.ai.spike-ai-pipeline: recorded video files (MP4, MKV, WebM,
   AVI) route to `route.Video` with no task owning their processor; `streams` or `formats` takes
   them, settled at the next of their plans.
@@ -1936,3 +2038,5 @@ Door          two-way: pin rollback is a re-copy from d285b06 plus
 - coordinator · roadmap, the `gb10-2-align` task: summary and proof say b12098 where they say b12063, the root's own llama.env beside 7 scripts copied from verify-gb10's merge commit where they say a re-copy of host/, and add the gpt-oss preset keys (cache-ram = 0, cache-idle-slots = false) and the memory reads. In the summary, "the router's leases cleared only if a gb10-2.lan record remains" reads that the records remained after the hostname send stopped, so the architect cleared the router's leases. Proof: the diff check over the 7 copied files prints nothing, gb10-2's /props reads b12098, and the routing check passes after the lease clearing. The earlier note that b12110 may want a fresh look is resolved by this task's r1 q1.
 - coordinator · context/ai-hosting.md, "Hosts and access": the pending gb10-2 sentence names server-cuda13-b12098, not b11669.
 - roadmap note · spike-ai-pipeline: once spike-model-engines' gb10 pin reaches the root's (its screen branch, at 4d5e114, sets b12098), re-copy host/ from that merge commit so llama.env is a copy again.
+- coordinator · roadmap (note for plan): no task covers a video file's audio track; streams covers
+  live video and formats doesn't name it.
