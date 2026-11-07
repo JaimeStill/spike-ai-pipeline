@@ -4,6 +4,18 @@ go = "1.27.3"
 golangci-lint = "2.15.0"
 jq = "1.8.2"
 shellcheck = "0.11.0"
+# office, from its GitHub release, for docproc's office stage, which runs the real binary; mise
+# checks the archive against the release's digest.
+"github:JaimeStill/spike-ai-pipeline-office" = "0.1.0"
+# mail, from its GitHub release, for docproc's email stage, which runs the real binary; mise checks
+# the archive against the release's digest.
+"github:JaimeStill/spike-ai-pipeline-mail" = "0.3.1"
+# onenote, from its GitHub release, for docproc's onenote stage, which runs the real binary; mise
+# checks the archive against the release's digest.
+"github:JaimeStill/spike-ai-pipeline-onenote" = "0.1.0"
+# 7-Zip's 7zz, from its GitHub release, for docproc's archive stage and its 7z, zstd, cabinet, and
+# other ZIP methods; mise checks the archive against the release's digest.
+"github:ip7z/7zip" = { version = "26.06", asset_pattern = "7z*-linux-x64.tar.xz" }
 
 [env]
 # The repository's Go modules, as directories; tasks run in each one.
