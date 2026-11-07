@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -89,8 +90,8 @@ func byInput(lines []outdir.Line, input, kind string) []outdir.Line {
 	return out
 }
 
-// A run embeds every text and Markdown output line, never a record, image, or audio, and one
-// metadata text per input with file metadata, the error line's input among them; writes a chunk
+// A run embeds every text and Markdown output line, never a record, image, or audio directly, the
+// image's vision text, and one metadata text per input with file metadata, the error line's input among them; writes a chunk
 // line per chunk per occurrence, with its input, part, and output, and the vector as the endpoint
 // returned it; sends each distinct chunk once; and records the run in its manifest.
 func TestRun_Embeds(t *testing.T) {
@@ -114,15 +115,15 @@ func TestRun_Embeds(t *testing.T) {
 		m.Docproc != (outdir.Docproc{Dir: abs, Run: latestRun}) || m.Chunks != "runs/"+m.Run+"/chunks.jsonl" {
 		t.Errorf("manifest = %+v, want schema 1, its times, the docproc run %s, and its chunks", m, abs)
 	}
-	if len(m.Capabilities) != 1 {
-		t.Fatalf("capabilities = %+v, want embeddings alone", m.Capabilities)
+	if len(m.Capabilities) != 2 || m.Capabilities[0].Name != "vision" {
+		t.Fatalf("capabilities = %+v, want vision, then embeddings", m.Capabilities)
 	}
-	c := m.Capabilities[0]
+	c := m.Capabilities[1]
 	if c.Name != "embeddings" || c.Endpoint != "fake" || c.BaseURL != e.URL() || c.Model != embeddingModel ||
 		fmt.Sprint(c.Settings) != "map[batch:16 chunk_size:2000 concurrency:4]" {
 		t.Errorf("capability = %+v, want embeddings on fake with its defaults", c)
 	}
-	wantSkipped := []outdir.Skipped{{Name: "vision", Reason: "configured; docinfer doesn't run it yet"}, {Name: "transcription", Reason: "configured; docinfer doesn't run it yet"}}
+	wantSkipped := []outdir.Skipped{{Name: "transcription", Reason: "configured; docinfer doesn't run it yet"}}
 	if !slices.Equal(m.Skipped, wantSkipped) {
 		t.Errorf("skipped = %+v, want %+v", m.Skipped, wantSkipped)
 	}
@@ -223,12 +224,13 @@ func TestRun_Embeds(t *testing.T) {
 		t.Errorf("locked.bin metadata = %+v, want its file's alone", locked)
 	}
 
-	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 13,
-		Embedded: m.Counts.Chunks, Requests: 1}
-	if m.Counts != wantCounts || m.Counts.Chunks != len(all) {
+	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 14,
+		Embedded: m.Counts.Chunks, Requests: 1, Images: 1,
+		Vision: &outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1}}
+	if !reflect.DeepEqual(m.Counts, wantCounts) || m.Counts.Chunks != len(all) {
 		t.Errorf("counts = %+v, want %+v, its chunks the %d sent", m.Counts, wantCounts, len(all))
 	}
-	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 13: .*chunks\.jsonl`)
+	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 14: .*chunks\.jsonl`)
 }
 
 // A second run over the same docproc run and configuration sends no request but the listing, and

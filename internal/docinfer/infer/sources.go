@@ -16,12 +16,18 @@ import (
 // those capabilities.
 var textKinds = map[string]bool{"text": true, "markdown": true}
 
+// imageKind is the output kind whose stored file is an image, which vision makes a text of.
+const imageKind = "image"
+
 // occurrence is one place a text docinfer embeds occurs in the docproc run: the input, part, and
 // output line it belongs to, and its source text. Each of the text's chunks is one chunk line per
 // occurrence, so the same text under two inputs is two sets of lines. A capability that makes
 // texts of its own, vision of an image or transcription of an audio window, adds an occurrence
 // of its text, its Source naming the file it stored, and the text is cut and embedded as any
 // other.
+//
+// An image output's occurrence is one awaiting its text: image is its stored file's path and
+// mediaType its media type, as docproc records it, and its text and source are vision's to set.
 type occurrence struct {
 	input       string
 	file        *schema.File
@@ -30,6 +36,8 @@ type occurrence struct {
 	output      *outdir.Output
 	source      outdir.Source
 	text        string
+	image       string
+	mediaType   string
 }
 
 // inputInfo is what an input's own lines say of it: its file metadata and content type, from its
@@ -61,8 +69,9 @@ func partOf(p *schema.Part, outcome string) *outdir.Part {
 
 // occurrences returns the occurrences of every text docinfer embeds in run, in its record's
 // order: each text or Markdown output line, whatever its part's outcome, its file read from the
-// run directory, and, at each input's own part line or error line, its metadata text, when the
-// line carries file metadata. An output's stored file that can't be read is an error.
+// run directory; each image output line, whatever its part's outcome, awaiting its vision text;
+// and, at each input's own part line or error line, its metadata text, when the line carries
+// file metadata. An output's stored text file that can't be read is an error.
 func occurrences(run *source.Run) ([]occurrence, error) {
 	// An input's own lines, and each part's outcome, come after its output lines; read them
 	// first.
@@ -91,10 +100,23 @@ func occurrences(run *source.Run) ([]occurrence, error) {
 		}
 		switch ev.Event {
 		case schema.OutputEvent:
-			if ev.Output == nil || !textKinds[ev.Output.Kind] {
+			if ev.Output == nil || (!textKinds[ev.Output.Kind] && ev.Output.Kind != imageKind) {
 				continue
 			}
 			o := ev.Output
+			var part *outdir.Part
+			if ev.Part != nil {
+				part = partOf(ev.Part, outcomes[keyOf(ev.Input, ev.Part)])
+			}
+			occ := occurrence{
+				input: ev.Input, file: info.file, contentType: info.contentType, part: part,
+				output: &outdir.Output{Kind: o.Kind, Name: o.Name, MediaType: o.MediaType, Ref: o.Ref, Meta: o.Meta},
+			}
+			if o.Kind == imageKind {
+				occ.image, occ.mediaType = run.Path(*o), o.MediaType
+				occs = append(occs, occ)
+				continue
+			}
 			text, ok := texts[o.Ref]
 			if !ok {
 				b, err := os.ReadFile(run.Path(*o))
@@ -104,16 +126,8 @@ func occurrences(run *source.Run) ([]occurrence, error) {
 				text = string(b)
 				texts[o.Ref] = text
 			}
-			var part *outdir.Part
-			if ev.Part != nil {
-				part = partOf(ev.Part, outcomes[keyOf(ev.Input, ev.Part)])
-			}
-			occs = append(occs, occurrence{
-				input: ev.Input, file: info.file, contentType: info.contentType, part: part,
-				output: &outdir.Output{Kind: o.Kind, Name: o.Name, Ref: o.Ref, Meta: o.Meta},
-				source: outdir.Source{Kind: outdir.SourceOutput, Ref: o.Ref},
-				text:   text,
-			})
+			occ.source, occ.text = outdir.Source{Kind: outdir.SourceOutput, Ref: o.Ref}, text
+			occs = append(occs, occ)
 		case schema.PartEvent, schema.ErrorEvent:
 			if ev.File == nil || (ev.Event == schema.PartEvent && (ev.Part == nil || ev.Part.Depth != 0)) {
 				continue

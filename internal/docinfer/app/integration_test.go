@@ -4,6 +4,7 @@ package app_test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/standards-lab/go-core/process"
@@ -19,8 +20,9 @@ const (
 
 // TestRun_AgainstConfig loads the configuration DOCINFER_CONFIG names, such as config/example,
 // which serves set A on gb10-2, and runs docinfer over the committed docproc run end to end: the
-// models check lists each endpoint it names, and every chunk is embedded, its vector of the
-// space's dimensions, set A's 768 for its embedding model. It never loads a model.
+// models check lists each endpoint it names, the fixture's image is sent to the vision model and
+// its text is not empty, and every chunk is embedded, its vector of the space's dimensions, set
+// A's 768 for its embedding model. It never loads a model.
 func TestRun_AgainstConfig(t *testing.T) {
 	dir := os.Getenv("DOCINFER_CONFIG")
 	if dir == "" {
@@ -38,6 +40,20 @@ func TestRun_AgainstConfig(t *testing.T) {
 	}
 	if m.Space.Model == granite && m.Space.Dimensions != graniteDims {
 		t.Errorf("%s: dimensions %d, want %d", granite, m.Space.Dimensions, graniteDims)
+	}
+	vc := m.Counts.Vision
+	if vc == nil || vc.Images != 1 || vc.Refused != 0 || vc.Described+vc.Held != 1 {
+		t.Fatalf("vision counts = %+v, want the fixture's one image described", vc)
+	}
+	var vision []string
+	for _, l := range lines {
+		if l.Source.Kind == outdir.SourceVision {
+			vision = append(vision, l.Text)
+		}
+	}
+	t.Logf("vision text of %s, incomplete %d: %q", pngRef, vc.Incomplete, vision)
+	if len(vision) == 0 || strings.TrimSpace(strings.Join(vision, "")) == "" {
+		t.Errorf("vision lines = %q, want the image's text, not empty", vision)
 	}
 	for _, l := range lines {
 		if l.Error != "" {

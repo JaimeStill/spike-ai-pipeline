@@ -1,0 +1,188 @@
+package infer
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"mime"
+	"net/http"
+	"os"
+	"path/filepath"
+
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/vision"
+)
+
+// visionName is the vision capability's name, in the manifest and the held results' paths.
+const visionName = "vision"
+
+// visionSettings returns the settings a vision result is held under: those that change it, the
+// cap on the reply and the prompt. The cap comes first, a number, so the prompt, whatever it
+// holds, can't make two settings one.
+func visionSettings(v *config.Vision) string {
+	return fmt.Sprintf("max_tokens=%d\nprompt=%s", *v.MaxTokens, v.Prompt)
+}
+
+// visionTexts makes the vision text of each image occurrence in occs, counting the images in m,
+// and returns occs with each image occurrence that has a text given it, as a source of kind
+// vision naming the stored text, and every other image occurrence dropped, and a warning for each
+// image the endpoint refused or the model left incomplete. With vision unset, every image
+// occurrence is dropped, counted, and skipped.
+//
+// Each distinct image, by its bytes' SHA-256, is sent once: an image an earlier run held a
+// result for, under the model and the settings, is sent in no request; the rest are sent
+// through the describer, each text stored whole in dir, and its result held, as it completes.
+// The results are held apart from the chunk settings, so a changed bound sends no image again.
+// An image the endpoint refuses is recorded, not fatal; a refusal it gives with a 4xx reply is
+// held, a verdict on the image, while one it gives with any other is not, so the next run sends
+// that image again. An image whose reply was cut at the output cap keeps its text, marked
+// incomplete, and is embedded like any other.
+func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence) ([]occurrence, []string, error) {
+	for _, o := range occs {
+		if o.image != "" {
+			m.Counts.Images++
+		}
+	}
+	v := j.cfg.Vision
+	if v == nil {
+		var texts []occurrence
+		for _, o := range occs {
+			if o.image == "" {
+				texts = append(texts, o)
+			}
+		}
+		return texts, nil, nil
+	}
+	settings := visionSettings(v)
+	vc := &outdir.VisionCounts{}
+	m.Counts.Vision = vc
+
+	// image is one distinct image: the ref it was first seen under, and its result.
+	type image struct {
+		ref    string
+		result *outdir.Vision
+	}
+	sums := map[string]string{}   // each image file's SHA-256, by its path, each read once
+	images := map[string]*image{} // by SHA-256
+	var order, pendingSums []string
+	var pending []vision.Image
+	for _, o := range occs {
+		if o.image == "" {
+			continue
+		}
+		if _, ok := sums[o.image]; ok {
+			continue
+		}
+		data, err := os.ReadFile(o.image)
+		if err != nil {
+			return nil, nil, fmt.Errorf("output %s of %s: %w", o.output.Ref, o.input, err)
+		}
+		h := sha256.Sum256(data)
+		s := hex.EncodeToString(h[:])
+		sums[o.image] = s
+		if images[s] != nil {
+			continue
+		}
+		img := &image{ref: o.output.Ref}
+		images[s], order = img, append(order, s)
+		var held outdir.Vision
+		ok, err := dir.Held(visionName, outdir.Key(visionName, v.Model, settings, s), &held)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
+			img.result = &held
+			vc.Held++
+			continue
+		}
+		pending = append(pending, vision.Image{Path: o.image, MediaType: mediaType(o, data)})
+		pendingSums = append(pendingSums, s)
+	}
+	vc.Images = len(images)
+
+	if len(pending) > 0 {
+		cl, err := j.cfg.Endpoints[v.Endpoint].Client(j.http)
+		if err != nil {
+			return nil, nil, err
+		}
+		d := vision.Describer{Client: cl, Model: v.Model, Prompt: v.Prompt, MaxTokens: *v.MaxTokens, Concurrency: *v.Concurrency}
+		vc.Requests, err = d.Run(ctx, pending, func(i int, r vision.Result) error {
+			s := pendingSums[i]
+			held := &outdir.Vision{Model: v.Model, Settings: settings, Content: s}
+			images[s].result = held
+			if r.Rejected != nil {
+				held.Error = r.Rejected.Error()
+				if r.Rejected.Status < 400 || r.Rejected.Status > 499 {
+					return nil
+				}
+			} else {
+				rel, sum, err := dir.WriteText(r.Text)
+				if err != nil {
+					return err
+				}
+				held.Text, held.TextSHA256, held.Incomplete = rel, sum, r.Incomplete
+				vc.Described++
+			}
+			_, err := dir.Hold(visionName, outdir.Key(visionName, v.Model, settings, s), held)
+			return err
+		})
+		if err != nil {
+			return nil, nil, fmt.Errorf("vision: %w", err)
+		}
+	}
+
+	var warnings []string
+	texts := map[string]string{} // by image SHA-256
+	for _, s := range order {
+		img := images[s]
+		r := img.result
+		if r.Error != "" {
+			vc.Refused++
+			warnings = append(warnings, fmt.Sprintf("warning: vision: refused image %s: %s", img.ref, r.Error))
+			continue
+		}
+		if r.Incomplete != "" {
+			vc.Incomplete++
+			warnings = append(warnings, fmt.Sprintf("warning: vision: incomplete text of image %s: %s", img.ref, r.Incomplete))
+		}
+		text, err := dir.ReadText(r.Text, r.TextSHA256)
+		if err != nil {
+			return nil, nil, fmt.Errorf("vision: text of image %s: %w", img.ref, err)
+		}
+		texts[s] = text
+	}
+
+	var out []occurrence
+	for _, o := range occs {
+		if o.image != "" {
+			s := sums[o.image]
+			text, ok := texts[s]
+			if !ok {
+				continue
+			}
+			r := images[s].result
+			o.text, o.source = text, outdir.Source{Kind: outdir.SourceVision, File: r.Text, Incomplete: r.Incomplete}
+			vc.Texts++
+		}
+		out = append(out, o)
+	}
+	return out, warnings, nil
+}
+
+// mediaType returns the media type of o's image, whose bytes are data, for its data URL: the
+// one docproc recorded, or, when it recorded none, the one its file's extension names, or, when
+// that names none, the one its bytes are sniffed as.
+func mediaType(o occurrence, data []byte) string {
+	if o.mediaType != "" {
+		return o.mediaType
+	}
+	if t := mime.TypeByExtension(filepath.Ext(o.image)); t != "" {
+		if mt, _, err := mime.ParseMediaType(t); err == nil {
+			return mt
+		}
+	}
+	mt, _, _ := mime.ParseMediaType(http.DetectContentType(data)) // DetectContentType's are valid
+	return mt
+}

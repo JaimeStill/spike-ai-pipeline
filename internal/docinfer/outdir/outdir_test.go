@@ -3,6 +3,8 @@ package outdir_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 	"time"
@@ -28,22 +30,22 @@ func TestLine_JSONShape(t *testing.T) {
 	modified := schema.Time(time.Date(2026, 11, 7, 9, 0, 0, 0, time.UTC))
 	l := outdir.Line{
 		Text: "Page one.", Index: 2, Span: outdir.Span{Start: 10, End: 19},
-		Source: outdir.Source{Kind: "vision", Ref: "outputs/ab/doc-1/1.txt", File: "results/vision/ab/ab12.json", SHA256: "s0"},
+		Source: outdir.Source{Kind: "vision", Ref: "outputs/ab/doc-1/1.txt", File: "texts/ab/ab12.txt", SHA256: "s0", Incomplete: "max_output_tokens"},
 		Input:  "/srv/in/a.pdf",
 		File:   &schema.File{Name: "a.pdf", Arg: "/srv/in", Path: "a.pdf", Size: 3, Mode: "-rw-r--r--", Modified: modified, Created: modified},
 		ContentType: &schema.ContentType{Kind: "pdf", Route: "document", RouteReason: "pdf signature", Stored: "application/pdf",
 			Detected: "application/pdf"},
 		Part:   &outdir.Part{SHA256: "p0", Name: "a.pdf", Kind: "pdf", Route: "document", Where: "zip entry a.pdf", Depth: 1, Outcome: "prepared"},
-		Output: &outdir.Output{Kind: "text", Name: "page 1", Ref: "outputs/ab/doc-1/1.txt", Meta: map[string]string{"page": "1"}},
+		Output: &outdir.Output{Kind: "image", Name: "page 1", MediaType: "image/png", Ref: "outputs/ab/doc-1/1.png", Meta: map[string]string{"page": "1"}},
 		Vector: "AACAPw==", Error: "400 Bad Request",
 	}
 	want := `{"text":"Page one.","index":2,"span":{"start":10,"end":19},` +
-		`"source":{"kind":"vision","ref":"outputs/ab/doc-1/1.txt","file":"results/vision/ab/ab12.json","sha256":"s0"},` +
+		`"source":{"kind":"vision","ref":"outputs/ab/doc-1/1.txt","file":"texts/ab/ab12.txt","sha256":"s0","incomplete":"max_output_tokens"},` +
 		`"input":"/srv/in/a.pdf",` +
 		`"file":{"name":"a.pdf","arg":"/srv/in","path":"a.pdf","size":3,"mode":"-rw-r--r--","modified":"2026-11-07T09:00:00.000000000Z","created":"2026-11-07T09:00:00.000000000Z"},` +
 		`"content_type":{"kind":"pdf","route":"document","route_reason":"pdf signature","stored":"application/pdf","detected":"application/pdf"},` +
 		`"part":{"sha256":"p0","name":"a.pdf","kind":"pdf","route":"document","where":"zip entry a.pdf","depth":1,"outcome":"prepared"},` +
-		`"output":{"kind":"text","name":"page 1","ref":"outputs/ab/doc-1/1.txt","meta":{"page":"1"}},` +
+		`"output":{"kind":"image","name":"page 1","media_type":"image/png","ref":"outputs/ab/doc-1/1.png","meta":{"page":"1"}},` +
 		`"vector":"AACAPw==","error":"400 Bad Request"}` + "\n"
 	if got := marshal(t, l); got != want {
 		t.Errorf("Line JSON =\n%s want\n%s", got, want)
@@ -113,5 +115,30 @@ func TestDir_Held(t *testing.T) {
 	}
 	if ok, err := d.Held("embeddings", key, &got); !ok || err != nil || got != want {
 		t.Errorf("Held = %v, %v, %+v, want %+v", ok, err, got, want)
+	}
+}
+
+// A text is written whole under its SHA-256 and read back; one changed since it was written is an
+// error, not its text.
+func TestDir_Text(t *testing.T) {
+	d, err := outdir.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	rel, sum, err := d.WriteText("a red square")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "texts/" + sum[:2] + "/" + sum + ".txt"; rel != want || len(sum) != 64 {
+		t.Errorf("WriteText = %q, %q; want %q", rel, sum, want)
+	}
+	if got, err := d.ReadText(rel, sum); err != nil || got != "a red square" {
+		t.Errorf("ReadText = %q, %v; want the text", got, err)
+	}
+	if err := os.WriteFile(filepath.Join(d.Root(), filepath.FromSlash(rel)), []byte("a blue circle"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.ReadText(rel, sum); err == nil {
+		t.Errorf("ReadText of a changed text: no error, want one")
 	}
 }

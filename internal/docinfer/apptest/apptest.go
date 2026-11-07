@@ -7,10 +7,12 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 
@@ -63,6 +65,41 @@ type Fake struct {
 	// counting from 1, before the request is answered, so a test can cancel its run there, or
 	// hold the request in flight.
 	OnEmbed func(ctx context.Context, n int)
+	// Vision, when set, answers each vision request; nil answers each with [VisionText] of its
+	// image, complete.
+	Vision func(VisionRequest) VisionReply
+	// OnVision, when set, is called with each vision request's context and its number, counting
+	// from 1, before the request is answered, as OnEmbed is.
+	OnVision func(ctx context.Context, n int)
+}
+
+// VisionRequest is one vision request an [Endpoint] received, in any of the three formats: the
+// format, by its route's name in docinfer's configuration, "completions", "messages", or
+// "responses"; the model; the text part's prompt; the image's media type and bytes, decoded from
+// its data URL or base64 source; and the cap on the reply's output tokens.
+type VisionRequest struct {
+	Format    string
+	Model     string
+	Prompt    string
+	MediaType string
+	Image     []byte
+	MaxTokens int
+}
+
+// VisionReply is how a [Fake] answers a vision request: with Text, cut at the output cap when
+// Incomplete, as the format reports a reply stopped at its length; or, when Status is set, with
+// that status and an OpenAI-style error body.
+type VisionReply struct {
+	Text       string
+	Incomplete bool
+	Status     int
+}
+
+// VisionText is the text a [Fake] gives an image by default: its size and the start of its
+// SHA-256, so a test can tell one image's text from another's.
+func VisionText(image []byte) string {
+	sum := sha256.Sum256(image)
+	return fmt.Sprintf("An image of %d bytes, SHA-256 %x.", len(image), sum[:6])
 }
 
 // DefaultDims is the dimensions of a [Fake]'s embeddings when its Dims is zero.
@@ -106,6 +143,7 @@ type Endpoint struct {
 	mu         sync.Mutex
 	requests   []Request
 	embeddings []Embedding
+	visions    []VisionRequest
 }
 
 // Serve starts an Endpoint answering as fake says, closed when t ends.
@@ -115,6 +153,9 @@ func Serve(t testing.TB, fake Fake) *Endpoint {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /v1/models", e.models)
 	mux.HandleFunc("POST /v1/embeddings", e.embed)
+	mux.HandleFunc("POST /v1/chat/completions", e.vision("completions"))
+	mux.HandleFunc("POST /v1/messages", e.vision("messages"))
+	mux.HandleFunc("POST /v1/responses", e.vision("responses"))
 	e.server = httptest.NewServer(e.record(mux))
 	t.Cleanup(e.server.Close)
 	return e
@@ -136,6 +177,13 @@ func (e *Endpoint) Embeddings() []Embedding {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return slices.Clone(e.embeddings)
+}
+
+// Visions returns a copy of the vision requests e has received, in the order each arrived.
+func (e *Endpoint) Visions() []VisionRequest {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return slices.Clone(e.visions)
 }
 
 // record records each request before next answers it.
@@ -231,4 +279,173 @@ func apiError(w http.ResponseWriter, status int, message string) {
 	_ = json.NewEncoder(w).Encode(map[string]any{ // a test's client gone loses nothing
 		"error": map[string]any{"message": message, "type": "invalid_request_error", "code": status},
 	})
+}
+
+// vision returns the handler of a generation request in format, the image and prompt of one
+// user message: it decodes the request as the client's format sends it, records it, and answers
+// as the Fake's Vision says, in the format's reply. A body it can't decode, or one with no image
+// or prompt, is a 400.
+func (e *Endpoint) vision(format string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req, err := decodeVision(format, r)
+		if err != nil {
+			apiError(w, http.StatusBadRequest, "bad vision request: "+err.Error())
+			return
+		}
+		e.mu.Lock()
+		e.visions = append(e.visions, req)
+		n := len(e.visions)
+		e.mu.Unlock()
+		if e.fake.OnVision != nil {
+			e.fake.OnVision(r.Context(), n)
+		}
+		reply := VisionReply{Text: VisionText(req.Image)}
+		if e.fake.Vision != nil {
+			reply = e.fake.Vision(req)
+		}
+		if reply.Status != 0 {
+			apiError(w, reply.Status, "image refused")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(visionBody(format, req.Model, reply)) // a test's client gone loses nothing
+	}
+}
+
+// part is one content part of a vision request, in any of the three formats' names: a text
+// part's text; a Chat Completions image_url's URL; an Open Responses input_image's image_url; and
+// a Messages image's base64 source.
+type part struct {
+	Type     string          `json:"type"`
+	Text     string          `json:"text"`
+	ImageURL json.RawMessage `json:"image_url"`
+	Source   struct {
+		Type      string `json:"type"`
+		MediaType string `json:"media_type"`
+		Data      string `json:"data"`
+	} `json:"source"`
+}
+
+// decodeVision decodes r's body as format's request of one user message of an image and a
+// prompt.
+func decodeVision(format string, r *http.Request) (VisionRequest, error) {
+	var body struct {
+		Model               string `json:"model"`
+		MaxCompletionTokens int    `json:"max_completion_tokens"`
+		MaxTokens           int    `json:"max_tokens"`
+		MaxOutputTokens     int    `json:"max_output_tokens"`
+		Messages            []struct {
+			Role    string `json:"role"`
+			Content []part `json:"content"`
+		} `json:"messages"`
+		Input []struct {
+			Type    string `json:"type"`
+			Role    string `json:"role"`
+			Content []part `json:"content"`
+		} `json:"input"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return VisionRequest{}, err
+	}
+	req := VisionRequest{Format: format, Model: body.Model}
+	var parts []part
+	switch format {
+	case "completions":
+		req.MaxTokens = body.MaxCompletionTokens
+		if len(body.Messages) == 1 && body.Messages[0].Role == "user" {
+			parts = body.Messages[0].Content
+		}
+	case "messages":
+		req.MaxTokens = body.MaxTokens
+		if len(body.Messages) == 1 && body.Messages[0].Role == "user" {
+			parts = body.Messages[0].Content
+		}
+	case "responses":
+		req.MaxTokens = body.MaxOutputTokens
+		if len(body.Input) == 1 && body.Input[0].Type == "message" && body.Input[0].Role == "user" {
+			parts = body.Input[0].Content
+		}
+	}
+	for _, p := range parts {
+		switch {
+		case p.Type == "text" || p.Type == "input_text":
+			req.Prompt = p.Text
+		case p.Type == "image_url" || p.Type == "input_image":
+			var url string
+			if p.Type == "image_url" {
+				var u struct {
+					URL string `json:"url"`
+				}
+				if err := json.Unmarshal(p.ImageURL, &u); err != nil {
+					return req, err
+				}
+				url = u.URL
+			} else if err := json.Unmarshal(p.ImageURL, &url); err != nil {
+				return req, err
+			}
+			mediaType, data, ok := strings.Cut(strings.TrimPrefix(url, "data:"), ";base64,")
+			if !ok || !strings.HasPrefix(url, "data:") {
+				return req, fmt.Errorf("image URL %.40q isn't a base64 data URL", url)
+			}
+			b, err := base64.StdEncoding.DecodeString(data)
+			if err != nil {
+				return req, err
+			}
+			req.MediaType, req.Image = mediaType, b
+		case p.Type == "image" && p.Source.Type == "base64":
+			b, err := base64.StdEncoding.DecodeString(p.Source.Data)
+			if err != nil {
+				return req, err
+			}
+			req.MediaType, req.Image = p.Source.MediaType, b
+		}
+	}
+	if req.Image == nil || req.Prompt == "" {
+		return req, errors.New("want one user message of an image and a prompt")
+	}
+	return req, nil
+}
+
+// visionBody returns reply as format's reply body, as llama.cpp's router gives it: a finished
+// reply's stop reason stop, end_turn, or status completed; an incomplete one's length,
+// max_tokens, or status incomplete with its reason.
+func visionBody(format, model string, reply VisionReply) any {
+	switch format {
+	case "messages":
+		stop := "end_turn"
+		if reply.Incomplete {
+			stop = "max_tokens"
+		}
+		return map[string]any{
+			"id": "msg_fake", "type": "message", "role": "assistant", "model": model,
+			"content":     []map[string]any{{"type": "text", "text": reply.Text}},
+			"stop_reason": stop, "usage": map[string]int{"input_tokens": 1, "output_tokens": 1},
+		}
+	case "responses":
+		body := map[string]any{
+			"id": "resp_fake", "object": "response", "model": model, "status": "completed",
+			"output": []map[string]any{{
+				"type": "message", "id": "msg_fake", "status": "completed", "role": "assistant",
+				"content": []map[string]any{{"type": "output_text", "text": reply.Text, "annotations": []any{}}},
+			}},
+			"usage": map[string]int{"input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+		}
+		if reply.Incomplete {
+			body["status"] = "incomplete"
+			body["incomplete_details"] = map[string]string{"reason": "max_output_tokens"}
+		}
+		return body
+	}
+	finish := "stop"
+	if reply.Incomplete {
+		finish = "length"
+	}
+	return map[string]any{
+		"id": "chatcmpl-fake", "object": "chat.completion", "model": model,
+		"choices": []map[string]any{{
+			"index": 0, "finish_reason": finish,
+			"message": map[string]any{"role": "assistant", "content": reply.Text},
+		}},
+		"usage": map[string]int{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+	}
 }

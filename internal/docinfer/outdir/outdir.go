@@ -28,6 +28,7 @@ const Version = "1"
 const (
 	resultsDir = "results"
 	runsDir    = "runs"
+	textsDir   = "texts"
 )
 
 // Dir is docinfer's directory, the one --out names: its held results and its runs.
@@ -90,6 +91,37 @@ func (d *Dir) Hold(capability, key string, v any) (string, error) {
 	return rel, rundir.WriteFile(filepath.Join(d.root, filepath.FromSlash(rel)), func(w io.Writer) error {
 		return encoder(w).Encode(v)
 	})
+}
+
+// textPath returns the path of the text whose SHA-256 is sum, relative to the directory:
+// texts/<first two hex digits>/<sum>.txt.
+func textPath(sum string) string {
+	return path.Join(textsDir, sum[:2], sum+".txt")
+}
+
+// WriteText writes text whole as a file of its own, named by its content, and returns its path
+// relative to the directory and its SHA-256. A text written before is written again, the same.
+func (d *Dir) WriteText(text string) (rel, sum string, err error) {
+	h := sha256.Sum256([]byte(text))
+	sum = hex.EncodeToString(h[:])
+	rel = textPath(sum)
+	return rel, sum, rundir.WriteFile(filepath.Join(d.root, filepath.FromSlash(rel)), func(w io.Writer) error {
+		_, err := io.WriteString(w, text)
+		return err
+	})
+}
+
+// ReadText reads the text WriteText wrote at rel, a path relative to the directory, and checks it
+// against sum, its SHA-256 when it was written: a text that is gone or changed is an error.
+func (d *Dir) ReadText(rel, sum string) (string, error) {
+	b, err := os.ReadFile(filepath.Join(d.root, filepath.FromSlash(rel)))
+	if err != nil {
+		return "", err
+	}
+	if h := sha256.Sum256(b); hex.EncodeToString(h[:]) != sum {
+		return "", fmt.Errorf("%s: its SHA-256 isn't %s, the one it was written with", rel, sum)
+	}
+	return string(b), nil
 }
 
 // RunPath returns the file name of run id's directory, relative to the directory:
@@ -277,6 +309,32 @@ type Counts struct {
 	Rejected int `json:"rejected"`
 	// Requests counts the embeddings requests this run sent.
 	Requests int `json:"requests"`
+	// Images counts the docproc run's image output lines, whether vision ran or was skipped.
+	Images int `json:"images"`
+	// Vision counts what vision did with the images. Absent when it was skipped.
+	Vision *VisionCounts `json:"vision,omitempty"`
+}
+
+// VisionCounts is what a run's vision did: the images it saw, by content, and what became of
+// each.
+type VisionCounts struct {
+	// Images counts the distinct images, by content; an image under two output lines is sent
+	// once.
+	Images int `json:"images"`
+	// Held counts the distinct images whose result an earlier run held.
+	Held int `json:"held"`
+	// Described counts the distinct images this run sent and the model answered.
+	Described int `json:"described"`
+	// Incomplete counts the distinct images whose text the model stopped before finishing,
+	// such as at the output cap, this run or held; the text is kept and embedded.
+	Incomplete int `json:"incomplete"`
+	// Refused counts the distinct images the endpoint refused, this run or held.
+	Refused int `json:"refused"`
+	// Requests counts the vision requests this run sent.
+	Requests int `json:"requests"`
+	// Texts counts the vision texts embedded, one per image output line whose image has a text;
+	// an empty text is one, cut to no chunk.
+	Texts int `json:"texts"`
 }
 
 // Line is one line of a run's chunk record: one chunk, in one place it occurs. The same chunk
@@ -319,6 +377,8 @@ const (
 	SourceOutput = "output"
 	// SourceMetadata is an input's metadata text, made from its file metadata and content type.
 	SourceMetadata = "metadata"
+	// SourceVision is a vision model's text of a docproc image output, stored by docinfer.
+	SourceVision = "vision"
 )
 
 // Source is the text a chunk was cut from: its kind, the stored file it is, and its SHA-256.
@@ -331,6 +391,10 @@ type Source struct {
 	File string `json:"file,omitzero"`
 	// SHA256 is the lowercase hex SHA-256 of the whole source text.
 	SHA256 string `json:"sha256"`
+	// Incomplete is why the model stopped before finishing a text docinfer asked it for, such as
+	// "max_output_tokens", the text being what it gave. Absent for a text it finished, or one
+	// no model made.
+	Incomplete string `json:"incomplete,omitzero"`
 }
 
 // Part is the part a chunk's source belongs to, in docproc's record's names, and the outcome its
@@ -347,10 +411,11 @@ type Part struct {
 
 // Output is a docproc output, in its record's names.
 type Output struct {
-	Kind string            `json:"kind"`
-	Name string            `json:"name,omitzero"`
-	Ref  string            `json:"ref"`
-	Meta map[string]string `json:"meta,omitempty"`
+	Kind      string            `json:"kind"`
+	Name      string            `json:"name,omitzero"`
+	MediaType string            `json:"media_type,omitzero"`
+	Ref       string            `json:"ref"`
+	Meta      map[string]string `json:"meta,omitempty"`
 }
 
 // Embedding is a held embeddings result: what it is keyed by, and the chunk's vector, or why the
@@ -363,4 +428,22 @@ type Embedding struct {
 	Vector     string `json:"vector,omitzero"`
 	Dimensions int    `json:"dimensions,omitzero"`
 	Error      string `json:"error,omitzero"`
+}
+
+// Vision is a held vision result: what it is keyed by, and the image's text, a file docinfer
+// stored, or why the endpoint refused the image.
+type Vision struct {
+	Model    string `json:"model"`
+	Settings string `json:"settings"`
+	// Content is the lowercase hex SHA-256 of the image's bytes.
+	Content string `json:"content"`
+	// Text is the stored text's path, relative to the directory, and TextSHA256 its SHA-256.
+	// Both absent when the endpoint refused the image; an empty text is a file too.
+	Text       string `json:"text,omitzero"`
+	TextSHA256 string `json:"text_sha256,omitzero"`
+	// Incomplete is why the model stopped before finishing the text, such as
+	// "max_output_tokens". Absent when it finished.
+	Incomplete string `json:"incomplete,omitzero"`
+	// Error is why the endpoint refused the image. Absent when it didn't.
+	Error string `json:"error,omitzero"`
 }

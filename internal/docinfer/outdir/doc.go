@@ -2,6 +2,7 @@
 //
 //	<out>/
 //	  results/<capability>/<xx>/<key>.json   each held result, keyed by Key
+//	  texts/<xx>/<sha256>.txt                each text docinfer stored, such as a vision text
 //	  runs/<run id>/manifest.json            each run's manifest
 //	  runs/<run id>/chunks.jsonl             its chunk record, a line per chunk per occurrence
 //
@@ -11,7 +12,9 @@
 // interrupted one, stored, and a changed setting finds nothing. Every file is written whole,
 // through internal/rundir's WriteFile, to a temporary name renamed into place, so a reader sees a
 // whole file or none, and a run stopped part way loses only what it hadn't stored. Every path
-// docinfer records of a file it wrote is relative to the directory, with slashes.
+// docinfer records of a file it wrote is relative to the directory, with slashes. A text a model
+// made, such as a vision model's of an image, is stored whole as a file of its own, named by its
+// SHA-256, and its held result names the file.
 //
 // A run's [Manifest] is written as the run starts and again, whole, as it ends: its id, a
 // version 7 UUID, its times, the docproc run it read, each capability it ran, with its endpoint,
@@ -24,13 +27,15 @@
 // The package exports:
 //
 //   - [Dir], opened by [Open], with its [Dir.Root], [Dir.Held] and [Dir.Hold], which read and
-//     write a held result, [Dir.WriteManifest] and [Dir.WriteChunks], which write a run's
+//     write a held result, [Dir.WriteText] and [Dir.ReadText], which write and read a stored
+//     text, [Dir.WriteManifest] and [Dir.WriteChunks], which write a run's
 //     files, and [Dir.ReadManifest] and [Dir.ReadChunks], which read them
 //   - [Key], a held result's key, and [RunPath], a run's file's path in the directory
-//   - [Manifest], with its [Docproc], [Capability], [Skipped], [Space], and [Counts]
-//   - [Line], with its [Span], [Source], of kind [SourceOutput] or [SourceMetadata], [Part], and
-//     [Output]
-//   - [Embedding], a held embeddings result
+//   - [Manifest], with its [Docproc], [Capability], [Skipped], [Space], and [Counts], with its
+//     [VisionCounts]
+//   - [Line], with its [Span], [Source], of kind [SourceOutput], [SourceMetadata], or
+//     [SourceVision], [Part], and [Output]
+//   - [Embedding], a held embeddings result, and [Vision], a held vision result
 //   - [EncodeVector] and [DecodeVector], a vector's base64 form, and [UnitTolerance], within
 //     which a vector's norm counts as unit length
 //   - [Version], the directory's schema

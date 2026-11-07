@@ -9,18 +9,28 @@
 // --run is one run's id: a path or a dot entry is a usage error, as docproc report has it.
 // --config and --out are required.
 //
-// The inference is execute's. It begins a run in --out, internal/docinfer/outdir's directory,
-// and embeds every text of the docproc run: each text and Markdown output line's stored file,
-// whatever its part came to, never a record, an image, or an audio window directly, and one
-// metadata text per input with file metadata, its file fields and content type as readable lines,
-// an input whose dispatch stopped with an error among them. Each distinct text is cut by
-// internal/docinfer/chunk to the configured bound, and each distinct chunk is embedded once, by
-// internal/docinfer/embed, unless an earlier run holds its result, keyed by its content, the
-// model, the bound, and the chunker's version; each result is held as it completes, so a run
-// stopped part way resumes from what it stored. The run writes a chunk line per chunk per
-// occurrence, the same content under two inputs two lines, one vector, and its manifest, with the
-// embedding space. Vision and transcription, when configured, are skipped for now, the terminal
-// and the manifest saying so; their texts will be occurrences cut and embedded like any other.
+// The inference is execute's. It begins a run in --out, internal/docinfer/outdir's directory.
+// When vision is configured, it sends each distinct image of the docproc run, every image output
+// line's stored file, whatever its part came to, once, by internal/docinfer/vision, as a data URL
+// beside the prompt, its reply capped at max_tokens, unless an earlier run holds its result, keyed
+// by the image's content, the model, and the prompt and cap; each text is stored whole in --out
+// and its result held as it completes. A reply cut at the cap is recorded incomplete and its text
+// kept; an image the endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
+// Unconfigured, vision skips the images, counting them.
+//
+// It then embeds every text of the docproc run: each text and Markdown output line's stored file,
+// whatever its part came to, never a record, an image, or an audio window directly, each image
+// output line's vision text, and one metadata text per input with file metadata, its file fields
+// and content type as readable lines, an input whose dispatch stopped with an error among them.
+// Each distinct text is cut by internal/docinfer/chunk to the configured bound, and each distinct
+// chunk is embedded once, by internal/docinfer/embed, unless an earlier run holds its result,
+// keyed by its content, the model, the bound, and the chunker's version; each result is held as
+// it completes, so a run stopped part way resumes from what it stored. The vision results are
+// held apart from the chunk settings, so a changed bound cuts and embeds again and sends no image.
+// The run writes a chunk line per chunk per occurrence, the same content under two inputs two
+// lines, one vector, and its manifest, with the embedding space. Transcription, when configured,
+// is skipped for now, the terminal and the manifest saying so; its texts will be occurrences cut
+// and embedded like any other.
 //
 // The package exports:
 //

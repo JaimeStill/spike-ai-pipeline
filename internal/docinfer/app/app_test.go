@@ -268,7 +268,8 @@ func TestRun_BuildFailureStopsRun(t *testing.T) {
 // With every model loaded, run lists the endpoint once, with its query and the secrets file's
 // token, shows each capability loaded, and reads the latest run's every output, the failed
 // part's and the seen part's among them; then it embeds, each request with the query and token
-// too. Vision and transcription, configured, are skipped, the terminal saying so.
+// too, and so is the vision request. Transcription, configured, is skipped, the terminal saying
+// so.
 func TestRun_ReadsLatestRun(t *testing.T) {
 	clean(t)
 	e := docinfertest.Serve(t, docinfertest.Fake{Models: setA})
@@ -290,7 +291,7 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 	wantLine(t, got, row("vision", "fake", visionModel, "loaded"))
 	wantLine(t, got, row("transcription", "fake", audioModel, "loaded"))
 	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 11: text 4, markdown 1, image 1, record 2, audio 3"))
-	wantLine(t, got, regexp.QuoteMeta("vision: configured; docinfer doesn't run it yet; skipped"))
+	wantLine(t, got, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 0, refused 0; requests 1"))
 	wantLine(t, got, regexp.QuoteMeta("transcription: configured; docinfer doesn't run it yet; skipped"))
 	wantLine(t, got, `embeddings: texts 5, metadata 8, chunks \d+: held 0, embedded \d+, rejected 0; requests 1`)
 	if strings.Contains(got, "warning") {
@@ -302,8 +303,12 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 		t.Fatalf("requests = %v, want the listing first, %v", reqs, want)
 	}
 	for _, r := range reqs[1:] {
-		if want := (docinfertest.Request{Method: "POST", Path: "/v1/embeddings", Query: "autoload=false", Authorization: "Bearer secret-token"}); r != want {
-			t.Errorf("request %v, want %v", r, want)
+		want := docinfertest.Request{Method: "POST", Path: "/v1/embeddings", Query: "autoload=false", Authorization: "Bearer secret-token"}
+		if r.Path == "/v1/chat/completions" {
+			want.Path = r.Path
+		}
+		if r != want {
+			t.Errorf("request %v, want %v or the vision request's", r, want)
 		}
 	}
 	if want := []string{"http client", "lifecycle config"}; !slices.Equal(slices.Sorted(slices.Values(built.Log())), want) {
