@@ -44,6 +44,14 @@ func execute(ctx context.Context, w io.Writer, set stages.Set, out string, args 
 		return err
 	}
 
+	// The earlier records are read once, before this run's own is begun.
+	subtrees, skipped := readSubtrees(dir.Root())
+	for _, err := range skipped {
+		if _, err := fmt.Fprintf(w, "warning: a record replays nothing: %v\n", err); err != nil {
+			return err
+		}
+	}
+
 	m := schema.Manifest{Workers: workers, Tools: toolsOf(set), Stages: stagesOf(set)}
 	for _, arg := range args {
 		abs, err := filepath.Abs(arg)
@@ -56,7 +64,10 @@ func execute(ctx context.Context, w io.Writer, set stages.Set, out string, args 
 	if err != nil {
 		return err
 	}
-	rec := &recorder{dir: dir, run: run, w: w, inputs: map[string]input{}, counts: map[string]int{}, tally: map[tallyKey]int{}}
+	rec := &recorder{
+		dir: dir, run: run, w: w, subtrees: subtrees, inputs: map[string]input{}, counts: map[string]int{},
+		tally: map[tallyKey]int{}, warnings: map[string]int{},
+	}
 	for _, in := range inputs {
 		rec.inputs[in.path] = in
 	}
@@ -71,13 +82,26 @@ func execute(ctx context.Context, w io.Writer, set stages.Set, out string, args 
 // recorder turns a run's events into its record, its stored outputs, and its terminal lines. It
 // runs on the pool's loop alone, so it holds no lock.
 type recorder struct {
-	dir     *rundir.Dir
-	run     *rundir.Run
-	w       io.Writer
-	inputs  map[string]input
-	started sync.Map         // an input's path to when the pool took it, written by the pool's feeder
-	counts  map[string]int   // outputs stored so far, by part SHA-256 and stage identity
-	tally   map[tallyKey]int // inputs by route and outcome
+	dir      *rundir.Dir
+	run      *rundir.Run
+	w        io.Writer
+	subtrees *subtrees // the subtrees the earlier records and this run's hold, for seen parts
+	inputs   map[string]input
+	started  sync.Map         // an input's path to when the pool took it, written by the pool's feeder
+	counts   map[string]int   // outputs stored so far, by part SHA-256 and stage identity
+	tally    map[tallyKey]int // inputs by route and outcome
+	warnings map[string]int   // seen parts whose children no record holds, by input path
+	warned   int              // those of the inputs whose own event has arrived
+}
+
+// write appends ev to the run's record, and adds it to the subtrees, so content seen again in
+// this run finds the subtree this run recorded for it.
+func (r *recorder) write(ev schema.Event) error {
+	if err := r.run.Write(ev); err != nil {
+		return err
+	}
+	r.subtrees.add(ev)
+	return nil
 }
 
 // dispatch dispatches inputs on d's pool, recording each event, and returns the error that
@@ -132,7 +156,7 @@ func (r *recorder) output(path string, ev dispatch.Event) error {
 		o.Ref, o.Value = ref, nil
 	}
 	part := schema.PartOf(ev.Part)
-	return r.run.Write(schema.Event{
+	return r.write(schema.Event{
 		Event: schema.OutputEvent, Input: r.inputs[path].absPath, Part: &part, Stage: stageOf(ev.Stage),
 		Output: &schema.Output{
 			Kind: string(o.Kind), Name: o.Name, MediaType: o.MediaType, Meta: o.Meta, Ref: o.Ref,
@@ -142,9 +166,11 @@ func (r *recorder) output(path string, ev dispatch.Event) error {
 }
 
 // part records ev, a part's own event, of the input at path. A quarantined part's file is kept
-// in the run directory. The input's own event, its last, carries its file's metadata and its
-// time, and is its terminal line, which prints its error as brief does; the record keeps it
-// whole.
+// in the run directory. A seen part's subtree, which processing doesn't dispatch again, is
+// copied before it from the record that holds it, as replay copies it. The input's own event,
+// its last, carries its file's metadata and its time, and is its terminal line, which prints its
+// error as brief does, and how many seen parts in it had children no record holds; the record
+// keeps the error whole.
 func (r *recorder) part(path string, ev dispatch.Event) error {
 	delete(r.counts, ev.Part.SHA256+"\x00"+ev.Stage.String())
 	part := schema.PartOf(ev.Part)
@@ -163,27 +189,43 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 		}
 		rec.Quarantine = &q
 	}
+	var span schema.Span
+	if ev.Part.Depth == 0 {
+		// The input's own event: its last.
+		rec.File = r.file(path)
+		if mt, err := schema.Detect(path); err == nil {
+			part.ContentType.Detected = mt
+		}
+		span = r.span(path)
+		rec.Time = &span
+	}
+	lines := []schema.Event{rec}
+	if ev.Outcome == dispatch.Seen {
+		var warnings int
+		lines, warnings = r.subtrees.replay(rec)
+		r.warnings[path] += warnings
+	}
+	for _, line := range lines {
+		if err := r.write(line); err != nil {
+			return err
+		}
+	}
 	if ev.Part.Depth > 0 {
-		return r.run.Write(rec)
+		return nil
 	}
 
-	// The input's own event: its last.
-	rec.File = r.file(path)
-	if mt, err := schema.Detect(path); err == nil {
-		part.ContentType.Detected = mt
-	}
-	span := r.span(path)
-	rec.Time = &span
-	if err := r.run.Write(rec); err != nil {
-		return err
-	}
 	outcome := string(ev.Outcome)
 	if ev.Err != nil {
 		outcome += ": " + brief(ev.Err)
 	}
+	warned := ""
+	if n := r.warnings[path]; n > 0 {
+		warned = fmt.Sprintf("  warnings %d", n)
+		r.warned += n
+	}
 	r.tally[tallyKey{routeName(ev.Part.Route), string(ev.Outcome)}]++
-	return r.line(fmt.Sprintf("%s  %s  %s  outputs %d  children %d  %s\n",
-		path, ev.Part.Route, outcome, ev.Outputs, ev.Children, r.took(span)))
+	return r.line(fmt.Sprintf("%s  %s  %s  outputs %d  children %d%s  %s\n",
+		path, ev.Part.Route, outcome, ev.Outputs, ev.Children, warned, r.took(span)))
 }
 
 // inputError records stop, the error that stopped the dispatch of the input at path before its
@@ -191,7 +233,7 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 func (r *recorder) inputError(path string, stop error) error {
 	span := r.span(path)
 	rec := schema.Event{Event: schema.ErrorEvent, Input: r.inputs[path].absPath, File: r.file(path), Error: stop.Error(), Time: &span}
-	if err := r.run.Write(rec); err != nil {
+	if err := r.write(rec); err != nil {
 		return err
 	}
 	r.tally[tallyKey{routeName(""), errorOutcome}]++

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -172,24 +173,36 @@ func (r *Run) writeManifest() error {
 	})
 }
 
+// Runs returns the ids of the runs in the run directory at root, the version 7 ids under runs/,
+// in the order the runs began, which is theirs. A run directory with no runs/ yet is an error,
+// fs.ErrNotExist.
+func Runs(root string) ([]string, error) {
+	entries, err := os.ReadDir(filepath.Join(root, runsDir))
+	if err != nil {
+		return nil, err
+	}
+	var ids []string
+	for _, e := range entries {
+		if e.IsDir() {
+			ids = append(ids, e.Name())
+		}
+	}
+	slices.Sort(ids)
+	return ids, nil
+}
+
 // Latest returns the id of the latest run in the run directory at root, the greatest of the
 // version 7 ids under runs/, which sort by when each run began. A run directory with no run is an
 // error.
 func Latest(root string) (string, error) {
-	entries, err := os.ReadDir(filepath.Join(root, runsDir))
+	ids, err := Runs(root)
 	if err != nil {
 		return "", err
 	}
-	latest := ""
-	for _, e := range entries {
-		if e.IsDir() && e.Name() > latest {
-			latest = e.Name()
-		}
-	}
-	if latest == "" {
+	if len(ids) == 0 {
 		return "", fmt.Errorf("%s holds no run", root)
 	}
-	return latest, nil
+	return ids[len(ids)-1], nil
 }
 
 // Load reads the run id in the run directory at root: its manifest, and its record's events in

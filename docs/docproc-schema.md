@@ -115,7 +115,9 @@ it changes:
 
 `runs/<run id>/record.jsonl`, one event per line, in the order the events arrived. An input's lines
 keep their order: the output and part lines of each part found in it come before its own, and its
-own part line is its last. Different inputs' lines interleave.
+own part line is its last. Different inputs' lines interleave. A seen part's subtree is copied in
+from an earlier record, in the same order ([Seen content and replayed
+subtrees](#seen-content-and-replayed-subtrees)), so a record is whole on its own.
 
 Every line has an `"event"`, its kind, and an `"input"`, the absolute, cleaned path of the input it
 belongs to. The three kinds:
@@ -135,12 +137,13 @@ belongs to. The three kinds:
 | `file` | file | no | input's only | when readable | The input's file metadata: on the input's own part line, and on an error line when the file could still be read. |
 | `stage` | stage | optional | optional | no | The stage of the part's route; absent when its route has no stage. |
 | `output` | output | yes | no | no | The output. |
-| `outcome` | string | `"seen"` or absent | yes | no | On a part line, what became of the part (below). On an output line, `"seen"` for an output the index recorded earlier, absent for one prepared in this run. |
-| `recorded` | string | optional | optional | no | For a seen part or output, the outcome the index recorded for it when it was prepared. |
+| `outcome` | string | `"seen"` or absent | yes | no | On a part line, what became of the part (below). On an output line, `"seen"` for an output the index recorded earlier, or one copied from an earlier record, absent for one prepared in this run. |
+| `recorded` | string | optional | optional | no | For a seen part or output, the outcome the index recorded for it when it was prepared; for a copied line, the outcome its record gave it. |
 | `reason` | string | no | optional | no | Why the part came to its outcome. |
 | `error` | string | no | optional | yes | On a part line, the error a failed or encrypted part came to; on an error line, the error that stopped the input's dispatch. |
 | `outputs` | integer | no | yes | no | How many outputs the part yielded, or, seen, recorded. |
 | `children` | integer | no | yes | no | How many parts its stage found in it. |
+| `warning` | string | no | optional | no | On a seen part line whose children no record in the run directory holds, so none of their lines is copied: what is missing. |
 | `quarantine` | quarantine | no | quarantined only | no | Where a quarantined part's file is kept. |
 | `time` | span | no | input's only | yes | The input's time, on its own part line and on an error line. |
 
@@ -150,7 +153,7 @@ A part line's `"outcome"`:
 |---|---|
 | `prepared` | Its stage prepared it. |
 | `no processor yet` | Its route has no wired stage (missing, excluded, or route `unrouted`), or its stage has no processor for its kind yet. |
-| `seen` | The index already holds its content, from this run or an earlier one over the same run directory: its outputs are the index's, not prepared again. |
+| `seen` | The index already holds its content, from this run or an earlier one over the same run directory: its outputs are the index's, not prepared again, and the lines of the parts found in it are copied from the record that holds them. |
 | `cycle` | Its SHA-256 is one of its ancestors': it is neither prepared nor opened. |
 | `quarantined` | Its inspection's verdict quarantines it: no stage runs, its file is kept under `quarantine/`, and its flags hold the evidence. |
 | `encrypted` | Its stage can't read it because it is encrypted. |
@@ -228,7 +231,7 @@ A **span**, an input's time:
 | `start` | time | When the pool took the input, any wait for a free worker included. |
 | `end` | time | When its last event arrived. |
 
-## Seen content and replayed refs
+## Seen content and replayed subtrees
 
 Content is prepared once per run directory, by its SHA-256 and its stage's identity. The file index
 records each part's outcome and outputs, and each output's `ref` as docproc set it when it stored
@@ -236,7 +239,33 @@ the output. When the same content comes again, in the same run or a later one ov
 directory, under the same stage identity, its part line's outcome is `"seen"`, with `"recorded"`
 naming the outcome it was prepared to, and each of its output lines is `"seen"` too, its `ref`
 replayed from the index: it names the copy the run that prepared it stored, which is still under
-`outputs/`. A reader never needs the earlier run's record to follow a seen output.
+`outputs/`.
+
+Processing doesn't dispatch the parts found in seen content again, so docproc copies them. Before
+the seen part's own line, it writes its subtree, the part lines of every part found in it, at any
+depth, and their output lines, copied from the earliest record in the run directory that holds
+that subtree for the same SHA-256 and stage identity, this run's own record last, for content seen
+twice in one run. Each copied line:
+
+- carries this run's `"input"`, and its part's `"depth"` under the seen part's, which can differ
+  from the record it came from;
+- is `"seen"`, its `"recorded"` the outcome its record gave it: a part line's outcome, or, for a
+  line that was seen there too, its `"recorded"`; an output prepared there records its part's
+  outcome;
+- keeps everything else its record gave it, its `"reason"`, `"error"`, counts, `"quarantine"`,
+  and its output's `"ref"`, which names a file under `outputs/`.
+
+A copied part whose record holds no lines for its own children, as a record written before docproc
+copied subtrees has for a seen part, takes them from the earliest record that does. So every run's
+record is whole on its own: a reader never needs an earlier run's record to follow a seen part or
+its outputs, and its part tree has the same lines the run that prepared it recorded.
+
+A seen part with children no record in the run directory holds, as when `index/` is kept and its
+`runs/` are not, is recorded with what the index gave it and a `"warning"` saying its children's
+lines are missing; none of them is copied, and the run goes on. The input's terminal line ends its
+counts with `warnings <n>`, the closing summary counts them, and the report shows the warning on the
+part and counts them at its head. A record that can't be read is skipped, the terminal saying so,
+and copies nothing.
 
 Processing's index records a part only when its stage ran and its whole subtree came to an outcome
 its content decides. A part that failed, or that holds a `failed` or `limited` part at any depth, is

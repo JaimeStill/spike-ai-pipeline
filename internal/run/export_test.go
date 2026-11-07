@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
 )
 
@@ -21,4 +22,17 @@ func Execute(ctx context.Context, w io.Writer, set stages.Set, out string, paths
 		return err
 	}
 	return execute(ctx, w, set, out, paths, inputs, 1)
+}
+
+// Replay reads records, each a run's lines, in order, as readSubtrees reads a run directory's,
+// then returns the lines replay writes for seen, and how many warnings they carry.
+func Replay(records [][]schema.Event, seen schema.Event) ([]schema.Event, int) {
+	s := &subtrees{found: map[subtreeKey]*node{}, inputs: map[string]*tree{}}
+	for _, rec := range records {
+		for _, ev := range rec {
+			s.add(ev)
+		}
+		clear(s.inputs)
+	}
+	return s.replay(seen)
 }

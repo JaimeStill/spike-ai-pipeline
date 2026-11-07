@@ -138,8 +138,10 @@ runs/<run id>/report.html            its report
 
 A run over an existing run directory reuses its index and output store under a new run id: content
 an earlier run prepared is seen, not prepared again, and its outputs' refs name the copies already
-stored. Content that failed, or holds a part that failed, is prepared again, and a part with no
-stage comes to `no processor yet` again. The directory is schema `"1"`, the contract docinfer reads: every field of the manifest and
+stored. A seen part's subtree, which processing doesn't dispatch again, is copied into the new
+record from the earliest record that holds it, each line marked seen, so every run's record is
+whole on its own. Content that failed, or holds a part that failed or was limited, is prepared
+again, and a part with no stage comes to `no processor yet` again. The directory is schema `"1"`, the contract docinfer reads: every field of the manifest and
 the record, the path rules, and the store's naming are in
 [docs/docproc-schema.md](docs/docproc-schema.md).
 

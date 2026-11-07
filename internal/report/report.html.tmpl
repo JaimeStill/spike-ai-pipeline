@@ -28,6 +28,7 @@ a { color: var(--link); }
 code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
 .muted { color: var(--muted); }
 .error { color: var(--bad); }
+.warning { color: var(--warn); }
 .scroll { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; }
 th, td { text-align: left; padding: .3rem .6rem .3rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -70,6 +71,9 @@ li.part { margin: .6rem 0; }
 <dt>Inputs</dt><dd>{{range $i, $p := .M.Inputs}}{{if $i}}<br>{{end}}<code>{{$p}}</code>{{end}}</dd>
 {{- if .M.Error}}
 <dt>Stopped</dt><dd class="error">{{.M.Error}}</dd>
+{{- end}}
+{{- with .Warnings}}
+<dt>Warnings</dt><dd class="warning">{{.}} seen {{if eq . 1}}part has{{else}}parts have{{end}} children no record in the run directory holds, not replayed; each part says so</dd>
 {{- end}}
 </dl>
 </header>
@@ -177,6 +181,9 @@ li.part { margin: .6rem 0; }
 {{- end}}
 {{- with .Ev.Error}}
 <dt>Error</dt><dd class="error">{{.}}</dd>
+{{- end}}
+{{- with .Ev.Warning}}
+<dt>Warning</dt><dd class="warning">{{.}}</dd>
 {{- end}}
 {{- if or (n .Ev.Outputs) (n .Ev.Children)}}
 <dt>Yielded</dt><dd>outputs {{n .Ev.Outputs}}, parts {{n .Ev.Children}}</dd>

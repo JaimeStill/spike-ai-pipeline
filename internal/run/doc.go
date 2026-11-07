@@ -20,6 +20,14 @@
 // already stored. Such an output's inline Value is cleared once stored, so the index holds no
 // second copy of it.
 //
+// Processing doesn't dispatch the parts found in a seen part again, so the run copies its
+// subtree, those parts' lines and their outputs', from the earliest record in the run directory
+// that holds it, this run's own last, before the seen part's own line: each copied line is seen,
+// of this run's input, at its depth under the seen part, recording the outcome its record gave
+// it. The earlier records are read once, as the run begins. A seen part whose children no record
+// holds is recorded with a warning, which its input's terminal line and the summary count; a
+// record that can't be read is skipped, the terminal saying so.
+//
 // --exclude <route>, repeatable, leaves a route's stage out, and a route that isn't one of
 // processing's ten is a usage error. --workers, runtime.NumCPU() by default, is how many inputs
 // are dispatched at once; outside 1 to NumCPU it is a usage error.

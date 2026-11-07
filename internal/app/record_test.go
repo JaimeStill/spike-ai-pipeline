@@ -1,7 +1,9 @@
 package app_test
 
 import (
+	"archive/zip"
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -334,8 +336,8 @@ func TestRun_ReRunSeesEverything(t *testing.T) {
 	}
 	seen := 0
 	for _, ev := range rs[1].events(t) {
-		if ev.Outcome != "seen" {
-			t.Errorf("re-run line %+v is %q, want seen", ev, ev.Outcome)
+		if ev.Outcome != "seen" || ev.Recorded != "prepared" {
+			t.Errorf("re-run line %+v is %q, recorded %q; want seen, recorded prepared", ev, ev.Outcome, ev.Recorded)
 		}
 		if ev.Output != nil {
 			if !refs[ev.Output.Ref] {
@@ -343,14 +345,11 @@ func TestRun_ReRunSeesEverything(t *testing.T) {
 			}
 			seen++
 		}
-		if ev.Part != nil && ev.Part.Depth > 0 {
-			t.Errorf("re-run dispatched the nested part %+v again", ev.Part)
-		}
 	}
-	// The input's own outputs are replayed; notes.zip's text, its child's, is recorded under
-	// its child, which a seen part references and doesn't dispatch again.
-	if seen != 1 {
-		t.Errorf("re-run replayed %d outputs, want 1", seen)
+	// hello.txt's text is replayed by the index, and notes.txt's, under notes.zip's child, is
+	// copied from the first run's record.
+	if seen != 2 {
+		t.Errorf("re-run replayed %d outputs, want 2", seen)
 	}
 	for ref := range refs {
 		b, err := os.ReadFile(filepath.Join(out, filepath.FromSlash(ref)))
@@ -362,9 +361,202 @@ func TestRun_ReRunSeesEverything(t *testing.T) {
 	}
 	wantLine(t, stdout, `archive\s+seen\s+1`)
 	wantLine(t, stdout, `text\s+seen\s+1`)
+	if strings.Contains(stdout, "warnings") {
+		t.Errorf("re-run warns:\n%s", stdout)
+	}
 	matches, err := filepath.Glob(filepath.Join(out, ".work-*"))
 	if err != nil || len(matches) != 0 {
 		t.Errorf("working directories left: %q, %v", matches, err)
+	}
+}
+
+// nested writes into dir the ZIP nest.zip, holding the committed notes.zip as its one entry, so
+// notes.zip's text is two parts deep in it.
+func nested(t *testing.T, dir string) {
+	t.Helper()
+	notes, err := os.ReadFile(filepath.Join("testdata", "inputs", "notes.zip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, err := zw.Create("notes.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Write(notes); err != nil {
+		t.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "nest.zip"), buf.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// normalized returns ev without what a re-run changes: its outcome and recorded outcome, its
+// input's file times, and its input's time; and, for an input's own line, whose seen event
+// processing writes, its reason.
+func normalized(t *testing.T, ev schema.Event) string {
+	t.Helper()
+	ev.Outcome, ev.Recorded, ev.Time = "", "", nil
+	if ev.File != nil {
+		f := *ev.File
+		f.Modified, f.Created = schema.Time{}, schema.Time{}
+		ev.File = &f
+	}
+	if ev.Part != nil && ev.Part.Depth == 0 {
+		ev.Reason = ""
+	}
+	b, err := json.Marshal(ev)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+// recordedOf returns the outcome a seen copy of ev records: its own, or, seen, the one it
+// recorded.
+func recordedOf(ev schema.Event) string {
+	if ev.Outcome == "seen" {
+		return ev.Recorded
+	}
+	if ev.Event == schema.OutputEvent {
+		return "prepared"
+	}
+	return ev.Outcome
+}
+
+// wantOrdered fails the test unless each part line of evs comes after the lines of every part
+// found in it, input by input, as the record's order has it.
+func wantOrdered(t *testing.T, evs []schema.Event) {
+	t.Helper()
+	type key struct {
+		input, parent string
+		depth         int
+	}
+	done := map[key]int{} // part lines not yet taken by their parent's
+	for _, ev := range evs {
+		if ev.Event != schema.PartEvent {
+			continue
+		}
+		k := key{ev.Input, ev.Part.SHA256, ev.Part.Depth + 1}
+		if n := *ev.Children; done[k] < n {
+			t.Errorf("part %s at depth %d of %s has %d children, %d lines before it", ev.Part.Name, ev.Part.Depth, ev.Input, n, done[k])
+		} else {
+			done[k] -= n
+		}
+		if ev.Part.Depth > 0 {
+			done[key{ev.Input, ev.Part.Parent, ev.Part.Depth}]++
+		}
+	}
+}
+
+// A re-run's record is whole on its own: a seen part's subtree, which processing doesn't
+// dispatch again, is copied from the first run's record, so the re-run's lines are the first
+// run's, every one seen, recording the outcome the first run gave it, in the record's order;
+// evil.zip, quarantined, is quarantined again.
+// The first run holds notes.zip twice, inside nest.zip and as an input, so its own record
+// copies the second notes.zip's subtree from the first, a depth shallower.
+func TestRun_ReRunRecordWhole(t *testing.T) {
+	in, out := inputs(t, "hello.txt", "notes.zip", "evil.zip")
+	nested(t, in)
+	lookup := sevenZip(t)
+
+	first := runOnce(t, lookup, process.ExitOK, in, "--out", out, "--workers", "1")
+	runOnce(t, lookup, process.ExitOK, in, "--out", out, "--workers", "2")
+
+	rs := runs(t, out)
+	if len(rs) != 2 {
+		t.Fatalf("%d runs, want 2", len(rs))
+	}
+	if strings.Contains(first, "warnings") {
+		t.Errorf("first run warns:\n%s", first)
+	}
+	one, two := rs[0].events(t), rs[1].events(t)
+	recorded := map[string][]string{} // a first-run line, normalized, to what a copy records
+	var want []string
+	for _, ev := range one {
+		n := normalized(t, ev)
+		want = append(want, n)
+		recorded[n] = append(recorded[n], recordedOf(ev))
+	}
+	var got []string
+	for _, ev := range two {
+		n := normalized(t, ev)
+		got = append(got, n)
+		// A quarantined input, which the index never records, is quarantined again.
+		requarantined := ev.Outcome == "quarantined" && slices.Equal(recorded[n], []string{"quarantined"})
+		if !requarantined && (ev.Outcome != "seen" || !slices.Contains(recorded[n], ev.Recorded)) {
+			t.Errorf("re-run line %s is %q, recorded %q; want seen, recorded one of %q", n, ev.Outcome, ev.Recorded, recorded[n])
+		}
+		if ev.Warning != "" {
+			t.Errorf("re-run line %s warns %q", n, ev.Warning)
+		}
+		if ev.Output != nil {
+			if _, err := os.Stat(filepath.Join(out, filepath.FromSlash(ev.Output.Ref))); err != nil {
+				t.Errorf("re-run's ref: %v", err)
+			}
+		}
+	}
+	slices.Sort(want)
+	slices.Sort(got)
+	if !slices.Equal(got, want) {
+		t.Errorf("re-run's lines =\n%s\nwant the first run's\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	wantOrdered(t, one)
+	wantOrdered(t, two)
+
+	// notes.txt is two deep in nest.zip and one deep in notes.zip, in both runs.
+	depths := map[int]int{}
+	for _, ev := range two {
+		if ev.Event == schema.PartEvent && ev.Part.Name == "notes.txt" {
+			depths[ev.Part.Depth]++
+		}
+	}
+	if depths[1] != 1 || depths[2] != 1 {
+		t.Errorf("re-run's notes.txt lines by depth = %v, want one at 1 and one at 2", depths)
+	}
+}
+
+// A seen part whose children no record in the run directory holds, as when the index is kept
+// and its runs are not, is recorded with a warning, its children's lines missing, and the run
+// goes on: its terminal line and the summary count the warning, and the report shows it.
+func TestRun_ReRunNoRecordWarns(t *testing.T) {
+	in, out := inputs(t, "hello.txt", "notes.zip")
+	lookup := sevenZip(t)
+	runOnce(t, lookup, process.ExitOK, in, "--out", out, "--workers", "1")
+	if err := os.RemoveAll(filepath.Join(out, "runs")); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout := runOnce(t, lookup, process.ExitOK, in, "--out", out, "--workers", "1")
+
+	r := runs(t, out)[0]
+	var warned []schema.Event
+	for _, ev := range r.events(t) {
+		if ev.Part != nil && ev.Part.Depth > 0 {
+			t.Errorf("a line for %s, which no record holds", ev.Part.Name)
+		}
+		if ev.Warning != "" {
+			warned = append(warned, ev)
+		}
+	}
+	if len(warned) != 1 || warned[0].Part.Name != "notes.zip" || warned[0].Outcome != "seen" ||
+		!strings.Contains(warned[0].Warning, "seen with 1 children") {
+		t.Fatalf("warned lines = %+v, want notes.zip's, seen with 1 children", warned)
+	}
+	q := regexp.QuoteMeta
+	wantLine(t, stdout, q(filepath.Join(in, "notes.zip"))+`  archive  seen  outputs 0  children 1  warnings 1  \S+`)
+	wantLine(t, stdout, q(filepath.Join(in, "hello.txt"))+`  text  seen  outputs 1  children 0  \S+`)
+	wantLine(t, stdout, `warnings 1: seen parts whose children no record .*`)
+	page, err := os.ReadFile(filepath.Join(out, "runs", r.manifest.Run, "report.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(page), warned[0].Warning) || !strings.Contains(string(page), "<dt>Warnings</dt>") {
+		t.Error("the report doesn't show the warning")
 	}
 }
 

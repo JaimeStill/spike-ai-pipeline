@@ -71,8 +71,9 @@ func brief(err error) string {
 }
 
 // summary writes the closing summary to the terminal: how many inputs came to each route and
-// outcome, in the stage table's route order, then the total, where the run's record is, and
-// where its report is, page, when it was written.
+// outcome, in the stage table's route order, then the total, how many seen parts had children no
+// record holds, when any did, where the run's record is, and where its report is, page, when it
+// was written.
 func (r *recorder) summary(page string) error {
 	keys := slices.SortedFunc(func(yield func(tallyKey) bool) {
 		for k := range r.tally {
@@ -102,6 +103,9 @@ func (r *recorder) summary(page string) error {
 	}
 	row("total", "", fmt.Sprint(total))
 	row()
+	if r.warned > 0 {
+		row(fmt.Sprintf("warnings %d: seen parts whose children no record in the run directory holds, not replayed; their part lines' \"warning\" says so", r.warned))
+	}
 	row("run " + r.run.ID() + "  " + r.run.Record())
 	if page != "" {
 		row("report " + page)

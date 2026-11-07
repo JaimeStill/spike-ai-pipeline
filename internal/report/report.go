@@ -86,6 +86,9 @@ type view struct {
 	Summary []tally
 	Total   tally
 	Inputs  []*input
+	// Warnings counts the seen parts whose children no record in the run directory holds, so
+	// the run copied none of them.
+	Warnings int
 }
 
 // tally is one row of the summary: how many inputs, and how many parts, the inputs among them,
@@ -165,6 +168,9 @@ func build(m schema.Manifest, evs []schema.Event) view {
 			switch ev.Event {
 			case schema.PartEvent:
 				count(routeOf(ev.Part), ev.Outcome, ev.Part.Depth == 0)
+				if ev.Warning != "" {
+					v.Warnings++
+				}
 			case schema.ErrorEvent:
 				count(noRoute, errorOutcome, true)
 			}

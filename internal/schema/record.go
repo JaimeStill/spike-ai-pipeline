@@ -15,7 +15,10 @@ const (
 
 // Event is one line of a run's record, runs/<run>/record.jsonl, a JSON object per line in the
 // order the events arrived: an input's lines keep their order, the output and part lines of each
-// part found in it before its own, and different inputs' lines interleave. Its fields:
+// part found in it before its own, and different inputs' lines interleave. A seen part's subtree,
+// the lines of the parts found in it and their outputs, which processing doesn't dispatch again,
+// is copied from the earliest record in the run directory that holds it, each copied line "seen",
+// so every run's record is whole on its own. Its fields:
 //
 //   - "event": the line's kind, "output", "part", or "error"
 //   - "input": the input the line belongs to, its absolute path, cleaned
@@ -26,14 +29,17 @@ const (
 //   - "output": the [Output], on an "output" line alone
 //   - "outcome": on a "part" line, what became of the part: "prepared", "no processor yet",
 //     "seen", "cycle", "quarantined", "encrypted", "failed", or "limited"; on an "output" line,
-//     "seen" for an output the index recorded earlier, absent for one prepared in this run
+//     "seen" for an output the index recorded earlier, or copied from an earlier record, absent
+//     for one prepared in this run
 //   - "recorded": for a seen part or output, the outcome the index recorded for it when it was
-//     prepared; optional
+//     prepared, or, copied, the outcome its record gave it; optional
 //   - "reason": why the part came to its outcome; optional
 //   - "error": the error a failed or encrypted part came to, or that stopped an input's
 //     dispatch on an "error" line; optional
 //   - "outputs": on a "part" line, how many outputs the part yielded, or, seen, recorded
 //   - "children": on a "part" line, how many parts its stage found in it
+//   - "warning": on a seen "part" line whose children no record in the run directory holds, so
+//     none of them is replayed, what is missing; optional
 //   - "quarantine": on a quarantined part's "part" line, the [Quarantine], where its file is
 //     kept; optional
 //   - "time": the input's [Span], from when the pool took it to its last event; on an input's
@@ -51,6 +57,7 @@ type Event struct {
 	Error      string      `json:"error,omitzero"`
 	Outputs    *int        `json:"outputs,omitempty"`
 	Children   *int        `json:"children,omitempty"`
+	Warning    string      `json:"warning,omitzero"`
 	Quarantine *Quarantine `json:"quarantine,omitempty"`
 	Time       *Span       `json:"time,omitempty"`
 }
