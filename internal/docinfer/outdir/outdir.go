@@ -353,6 +353,30 @@ type Counts struct {
 	Windows int `json:"windows"`
 	// Transcription counts what transcription did with the windows. Absent when it was skipped.
 	Transcription *TranscriptionCounts `json:"transcription,omitempty"`
+	// Tokens counts the tokens each capability's requests took, this run's only.
+	Tokens Tokens `json:"tokens"`
+}
+
+// Tokens is the tokens each capability's requests took in one run, as the endpoint reported
+// them in each reply it answered: a held result took none in this run, and a refusal or a
+// rejection carries no usage, so neither adds any.
+type Tokens struct {
+	// Vision is vision's tokens. Absent when it was skipped.
+	Vision *Usage `json:"vision,omitempty"`
+	// Transcription is transcription's tokens. Absent when it was skipped.
+	Transcription *Usage `json:"transcription,omitempty"`
+	// Embeddings is the embeddings' tokens; an embedding has no output, so its Output is 0.
+	Embeddings Usage `json:"embeddings"`
+}
+
+// Usage is the tokens a capability's requests took, summed over each reply: Input, the inputs'
+// (prompt, image, or clip, and instructions), Output, the generated, and Total, as the endpoint
+// reports it, or, where its format reports none, Input and Output together. An endpoint that
+// reports no usage leaves each 0.
+type Usage struct {
+	Input  int `json:"input"`
+	Output int `json:"output"`
+	Total  int `json:"total"`
 }
 
 // TranscriptionCounts is what a run's transcription did: the windows it saw, by content, what

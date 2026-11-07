@@ -20,10 +20,11 @@ type Transcriber struct {
 	Concurrency int
 }
 
-// Result is one window's reply: its Text, or, when the endpoint refused the window, Rejected,
-// the endpoint's reply.
+// Result is one window's reply: its Text and Usage, the tokens the reply says the request took,
+// or, when the endpoint refused the window, Rejected, the endpoint's reply, with no Usage.
 type Result struct {
 	Text     string
+	Usage    client.TranscriptionUsage
 	Rejected *client.APIError
 }
 
@@ -95,5 +96,5 @@ func (t Transcriber) transcribe(ctx context.Context, path string) (Result, bool,
 	case err != nil:
 		return Result{}, true, err
 	}
-	return Result{Text: reply.Text}, true, nil
+	return Result{Text: reply.Text, Usage: reply.Usage}, true, nil
 }

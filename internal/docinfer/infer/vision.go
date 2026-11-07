@@ -58,6 +58,8 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 	settings := visionSettings(v)
 	vc := &outdir.VisionCounts{}
 	m.Counts.Vision = vc
+	tokens := &outdir.Usage{}
+	m.Counts.Tokens.Vision = tokens
 
 	// image is one distinct image: the ref it was first seen under, and its result.
 	type image struct {
@@ -118,6 +120,9 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 					return nil
 				}
 			} else {
+				tokens.Input += r.Usage.InputTokens
+				tokens.Output += r.Usage.OutputTokens
+				tokens.Total += r.Usage.TotalTokens
 				rel, sum, err := dir.WriteText(r.Text)
 				if err != nil {
 					return err

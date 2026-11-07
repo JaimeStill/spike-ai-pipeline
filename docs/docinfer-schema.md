@@ -171,6 +171,7 @@ The **counts**:
 | `vision` | vision counts | What vision did. Optional: absent when it was skipped. |
 | `windows` | integer | The docproc run's audio window output lines, an audio part's or a video's, whether transcription ran or was skipped. |
 | `transcription` | transcription counts | What transcription did. Optional: absent when it was skipped. |
+| `tokens` | tokens | The tokens each capability's requests took in this run. |
 
 The **vision counts**:
 
@@ -196,6 +197,26 @@ The **transcription counts**:
 | `transcripts` | integer | The joined transcripts embedded, one per part and stage with windows; an empty transcript is one, and cuts to no chunk. |
 | `seams_matched` | integer | The seams, in every transcript, whose windows' words aligned. |
 | `seams_unmatched` | integer | The seams whose windows were concatenated whole. |
+
+The **tokens**, each capability's requests' usage, summed over the replies the endpoint answered
+in this run: a held result took no request, and a refusal or a rejection carries no usage, so
+neither adds any. A re-run that sends no request has every count 0.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `vision` | usage | Vision's. Optional: absent when it was skipped. |
+| `transcription` | usage | Transcription's. Optional: absent when it was skipped. |
+| `embeddings` | usage | The embeddings'. An embedding generates nothing, so its `output` is 0. |
+
+A **usage**, in tokens, as the endpoint's replies report them:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `input` | integer | The inputs': for vision, the image's and the prompt's; for transcription, the clip's and its instruction's; for embeddings, every chunk text's, the reply's `prompt_tokens`. |
+| `output` | integer | The generated: the vision text's, reasoning included, or the transcript's. |
+| `total` | integer | Input and output together, as the reply reports it; for vision through the Messages format, which reports none, their sum. |
+
+An endpoint that reports no usage leaves its counts 0.
 
 ### The chunk record
 

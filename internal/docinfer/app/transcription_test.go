@@ -264,6 +264,12 @@ func TestRun_TranscriptionFailedWindow(t *testing.T) {
 			if tc := m.Counts.Transcription; tc == nil || *tc != want {
 				t.Errorf("transcription counts = %+v, want %+v", tc, want)
 			}
+			// Three requests, of which the two answered report usage; a refusal carries none.
+			wantTokens := outdir.Usage{Input: 2 * docinfertest.TranscriptionInputTokens, Output: 2 * docinfertest.TranscriptionOutputTokens,
+				Total: 2 * (docinfertest.TranscriptionInputTokens + docinfertest.TranscriptionOutputTokens)}
+			if tk := m.Counts.Tokens.Transcription; tk == nil || *tk != wantTokens {
+				t.Errorf("transcription tokens = %+v, want %+v", tk, wantTokens)
+			}
 			text := windowTexts[0] + " " + windowTexts[2]
 			wantSeams := []outdir.Seam{{Position: 6}, {Position: 6}}
 			if len(m.Transcripts) != 1 || !slices.Equal(m.Transcripts[0].Failed, []int{1}) || !slices.Equal(m.Transcripts[0].Seams, wantSeams) {
@@ -311,6 +317,9 @@ func TestRun_TranscriptionRerunSendsNothing(t *testing.T) {
 	want := outdir.TranscriptionCounts{Distinct: 3, Held: 3, Transcripts: 1, SeamsMatched: 2}
 	if tc := second.Counts.Transcription; tc == nil || *tc != want {
 		t.Errorf("second run's transcription counts = %+v, want %+v", tc, want)
+	}
+	if tk := second.Counts.Tokens; !reflect.DeepEqual(tk, outdir.Tokens{Transcription: &outdir.Usage{}}) {
+		t.Errorf("second run's tokens = %+v, want none: it sent no request", tk)
 	}
 	wantLine(t, stdout, regexp.QuoteMeta("transcription: windows 3, distinct 3: held 3, transcribed 0, failed 0; requests 0; transcripts 1: seams matched 2, unmatched 0"))
 }
@@ -364,7 +373,7 @@ func TestRun_TranscriptionUnset(t *testing.T) {
 		t.Errorf("transcript lines = %+v, want none", tl)
 	}
 	if !slices.Contains(m.Skipped, outdir.Skipped{Name: "transcription", Reason: "not configured"}) ||
-		m.Counts.Windows != 3 || m.Counts.Transcription != nil || m.Transcripts != nil {
+		m.Counts.Windows != 3 || m.Counts.Transcription != nil || m.Counts.Tokens.Transcription != nil || m.Transcripts != nil {
 		t.Errorf("manifest skipped %+v, counts %+v, transcripts %+v; want transcription skipped, its windows counted", m.Skipped, m.Counts, m.Transcripts)
 	}
 	wantLine(t, stdout, regexp.QuoteMeta("transcription: not configured; windows 3 skipped"))

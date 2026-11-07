@@ -30,11 +30,13 @@ type Image struct {
 }
 
 // Result is one image's reply: its Text, and, when the model stopped before finishing,
-// Incomplete, the reason the response gives, such as "max_output_tokens"; or, when the endpoint
-// refused the image, Rejected, the endpoint's reply.
+// Incomplete, the reason the response gives, such as "max_output_tokens", and Usage, the tokens
+// the response says the request took; or, when the endpoint refused the image, Rejected, the
+// endpoint's reply, with no Usage.
 type Result struct {
 	Text       string
 	Incomplete string
+	Usage      protocol.Usage
 	Rejected   *client.APIError
 }
 
@@ -110,7 +112,7 @@ func (d Describer) describe(ctx context.Context, img Image) (Result, bool, error
 	case err != nil:
 		return Result{}, true, err
 	}
-	r := Result{Text: Text(resp)}
+	r := Result{Text: Text(resp), Usage: resp.Usage}
 	if resp.Status == protocol.StatusIncomplete {
 		r.Incomplete = "incomplete"
 		if resp.IncompleteDetails != nil && resp.IncompleteDetails.Reason != "" {

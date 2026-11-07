@@ -358,7 +358,8 @@ send ends as the embeddings begin.
 Then a `warning:` line for each refused image, incomplete vision text, refused window, and
 rejected chunk; a line of counts for each capability, `not configured` for one skipped; a closing
 summary of each capability's requests and failures, `CAPABILITY REQUESTS FAILURES`, a skipped one
-saying why; and, last, the run's id, its chunk lines, the chunk record's path, and the report's.
+saying why; and, last, the run's id, its chunk lines, the chunk record's path, and the report's,
+each relative to `--out`, as docproc prints its record's.
 
 ### docinfer's directory
 
@@ -376,7 +377,8 @@ part and docproc output it belongs to, and its vector, base64 of little-endian f
 endpoint returned it, never normalized. The same chunk under two inputs is two lines, one vector.
 The manifest records the docproc run read, each capability's endpoint, model, and settings, the
 embedding space (its dimensions and whether every vector is unit length within 0.001), each
-transcript's seams, each refused output, and the counts.
+transcript's seams, each refused output, and the counts, among them the tokens each capability's
+requests took in the run, as the endpoint's replies report them.
 
 Each result is held as its request completes, keyed by the SHA-256 of its content, the
 capability, the model, and the settings that change it: the prompt and cap for vision, the prompt

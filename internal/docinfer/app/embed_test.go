@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -224,15 +225,24 @@ func TestRun_Embeds(t *testing.T) {
 		t.Errorf("locked.bin metadata = %+v, want its file's alone", locked)
 	}
 
+	embedTokens := docinfertest.EmbeddingTokens(all)
 	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 15,
 		Embedded: m.Counts.Chunks, Requests: 1, Images: 1,
 		Vision:        &outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1},
 		Windows:       3,
-		Transcription: &outdir.TranscriptionCounts{Distinct: 3, Transcribed: 3, Requests: 3, Transcripts: 1, SeamsUnmatched: 2}}
+		Transcription: &outdir.TranscriptionCounts{Distinct: 3, Transcribed: 3, Requests: 3, Transcripts: 1, SeamsUnmatched: 2},
+		Tokens: outdir.Tokens{
+			Vision: &visionTokens,
+			Transcription: &outdir.Usage{Input: 3 * docinfertest.TranscriptionInputTokens, Output: 3 * docinfertest.TranscriptionOutputTokens,
+				Total: 3 * (docinfertest.TranscriptionInputTokens + docinfertest.TranscriptionOutputTokens)},
+			Embeddings: outdir.Usage{Input: embedTokens, Total: embedTokens},
+		}}
 	if !reflect.DeepEqual(m.Counts, wantCounts) || m.Counts.Chunks != len(all) {
 		t.Errorf("counts = %+v, want %+v, its chunks the %d sent", m.Counts, wantCounts, len(all))
 	}
-	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 15: .*chunks\.jsonl`)
+	// The chunk record's path and the report's are relative to --out, as docproc prints its record's.
+	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 15: runs/`+m.Run+`/chunks\.jsonl`)
+	wantLine(t, stdout, `report runs/`+m.Run+`/report\.html`)
 }
 
 // A second run over the same docproc run and configuration sends no request but the listing, and
@@ -269,6 +279,9 @@ func TestRun_RerunSendsNothing(t *testing.T) {
 	if second.Counts.Held != first.Counts.Chunks || second.Counts.Embedded != 0 || second.Counts.Requests != 0 ||
 		*second.Space != *first.Space {
 		t.Errorf("second run = %+v, want every chunk held and the same space as %+v", second, first)
+	}
+	if second.Counts.Tokens != (outdir.Tokens{}) {
+		t.Errorf("second run's tokens = %+v, want none: it sent no request", second.Counts.Tokens)
 	}
 	wantLine(t, stdout, `embeddings: texts 5, metadata 8, chunks \d+: held \d+, embedded 0, rejected 0; requests 0`)
 }
@@ -367,6 +380,18 @@ func TestRun_RejectedChunk(t *testing.T) {
 	// One batch, rejected, then each chunk alone.
 	if reqs := e.Embeddings(); len(reqs) != 1+m.Counts.Chunks || m.Counts.Requests != len(reqs) {
 		t.Errorf("requests = %d, manifest %d, want the batch and then %d alone", len(reqs), m.Counts.Requests, m.Counts.Chunks)
+	}
+	// Only the requests the endpoint answered report usage: each chunk embedded alone, not the
+	// rejected batch nor the rejected chunk.
+	embedded := map[string]bool{}
+	for _, l := range lines {
+		if !bad(l.Text) {
+			embedded[l.Text] = true
+		}
+	}
+	wantTokens := docinfertest.EmbeddingTokens(slices.Collect(maps.Keys(embedded)))
+	if tk := m.Counts.Tokens.Embeddings; tk != (outdir.Usage{Input: wantTokens, Total: wantTokens}) {
+		t.Errorf("embeddings tokens = %+v, want %d, the embedded chunks'", tk, wantTokens)
 	}
 	wantLine(t, stdout, regexp.QuoteMeta("warning: embeddings: rejected chunk 0 of outputs/6466e450a16b77b865c5829d6b6c56d9f892956475642dbeb9ccc4340fe01b15/document-e88a7a4d9af5/1.txt: ")+".*input rejected.*")
 

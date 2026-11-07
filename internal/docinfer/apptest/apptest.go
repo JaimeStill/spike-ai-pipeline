@@ -136,6 +136,27 @@ func VisionText(image []byte) string {
 	return fmt.Sprintf("An image of %d bytes, SHA-256 %x.", len(image), sum[:6])
 }
 
+// The usage a [Fake] reports for each vision reply it answers and each transcription reply, in
+// tokens, each count distinct so a test can tell which one it summed: a vision reply's input and
+// output, in every format, its total their sum, given in the formats that give one; and a
+// transcription reply's. An embeddings reply reports [EmbeddingTokens] of its inputs.
+const (
+	VisionInputTokens         = 11
+	VisionOutputTokens        = 7
+	TranscriptionInputTokens  = 5
+	TranscriptionOutputTokens = 3
+)
+
+// EmbeddingTokens is the prompt tokens, and the total, a [Fake] reports for an embeddings
+// request of inputs: their bytes, together.
+func EmbeddingTokens(inputs []string) int {
+	n := 0
+	for _, in := range inputs {
+		n += len(in)
+	}
+	return n
+}
+
 // DefaultDims is the dimensions of a [Fake]'s embeddings when its Dims is zero.
 const DefaultDims = 4
 
@@ -312,7 +333,7 @@ func (e *Endpoint) embed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{ // a test's client gone loses nothing
 		"object": "list", "model": req.Model, "data": data,
-		"usage": map[string]int{"prompt_tokens": len(req.Input), "total_tokens": len(req.Input)},
+		"usage": map[string]int{"prompt_tokens": EmbeddingTokens(req.Input), "total_tokens": EmbeddingTokens(req.Input)},
 	})
 }
 
@@ -463,7 +484,7 @@ func visionBody(format, model string, reply VisionReply) any {
 		return map[string]any{
 			"id": "msg_fake", "type": "message", "role": "assistant", "model": model,
 			"content":     []map[string]any{{"type": "text", "text": reply.Text}},
-			"stop_reason": stop, "usage": map[string]int{"input_tokens": 1, "output_tokens": 1},
+			"stop_reason": stop, "usage": map[string]int{"input_tokens": VisionInputTokens, "output_tokens": VisionOutputTokens},
 		}
 	case "responses":
 		body := map[string]any{
@@ -472,7 +493,10 @@ func visionBody(format, model string, reply VisionReply) any {
 				"type": "message", "id": "msg_fake", "status": "completed", "role": "assistant",
 				"content": []map[string]any{{"type": "output_text", "text": reply.Text, "annotations": []any{}}},
 			}},
-			"usage": map[string]int{"input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+			"usage": map[string]int{
+				"input_tokens": VisionInputTokens, "output_tokens": VisionOutputTokens,
+				"total_tokens": VisionInputTokens + VisionOutputTokens,
+			},
 		}
 		if reply.Incomplete {
 			body["status"] = "incomplete"
@@ -490,7 +514,10 @@ func visionBody(format, model string, reply VisionReply) any {
 			"index": 0, "finish_reason": finish,
 			"message": map[string]any{"role": "assistant", "content": reply.Text},
 		}},
-		"usage": map[string]int{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+		"usage": map[string]int{
+			"prompt_tokens": VisionInputTokens, "completion_tokens": VisionOutputTokens,
+			"total_tokens": VisionInputTokens + VisionOutputTokens,
+		},
 	}
 }
 
@@ -521,8 +548,11 @@ func (e *Endpoint) transcription(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{ // a test's client gone loses nothing
-		"text":  reply.Text,
-		"usage": map[string]any{"type": "tokens", "input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+		"text": reply.Text,
+		"usage": map[string]any{
+			"type": "tokens", "input_tokens": TranscriptionInputTokens, "output_tokens": TranscriptionOutputTokens,
+			"total_tokens": TranscriptionInputTokens + TranscriptionOutputTokens,
+		},
 	})
 }
 

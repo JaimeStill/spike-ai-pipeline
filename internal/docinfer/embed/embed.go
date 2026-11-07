@@ -26,7 +26,8 @@ type Result struct {
 
 // Run embeds texts, in their order, Batch a request, keeping at most Concurrency requests in
 // flight, and calls done with each text's index and Result as its request completes, one call at
-// a time. It returns how many requests it sent.
+// a time. It returns how many requests it sent, and the tokens their replies say they took,
+// summed: a rejected request's reply carries none.
 //
 // A batch the endpoint rejects, a reply that isn't 2xx, is sent again a text a request, so one
 // text the endpoint rejects loses no other; a text it rejects alone is a Result whose Rejected is
@@ -34,7 +35,7 @@ type Result struct {
 // cancelled ctx, or an error done returns, stops the run: Run sends no request after it, waits
 // for those in flight, and returns it. Each Result done was called with before then is the
 // caller's to keep, so a run that stops resumes from what it stored.
-func (e Embedder) Run(ctx context.Context, texts []string, done func(i int, r Result) error) (int, error) {
+func (e Embedder) Run(ctx context.Context, texts []string, done func(i int, r Result) error) (int, client.EmbeddingUsage, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
 	r := &run{e: e, done: done}
@@ -60,15 +61,16 @@ send:
 		})
 	}
 	wg.Wait()
-	return r.requests, context.Cause(ctx)
+	return r.requests, r.usage, context.Cause(ctx)
 }
 
-// run is one Run's state: its requests, counted, and done, called under mu.
+// run is one Run's state: its requests, counted, their usage, summed, and done, called under mu.
 type run struct {
 	e        Embedder
 	done     func(int, Result) error
 	mu       sync.Mutex
 	requests int
+	usage    client.EmbeddingUsage
 }
 
 // batch embeds texts, the run's from first on, in one request, or, when the endpoint rejects
@@ -83,6 +85,8 @@ func (r *run) batch(ctx context.Context, first int, texts []string) error {
 	case err == nil:
 		r.mu.Lock()
 		defer r.mu.Unlock()
+		r.usage.PromptTokens += reply.Usage.PromptTokens
+		r.usage.TotalTokens += reply.Usage.TotalTokens
 		for i, v := range reply.Vectors {
 			if err := r.done(first+i, Result{Vector: v}); err != nil {
 				return err

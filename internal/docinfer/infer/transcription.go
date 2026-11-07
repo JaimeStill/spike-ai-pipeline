@@ -74,6 +74,8 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 	settings := transcriptionSettings(t)
 	tc := &outdir.TranscriptionCounts{}
 	m.Counts.Transcription = tc
+	tokens := &outdir.Usage{}
+	m.Counts.Tokens.Transcription = tokens
 
 	sums := map[string]string{}     // each window file's SHA-256, by its path, each read once
 	windows := map[string]*window{} // by SHA-256
@@ -125,6 +127,9 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 					return nil
 				}
 			} else {
+				tokens.Input += r.Usage.InputTokens
+				tokens.Output += r.Usage.OutputTokens
+				tokens.Total += r.Usage.TotalTokens
 				rel, sum, err := dir.WriteText(r.Text)
 				if err != nil {
 					return err

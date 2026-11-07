@@ -31,6 +31,9 @@ const pngRef = "outputs/6466e450a16b77b865c5829d6b6c56d9f892956475642dbeb9ccc434
 // reportPDF is the input pngRef belongs to.
 const reportPDF = "/srv/inputs/report.pdf"
 
+// visionTokens is the usage the fake endpoint's vision reply reports, in every format.
+var visionTokens = outdir.Usage{Input: docinfertest.VisionInputTokens, Output: docinfertest.VisionOutputTokens, Total: docinfertest.VisionInputTokens + docinfertest.VisionOutputTokens}
+
 // visionConfig is a config.json of the embeddings and vision capabilities on the endpoint "fake"
 // at url, speaking format, with vision, a JSON object's members such as `"max_tokens": 64`, added
 // to the vision capability, and embed to the embeddings capability.
@@ -112,6 +115,10 @@ func TestRun_Vision(t *testing.T) {
 			if m.Counts.Images != 1 || m.Counts.Vision == nil ||
 				*m.Counts.Vision != (outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1}) {
 				t.Errorf("counts = %+v, vision %+v, want one image described", m.Counts, m.Counts.Vision)
+			}
+			// Every format's reply gives the same usage; Messages gives no total, so it is the sum.
+			if tk := m.Counts.Tokens.Vision; tk == nil || *tk != visionTokens {
+				t.Errorf("vision tokens = %+v, want the reply's usage", tk)
 			}
 
 			text := docinfertest.VisionText(png)
@@ -219,6 +226,9 @@ func TestRun_VisionRefused(t *testing.T) {
 			if vc := m.Counts.Vision; vc == nil || *vc != (outdir.VisionCounts{Images: 1, Refused: 1, Requests: 1}) {
 				t.Errorf("vision counts = %+v, want the one image refused", vc)
 			}
+			if tk := m.Counts.Tokens.Vision; tk == nil || *tk != (outdir.Usage{}) {
+				t.Errorf("vision tokens = %+v, want none: a refusal carries no usage", tk)
+			}
 			if m.Counts.Texts != 5 || m.Counts.Lines != 13 || m.Error != "" {
 				t.Errorf("counts = %+v, error %q, want every other text embedded", m.Counts, m.Error)
 			}
@@ -260,6 +270,9 @@ func TestRun_VisionRerunSendsNothing(t *testing.T) {
 	}
 	if vc := second.Counts.Vision; vc == nil || *vc != (outdir.VisionCounts{Images: 1, Held: 1, Texts: 1}) {
 		t.Errorf("second run's vision counts = %+v, want the image held", vc)
+	}
+	if tk := second.Counts.Tokens; !reflect.DeepEqual(tk, outdir.Tokens{Vision: &outdir.Usage{}}) {
+		t.Errorf("second run's tokens = %+v, want none: it sent no request", tk)
 	}
 	wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 1, described 0, incomplete 0, refused 0; requests 0"))
 }
@@ -316,7 +329,7 @@ func TestRun_VisionUnset(t *testing.T) {
 		t.Errorf("vision lines = %+v, want none", vl)
 	}
 	want := []outdir.Skipped{{Name: "vision", Reason: "not configured"}, {Name: "transcription", Reason: "not configured"}}
-	if !slices.Equal(m.Skipped, want) || len(m.Capabilities) != 1 || m.Counts.Images != 1 || m.Counts.Vision != nil {
+	if !slices.Equal(m.Skipped, want) || len(m.Capabilities) != 1 || m.Counts.Images != 1 || m.Counts.Vision != nil || m.Counts.Tokens.Vision != nil {
 		t.Errorf("manifest skipped %+v, capabilities %+v, counts %+v; want vision skipped, its image counted", m.Skipped, m.Capabilities, m.Counts)
 	}
 	wantLine(t, stdout, regexp.QuoteMeta("vision: not configured; images 1 skipped"))

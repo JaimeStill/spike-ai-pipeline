@@ -9,12 +9,13 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
 	"uuid"
+
+	"github.com/JaimeStill/spike-ai-pipeline-client"
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/chunk"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
@@ -47,7 +48,7 @@ const embeddings = "embeddings"
 // one after the other, and both before any text is embedded, so the embeddings are sent in one
 // pass, as the embedder takes them. Each input's terminal line, progress's, is written as its
 // work ends; then the warnings, each capability's counts, the closing summary, the chunk record's
-// path, and the report's. A run that stops writes its manifest with its end and the error that
+// path, and the report's, each relative to j.out, as docproc prints its record's. A run that stops writes its manifest with its end and the error that
 // stopped it, no chunk record, and its report; the results it stored are held for the next run.
 func execute(ctx context.Context, w io.Writer, j job) error {
 	start := time.Now()
@@ -159,8 +160,7 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	if err := summary(w, m); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(w, "docinfer run %s: lines %d: %s\nreport %s\n",
-		m.Run, c.Lines, filepath.Join(dir.Root(), filepath.FromSlash(m.Chunks)), page)
+	_, err = fmt.Fprintf(w, "docinfer run %s: lines %d: %s\nreport %s\n", m.Run, c.Lines, m.Chunks, page)
 	return err
 }
 
@@ -283,7 +283,8 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 			return nil, nil, err
 		}
 		e := embed.Embedder{Client: cl, Model: emb.Model, Batch: *emb.Batch, Concurrency: *emb.Concurrency}
-		m.Counts.Requests, err = e.Run(ctx, pending, func(i int, r embed.Result) error {
+		var usage client.EmbeddingUsage
+		m.Counts.Requests, usage, err = e.Run(ctx, pending, func(i int, r embed.Result) error {
 			s := pendingSums[i]
 			held := &outdir.Embedding{Model: emb.Model, Settings: settings, Content: s}
 			results[s] = held
@@ -302,6 +303,7 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 			}
 			return p.embedded(waiters[s], s, r.Rejected != nil)
 		})
+		m.Counts.Tokens.Embeddings = outdir.Usage{Input: usage.PromptTokens, Total: usage.TotalTokens}
 		if err != nil {
 			return nil, nil, fmt.Errorf("embeddings: %w", err)
 		}
