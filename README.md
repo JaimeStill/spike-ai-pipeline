@@ -45,15 +45,17 @@ each released by tag:
   tool and routes each page's media.
 
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
-on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
-UI on experiment.html's stack.
+on the layers by tag, and two CLIs on the layers: docproc, which prepares an input set, and
+docinfer, which runs inference over what docproc prepared. The capstone, a backend on the layers
+and a web UI on experiment.html's stack, moves to a non-experimental repository of its own, which a
+`marathon plan` session sets up; docinfer's directory is its input.
 
 ## docproc
 
 docproc runs processing's whole suite over an input set: every file goes through processing's
 dispatcher and its ten routes' stages, every part found inside one (an attachment, a ZIP entry, a
 OneNote page's media) with it, and what each stage prepares is stored in a run directory. It runs
-no inference; docinfer, planned, reads the run directory and does.
+no inference; [docinfer](#docinfer) reads the run directory and does.
 
 ### Building
 
@@ -175,6 +177,231 @@ go test ./internal/report -update   # internal/report/testdata/report.golden.htm
 ```
 
 `git diff` then shows what changed.
+
+## docinfer
+
+docinfer runs inference over one docproc run: every image output goes to a vision model, every
+audio part's or video's windows go to a speech model and are joined into one transcript, and every
+text, docproc's text and Markdown outputs, each vision text, each transcript, and one metadata text
+per input, is cut into chunks and embedded. It reads the docproc run directory and never writes
+to it; what it makes goes into a directory of its own, whose chunk records and vectors are the
+capstone's input. It loads no database and normalizes no vector.
+
+### Building
+
+```sh
+go build ./cmd/docinfer   # or: go install ./cmd/docinfer
+```
+
+docinfer needs no system tool: only HTTP access to the endpoints its configuration names.
+
+### Configuration
+
+`--config` names a directory, read through go-core's layered JSON load: `config.json`, its overlay
+`config.<env>.json`, `secrets.json`, and its overlay `secrets.<env>.json`, later files winning,
+`DOCINFER_ENV` naming `<env>`; then the `DOCINFER_` overrides. Each file is optional, but a key the
+configuration doesn't declare stops the load.
+
+```json
+{
+  "endpoints": {
+    "gb10-2": {"base_url": "http://gb10-2:8080/v1", "format": "completions",
+               "query": {"autoload": "false"}}
+  },
+  "embeddings":    {"endpoint": "gb10-2", "model": "...", "batch": 16, "chunk_size": 2000, "concurrency": 4},
+  "vision":        {"endpoint": "gb10-2", "model": "...", "prompt": "...", "max_tokens": 2048, "concurrency": 4},
+  "transcription": {"endpoint": "gb10-2", "model": "...", "prompt": "", "language": "", "concurrency": 4}
+}
+```
+
+Each endpoint is a model server's API root under a name of the caller's choosing:
+
+- `base_url`: the API root, an absolute http or https URL with no query or fragment.
+- `format`: the wire format a vision request is sent in, `completions` (Chat Completions),
+  `messages` (Anthropic Messages), or `responses` (Open Responses). Embeddings go to the OpenAI
+  embeddings route, and transcription to the OpenAI-compatible `/audio/transcriptions` route,
+  whatever the format.
+- `token`: the bearer token each request carries, empty for none. It belongs in `secrets.json`,
+  which `.gitignore` keeps out of `config/*/`, as it does each `secrets.<env>.json`.
+- `query`: parameters added to every request's URL, optional, such as llama.cpp's router's
+  `autoload=false`, which keeps the router from loading a model a request names.
+
+There is no default endpoint. Each capability names an endpoint and a model there, and
+`concurrency`, the requests it keeps in flight, 4 by default:
+
+| Capability | Required | Settings and defaults |
+|---|---|---|
+| `embeddings` | yes | `batch`, the chunks one request carries, 16; `chunk_size`, the most characters (runes) in a chunk, 2,000 |
+| `vision` | no | `prompt`, what is asked of each image, by default processing's dispatch tier's, "Transcribe the text in this picture. If it has no text, describe it in one sentence."; `max_tokens`, the reply's cap, 2048 |
+| `transcription` | no | `prompt` and `language`, empty by default, which sends neither |
+
+A capability the configuration leaves unset is skipped: its outputs are counted, not sent.
+
+Each setting has an override, `DOCINFER_` and its path upper-cased, each run of characters
+outside `A-Z` and `0-9` made one `_`: `DOCINFER_EMBEDDINGS_MODEL`, `DOCINFER_VISION_MAX_TOKENS`,
+`DOCINFER_TRANSCRIPTION_LANGUAGE`, and, for the endpoint `gb10-2`,
+`DOCINFER_ENDPOINTS_GB10_2_BASE_URL`, `_FORMAT`, and `_TOKEN`. An override of a capability the
+files leave unset sets it; an endpoint is overridden only when the files name it, and its `query`
+has no override. `DOCINFER_SHUTDOWN_TIMEOUT` is the lifecycle's shutdown budget.
+
+Every configuration error stops docinfer before any request: no embeddings capability, a
+capability with no endpoint or model or naming an endpoint the configuration doesn't hold, a format
+that isn't one of the three, a base URL that isn't an absolute http or https URL without a query or
+fragment, a count below 1, an unknown key, or an override that doesn't parse.
+
+### The set A example
+
+[config/example](config/example) serves set A on gb10-2: one endpoint, `gb10-2`, at
+`http://gb10-2:8080/v1` in the `completions` format with `autoload=false`, granite-embedding
+English R2 (BF16) for embeddings, Gemma 4 26B-A4B (Q4_0) for vision, and Gemma 4 E4B (Q8_0) for
+transcription, each at its defaults. `secrets.json.example` shows the secrets file's shape, its
+token empty. `mise run host-update` leaves set A loaded.
+
+The configuration isn't tied to gb10-2. To point docinfer at another workstation's server, or at
+one per capability, copy the directory and change the endpoints and models: any server that lists
+its models at `GET <base_url>/models` and answers the capabilities docinfer uses will do. Drop
+`query` for a server that isn't llama.cpp's router, set `format` to what it speaks, add an endpoint
+per server, and name each capability's model as that server lists it. For a one-off change,
+the overrides reach the same settings without a copy:
+
+```sh
+DOCINFER_ENDPOINTS_GB10_2_BASE_URL=http://workstation:8080/v1 \
+DOCINFER_EMBEDDINGS_MODEL=<model> \
+  docinfer run <docproc-dir> --config config/example --out <dir>
+```
+
+### The models check
+
+As it starts, after reading its configuration and the docproc run, docinfer lists the models of
+each endpoint a capability uses, once each, by `GET <base_url>/models` with the endpoint's query
+and token, and finds each capability's model in the OpenAI listing, `{"data": [{"id": ...}]}`,
+reading the `"status": {"value": ...}` llama.cpp's router adds. It prints a table of each
+capability's endpoint, model, and state:
+
+| State | Meaning | docinfer |
+|---|---|---|
+| `loaded` | Listed with the status `loaded`. | runs |
+| `listed` | Listed with no status, as a server that isn't llama.cpp's router lists it. | runs |
+| another status, such as `unloaded` | Listed with that status. | warns and runs |
+| `unchecked` | The endpoint gives no listing: a reply that isn't 2xx, or holds no `data` list. | warns and runs |
+| `unlisted` | The listing doesn't name the model. | exits 1 |
+| `unreachable` | The listing's request couldn't reach the endpoint. | exits 1 |
+| `skipped` | The configuration leaves the capability unset. | skips it |
+
+### Running
+
+```sh
+docinfer run <docproc-dir> --config <dir> --out <dir> [--run <id>]
+docinfer report <dir> [--run <id>]
+docinfer version
+```
+
+`docinfer run` reads the docproc run directory's latest run, or the one `--run` names, and refuses
+a manifest whose schema isn't `"1"` before reading its record. `--config` (required) is the
+configuration's directory, and `--out` (required) docinfer's directory, made when it doesn't exist
+and reused when it does.
+
+It reads every output line, whatever its part came to, a failed part's outputs and a seen part's
+among them, and sends each distinct content once. The capabilities run one after another over the
+whole run:
+
+1. **Vision**: each distinct image, by its bytes, goes as a data URL beside the prompt, its reply
+   capped at `max_tokens`, in the endpoint's format. A reply cut at the cap is recorded incomplete,
+   its text kept and embedded.
+2. **Transcription**: each distinct audio window goes to the transcription route. Each part's
+   windows, by stage, are then joined in plan order, by the index each window's meta gives, by
+   processing's `audio.Join`; a refused window, or one the plan counts but the record lacks, joins
+   as an empty transcript. The manifest records each seam, matched or not.
+3. **Embeddings**: each text is cut on its own, at Markdown headings, then blank lines, then
+   sentences and line breaks, then a hard cut, to at most `chunk_size` characters, with no overlap
+   and no cut inside a UTF-8 character. Each distinct chunk is embedded once, `batch` a request; a
+   batch the endpoint rejects is sent again a chunk a request.
+
+An image or window the endpoint refuses, and a chunk it rejects, is recorded, not fatal: the run
+goes on without it.
+
+`docinfer report` renders a run's HTML report again from its manifest, chunk record, and stored
+texts, the latest run's by default, and prints its path relative to the directory. `docinfer run`
+writes the same page as each run ends. The page shows each input's texts: an image inline beside
+its vision text, a transcript with its windows, each with its chunk count, and every failure. It
+links to docproc's outputs by the relative path from the report to the docproc run directory, so
+the two directories can be moved together.
+
+docinfer exits with one of three codes:
+
+- **0** when the run completes, even with refused images or windows or rejected chunks.
+- **1** on a configuration error; a docproc run that can't be read, has no run, or has a schema
+  other than `"1"`; a model the listing doesn't name or an endpoint it can't reach, after the
+  table; or an error that stops the inference (a transport error, a reply that can't be decoded,
+  a file that can't be read or written, or the context ending), recorded in the run's manifest. For
+  `report`, when the directory or run doesn't exist.
+- **2** on a usage error, before anything is read: no docproc directory or more than one, no or an
+  empty `--config` or `--out`, or, for either command, a `--run` that is a path or a dot entry
+  rather than a run id.
+
+### Terminal output
+
+docinfer first prints the models table, `CAPABILITY ENDPOINT MODEL STATE`, and its warnings, then
+the docproc run it read, `docproc run <id>: outputs <n>: <counts by kind>`. As each input's work
+ends, it prints one line for it:
+
+```
+<path>  images <n>  windows <n>  chunks <n>  failures <n>  <time>
+```
+
+`images` and `windows` count the input's image and audio window output lines, `chunks` its chunk
+lines, and `failures` its output lines whose image or window was refused and its chunk lines whose
+chunk was rejected. The capabilities run one after another, so an input's work ends with its last
+chunk's embedding, and `<time>` is how long after the run began that was: an input with nothing to
+send ends as the embeddings begin.
+
+Then a `warning:` line for each refused image, incomplete vision text, refused window, and
+rejected chunk; a line of counts for each capability, `not configured` for one skipped; a closing
+summary of each capability's requests and failures, `CAPABILITY REQUESTS FAILURES`, a skipped one
+saying why; and, last, the run's id, its chunk lines, the chunk record's path, and the report's.
+
+### docinfer's directory
+
+```
+results/<capability>/<xx>/<key>.json   each held result, keyed by content, model, and settings
+texts/<xx>/<sha256>.txt                each text a model made, and each joined transcript
+runs/<run id>/manifest.json            each run's manifest
+runs/<run id>/chunks.jsonl             its chunk record, a line per chunk per occurrence
+runs/<run id>/report.html              its report
+```
+
+A chunk line holds the chunk's text, its byte span in its source text and the source's kind
+(`output`, `metadata`, `vision`, or `transcript`), the input's file metadata and content type, the
+part and docproc output it belongs to, and its vector, base64 of little-endian float32s as the
+endpoint returned it, never normalized. The same chunk under two inputs is two lines, one vector.
+The manifest records the docproc run read, each capability's endpoint, model, and settings, the
+embedding space (its dimensions and whether every vector is unit length within 0.001), each
+transcript's seams, each refused output, and the counts.
+
+Each result is held as its request completes, keyed by the SHA-256 of its content, the
+capability, the model, and the settings that change it: the prompt and cap for vision, the prompt
+and language for transcription, and the chunk bound and the chunker's version for embeddings. A
+run over the same docproc run and configuration sends no request but the listings and writes the
+same chunk lines under a new run id; a changed chunk bound cuts and embeds again and sends no
+image and no window; a run that stopped part way, its manifest naming the error, resumes from what
+it held. A refusal the endpoint gives with a 4xx reply is held as a verdict; any other is sent
+again by the next run. The directory is schema `"1"`, the contract the capstone reads: every field,
+the path rules, the held results' keys, and how a chunk joins back to docproc's run are in
+[docs/docinfer-schema.md](docs/docinfer-schema.md).
+
+### The integration tier
+
+`mise run integration` runs docinfer end to end, against the committed docproc run
+(`internal/docinfer/app/testdata/docproc`), through the configuration `DOCINFER_CONFIG` names, and
+skips it when that is unset:
+
+```sh
+DOCINFER_CONFIG="$PWD/config/example" mise run integration
+```
+
+It wants the models check to pass, the fixture's image described, its three windows transcribed
+and joined into a transcript that isn't empty, and every chunk embedded at the space's dimensions,
+768 for set A's embedding model. It never loads a model.
 
 ## gb10-2
 

@@ -91,9 +91,10 @@ func byInput(lines []outdir.Line, input, kind string) []outdir.Line {
 }
 
 // A run embeds every text and Markdown output line, never a record, image, or audio directly, the
-// image's vision text, and one metadata text per input with file metadata, the error line's input among them; writes a chunk
-// line per chunk per occurrence, with its input, part, and output, and the vector as the endpoint
-// returned it; sends each distinct chunk once; and records the run in its manifest.
+// image's vision text, and one metadata text per input with file metadata, the error line's
+// input among them; writes a chunk line per chunk per occurrence, with its input, part, and
+// output, and the vector as the endpoint returned it; sends each distinct chunk once; and records
+// the run in its manifest.
 func TestRun_Embeds(t *testing.T) {
 	clean(t)
 	e := docinfertest.Serve(t, docinfertest.Fake{Models: setA})

@@ -466,8 +466,9 @@ func (e *Endpoint) format() format.Format {
 	}
 }
 
-// Capabilities returns the three capabilities by name, in the order docinfer runs them, each
-// with its Capability, nil for one the configuration leaves unset.
+// Capabilities returns the three capabilities by name, embeddings, vision, then transcription,
+// the order the models table lists them, each with its Capability, nil for one the configuration
+// leaves unset. The run runs them in another order: vision, transcription, then embeddings.
 func (c *Config) Capabilities() []Named {
 	named := []Named{{Name: "embeddings"}, {Name: "vision"}, {Name: "transcription"}}
 	if c.Embeddings != nil {

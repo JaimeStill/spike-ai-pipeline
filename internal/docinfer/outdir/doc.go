@@ -21,10 +21,11 @@
 // version 7 UUID, its times, the docproc run it read, each capability it ran, with its endpoint,
 // model, and settings, the capabilities it skipped, the embedding [Space], each [Transcript] it
 // joined, with its [Seam]s, each [Failure], an image or audio window the endpoint refused, its
-// [Counts], and what stopped it, if anything. Its chunk record holds a [Line] per chunk per place the chunk's text
-// occurs: the chunk's text and byte [Span] in its [Source], the input's file metadata and content
-// type, the [Part] and [Output] it belongs to, and its vector, base64 of little-endian float32s
-// as the endpoint returned it, never normalized, or why the endpoint rejected it.
+// [Counts], and what stopped it, if anything. Its chunk record holds a [Line] per chunk per place
+// the chunk's text occurs: the chunk's text and byte [Span] in its [Source], the input's file
+// metadata and content type, the [Part] and [Output] it belongs to, and its vector, base64 of
+// little-endian float32s as the endpoint returned it, never normalized, or why the endpoint
+// rejected it. docs/docinfer-schema.md documents the directory as the capstone's input.
 //
 // The package exports:
 //

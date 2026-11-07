@@ -91,9 +91,9 @@ func partOf(p *schema.Part, outcome string) *outdir.Part {
 // order: each text or Markdown output line, whatever its part's outcome, its file read from the
 // run directory; each image output line, whatever its part's outcome, awaiting its vision text;
 // each audio output line, an audio window, whatever its part's outcome, awaiting its part's
-// transcript; and, at each input's own part line or error line, its metadata text, when the line carries
-// file metadata. An output's stored text file that can't be read is an error, as is an audio
-// window whose meta gives no index.
+// transcript; and, at each input's own part line or error line, its metadata text, when the line
+// carries file metadata. An output's stored text file that can't be read is an error, as is an
+// audio window whose meta gives no index.
 func occurrences(run *source.Run) ([]occurrence, error) {
 	// An input's own lines, and each part's outcome, come after its output lines; read them
 	// first.

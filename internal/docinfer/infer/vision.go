@@ -28,8 +28,8 @@ func visionSettings(v *config.Vision) string {
 // visionTexts makes the vision text of each image occurrence in occs, counting the images in m,
 // and returns occs with each image occurrence that has a text given it, as a source of kind
 // vision naming the stored text, and every other image occurrence dropped, recorded in m's
-// failures, and a warning for each image the endpoint refused or the model left incomplete. With vision unset, every image
-// occurrence is dropped, counted, and skipped.
+// failures, and a warning for each image the endpoint refused or the model left incomplete. With
+// vision unset, every image occurrence is dropped, counted, and skipped.
 //
 // Each distinct image, by its bytes' SHA-256, is sent once: an image an earlier run held a
 // result for, under the model and the settings, is sent in no request; the rest are sent

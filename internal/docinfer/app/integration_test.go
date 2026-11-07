@@ -22,8 +22,8 @@ const (
 // which serves set A on gb10-2, and runs docinfer over the committed docproc run end to end: the
 // models check lists each endpoint it names, the fixture's image is sent to the vision model and
 // its text is not empty, the fixture's three audio windows are sent to the audio model and their
-// joined transcript is not empty, and every chunk is embedded, its vector of the space's dimensions, set
-// A's 768 for its embedding model. It never loads a model.
+// joined transcript is not empty, and every chunk is embedded, its vector of the space's
+// dimensions, set A's 768 for its embedding model. It never loads a model.
 func TestRun_AgainstConfig(t *testing.T) {
 	dir := os.Getenv("DOCINFER_CONFIG")
 	if dir == "" {

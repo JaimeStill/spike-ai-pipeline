@@ -3,8 +3,9 @@
 // config's, then the docproc run, internal/docinfer/source's, the latest in <docproc-dir> or the
 // one --run names, refusing a schema other than "1", then checks each capability's model against
 // its endpoint's listing, internal/docinfer/models', and prints the table of capabilities, before
-// the inference runs. A configuration error, a schema refused, and a model the listing doesn't
-// name each exit 1 before any request but the listings'.
+// the inference runs. A configuration error, a docproc run that can't be read or whose schema is
+// refused, and a model the listing doesn't name or an endpoint it can't reach each exit 1 before
+// any request but the listings'.
 //
 // --run is one run's id: a path or a dot entry is a usage error, as docproc report has it.
 // --config and --out are required.

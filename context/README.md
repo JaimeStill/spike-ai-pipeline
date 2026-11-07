@@ -116,8 +116,8 @@ stage by stage in real time?
 ## Gates
 
 The capstone waits for the host, client, and processing tasks, the last of them two CLIs:
-docproc, which runs the processing suite over an input set, and docinfer, planned, which runs
-inference over docproc's run directory. It also waits for two answers: experiment.hosting's
+docproc, which runs the processing suite over an input set, and docinfer, which runs inference
+over docproc's run directory. It also waits for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
 spike-html-apps have answered, and neither experiment's intake is a gate. Once docinfer ships,
 after docproc, the spike returns to `planned` until the answers arrive.
@@ -136,5 +136,12 @@ after docproc, the spike returns to `planned` until the answers arrive.
 - **docproc**: the processing CLI, `cmd/docproc`, which runs processing's stages over an input
   set into a run directory, schema "1", with an HTML report per run (`README.md`, "docproc";
   `docs/docproc-schema.md`). It runs no inference.
+- **docinfer**: the inference CLI, `cmd/docinfer`, which sends a docproc run's images to vision,
+  its audio windows to transcription, joined per part by processing's `audio.Join`, and every text
+  to embeddings, chunked along its structure, through the client and a layered configuration
+  (`config/example` serves set A on gb10-2). It writes its own directory, schema "1", with held
+  results, a chunk record of vectors per run, and an HTML report per run (`README.md`,
+  "docinfer"; `docs/docinfer-schema.md`), the capstone's input.
 - **consumers**: the check that builds on the layers at their released tags.
-- **capstone**: the backend and web UI, once the gates clear.
+- **capstone**: the backend and web UI, once the gates clear. It moves to a non-experimental
+  repository of its own, which a `marathon plan` session sets up, and reads docinfer's directory.
