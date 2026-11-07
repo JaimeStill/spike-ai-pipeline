@@ -144,7 +144,7 @@ func TestRun_UsageErrors(t *testing.T) {
 
 // On a host with no tool, every stage that needs one is missing, each saying which, and the
 // stages that need none are wired, but the one excluded; the committed text input is prepared
-// by the text stage, and the run leaves nothing of its dispatch in --out.
+// by the text stage, and the run leaves its run directory in --out, its working directory gone.
 func TestRun_NoTools(t *testing.T) {
 	t.Setenv(shutdownTimeout, "")
 	a, stdout, stderr, built := newApp(t)
@@ -177,8 +177,15 @@ func TestRun_NoTools(t *testing.T) {
 		t.Errorf("nodes built = %q, want %q", built.Log(), want)
 	}
 	entries, err := os.ReadDir(out)
-	if err != nil || len(entries) != 0 {
-		t.Errorf("--out holds %v, %v; want it made and empty", entries, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	if want := []string{"index", "outputs", "runs"}; !slices.Equal(names, want) {
+		t.Errorf("--out holds %q, want %q", names, want)
 	}
 }
 

@@ -17,6 +17,12 @@
 // an input alone, the MIME type net/http.DetectContentType names, which [Detect] reads. A part
 // found in another has no file of its own on the caller's disk, so it carries no [File].
 //
+// A run directory holds, for each run, a [Manifest], runs/<run>/manifest.json, and a record,
+// runs/<run>/record.jsonl, one [Event] per line: an "output" line for each [Output], a "part"
+// line for each part's own event, and an "error" line for an input whose dispatch stopped. Every
+// path either writes is relative to the run directory, with slashes, but for a [Tool]'s, the
+// host's.
+//
 // The package exports:
 //
 //   - [Version], the schema's version, "1"
@@ -25,4 +31,7 @@
 //   - [File], an input's file metadata; [FileOf], which reads it; [Stat], what a [Stater]
 //     returns; and [Statx], the production Stater
 //   - [Detect], the MIME type of a file's first 512 bytes
+//   - [Event], a record line, of kind [OutputEvent], [PartEvent], or [ErrorEvent], with its
+//     [Stage], [Output], [Quarantine], and [Span]
+//   - [Manifest], a run's manifest, with its [Tool]s and [StageState]s
 package schema
