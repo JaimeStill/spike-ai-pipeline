@@ -205,21 +205,45 @@ func Latest(root string) (string, error) {
 	return ids[len(ids)-1], nil
 }
 
+// ValidID reports whether id can name one run under runs/: a single path element, neither a
+// path nor a dot entry, so a run id taken from a caller can't reach outside the run directory's
+// runs/.
+func ValidID(id string) bool {
+	return id != "" && id == filepath.Base(id) && id != "." && id != ".."
+}
+
 // Load reads the run id in the run directory at root: its manifest, and its record's events in
 // the order they were written.
 func Load(root, id string) (schema.Manifest, []schema.Event, error) {
-	var m schema.Manifest
-	dir := filepath.Join(root, runsDir, id)
-	b, err := os.ReadFile(filepath.Join(dir, "manifest.json"))
+	m, err := ReadManifest(root, id)
 	if err != nil {
 		return m, nil, err
+	}
+	evs, err := ReadRecord(root, m)
+	return m, evs, err
+}
+
+// ReadManifest reads the manifest of the run id in the run directory at root, without checking
+// its schema, so a reader can check it before reading anything else.
+func ReadManifest(root, id string) (schema.Manifest, error) {
+	var m schema.Manifest
+	p := filepath.Join(root, runsDir, id, "manifest.json")
+	b, err := os.ReadFile(p)
+	if err != nil {
+		return m, err
 	}
 	if err := json.Unmarshal(b, &m); err != nil {
-		return m, nil, fmt.Errorf("%s: %w", filepath.Join(dir, "manifest.json"), err)
+		return m, fmt.Errorf("%s: %w", p, err)
 	}
+	return m, nil
+}
+
+// ReadRecord reads the record m names, in the run directory at root: its events in the order
+// they were written.
+func ReadRecord(root string, m schema.Manifest) ([]schema.Event, error) {
 	f, err := os.Open(filepath.Join(root, filepath.FromSlash(m.Record)))
 	if err != nil {
-		return m, nil, err
+		return nil, err
 	}
 	defer func() { _ = f.Close() }() // read only: a close error loses nothing
 	var evs []schema.Event
@@ -227,9 +251,9 @@ func Load(root, id string) (schema.Manifest, []schema.Event, error) {
 	for {
 		var ev schema.Event
 		if err := dec.Decode(&ev); errors.Is(err, io.EOF) {
-			return m, evs, nil
+			return evs, nil
 		} else if err != nil {
-			return m, nil, fmt.Errorf("%s: event %d: %w", m.Record, len(evs)+1, err)
+			return nil, fmt.Errorf("%s: event %d: %w", m.Record, len(evs)+1, err)
 		}
 		evs = append(evs, ev)
 	}

@@ -34,6 +34,7 @@
 //   - [Run], begun by [Dir.Begin], with its [Run.ID], [Run.Record], [Run.Write], which appends a
 //     record line, and [Run.End], which closes the record and writes the manifest's end
 //   - [Runs], the runs in a run directory in the order they began, [Latest], the latest of
-//     them, [Load], which reads a run's manifest and record, and [WriteRunFile], which writes a
-//     file beside them, such as its report
+//     them, [ValidID], whether an id can name one run, [Load], which reads a run's manifest and
+//     record, [ReadManifest] and [ReadRecord], which read each apart, so a reader can check the
+//     schema first, and [WriteRunFile], which writes a file beside them, such as its report
 package rundir

@@ -181,3 +181,20 @@ func TestRun_ManifestAndRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// A run id is one path element: a path, a dot entry, or nothing is none.
+func TestValidID(t *testing.T) {
+	for id, want := range map[string]bool{
+		"019a5e2a-1b3c-7d4e-8f00-000000000001": true,
+		"nope":                                 true,
+		"":                                     false,
+		".":                                    false,
+		"..":                                   false,
+		"../runs/x":                            false,
+		"a/b":                                  false,
+	} {
+		if got := rundir.ValidID(id); got != want {
+			t.Errorf("ValidID(%q) = %v, want %v", id, got, want)
+		}
+	}
+}
