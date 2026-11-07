@@ -7,7 +7,8 @@
 //
 // Each path is a file, or a directory walked for its regular files; no symbolic link is
 // followed. As each input's last event arrives, the terminal prints one line: its path, route,
-// outcome, outputs, children, and time. A closing summary counts the inputs by route and
+// outcome, outputs, children, and time, an error after the outcome cut to its first line, at
+// most 400 runes, its unprintable runes replaced, and kept whole in the record. A closing summary counts the inputs by route and
 // outcome, and names the run, its record, and its report, internal/report's HTML page, written
 // into the run's directory as the run ends. A part that fails is counted, not fatal, and so is
 // an input whose dispatch an error stopped, which its line and the summary call "error"; an

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"text/tabwriter"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/JaimeStill/spike-ai-pipeline-processing/route"
 
@@ -18,6 +20,11 @@ import (
 // errorOutcome is the outcome the terminal and the summary give an input whose dispatch stopped
 // with an error before its own event.
 const errorOutcome = "error"
+
+// errorRunes is how many runes of an error the terminal prints, before its ellipsis: enough
+// for the whole first line of every error the runs over ~/docs recorded, whose cause follows a
+// path into the run's working directory, and no more than a few terminal rows.
+const errorRunes = 400
 
 // tallyKey is one cell of the closing summary: a route and an outcome.
 type tallyKey struct {
@@ -34,6 +41,33 @@ func (r *recorder) took(span schema.Span) time.Duration {
 func (r *recorder) line(s string) error {
 	_, err := io.WriteString(r.w, s)
 	return err
+}
+
+// brief returns err as the terminal prints it, one printable line: its first line, with each
+// rune that isn't printable, a control byte, a byte that isn't UTF-8, or a format rune, replaced
+// by U+FFFD, and cut at errorRunes runes. An ellipsis says more of it is in the record, whose
+// error field holds it all: processing's errors can run to several lines, and one carries
+// Ghostscript's raw PNG output. docs/findings/docproc-results/counts.sh reduces a record's
+// errors the same way.
+func brief(err error) string {
+	first, _, more := strings.Cut(strings.TrimSpace(err.Error()), "\n")
+	var b strings.Builder
+	n := 0
+	for _, c := range first {
+		if n == errorRunes {
+			more = true
+			break
+		}
+		if !unicode.IsPrint(c) {
+			c = utf8.RuneError
+		}
+		b.WriteRune(c)
+		n++
+	}
+	if more {
+		b.WriteString("…")
+	}
+	return b.String()
 }
 
 // summary writes the closing summary to the terminal: how many inputs came to each route and

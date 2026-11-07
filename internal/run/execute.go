@@ -143,7 +143,8 @@ func (r *recorder) output(path string, ev dispatch.Event) error {
 
 // part records ev, a part's own event, of the input at path. A quarantined part's file is kept
 // in the run directory. The input's own event, its last, carries its file's metadata and its
-// time, and is its terminal line.
+// time, and is its terminal line, which prints its error as brief does; the record keeps it
+// whole.
 func (r *recorder) part(path string, ev dispatch.Event) error {
 	delete(r.counts, ev.Part.SHA256+"\x00"+ev.Stage.String())
 	part := schema.PartOf(ev.Part)
@@ -178,7 +179,7 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 	}
 	outcome := string(ev.Outcome)
 	if ev.Err != nil {
-		outcome += ": " + ev.Err.Error()
+		outcome += ": " + brief(ev.Err)
 	}
 	r.tally[tallyKey{routeName(ev.Part.Route), string(ev.Outcome)}]++
 	return r.line(fmt.Sprintf("%s  %s  %s  outputs %d  children %d  %s\n",
@@ -186,7 +187,7 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 }
 
 // inputError records stop, the error that stopped the dispatch of the input at path before its
-// own event, as its record line and its terminal line.
+// own event, as its record line and its terminal line, the line printing it as brief does.
 func (r *recorder) inputError(path string, stop error) error {
 	span := r.span(path)
 	rec := schema.Event{Event: schema.ErrorEvent, Input: r.inputs[path].absPath, File: r.file(path), Error: stop.Error(), Time: &span}
@@ -194,7 +195,7 @@ func (r *recorder) inputError(path string, stop error) error {
 		return err
 	}
 	r.tally[tallyKey{routeName(""), errorOutcome}]++
-	return r.line(fmt.Sprintf("%s  -  %s: %v  %s\n", path, errorOutcome, stop, r.took(span)))
+	return r.line(fmt.Sprintf("%s  -  %s: %s  %s\n", path, errorOutcome, brief(stop), r.took(span)))
 }
 
 // file returns the metadata of the input at path, its argument absolute, or nil when it can't be

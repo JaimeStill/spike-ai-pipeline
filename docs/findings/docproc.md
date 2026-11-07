@@ -123,7 +123,9 @@ Paths are under `/home/jaime/docs/`. Two inputs came to `prepared` with a failed
 refused by office as "not a docx, xlsx, or pptx package", and
 `pdf/edge/signed/digitally-signed-3d-portfolio.pdf`, whose embedded `Design of Landing Gear.pdf`
 failed on its form, as the CFR volume did: qpdf found a field's value an indirect reference,
-neither a string nor a name. `counts-1.md` lists each line with its full reason.
+neither a string nor a name. `counts-1.md` lists each line with its reason's first line, as
+docproc's terminal now prints it; `run-1.txt`, the terminal log from before that reduction, and
+the record hold each whole, such as `no-document-catalog.pdf`'s qpdf and pdfdetach errors.
 
 ### Inspection flags
 

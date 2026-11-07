@@ -33,9 +33,9 @@ was in the session's scratch directory on tmpfs (`/tmp`). The tools, as the mani
 
 | File | What it records |
 |---|---|
-| `run-1.txt`, `run-2.txt` | Each run's terminal output, stdout, verbatim: the tools and stages tables, a line per input, and the summary. Each run's stderr was empty. |
+| `run-1.txt`, `run-2.txt` | Each run's terminal output, stdout, verbatim: the tools and stages tables, a line per input, and the summary. Each run's stderr was empty. They hold the raw error bytes the terminal printed before docproc reduced each error to one printable line: a failed input's error over several lines, and `compacted-syntax.pdf`'s Ghostscript PNG output, NUL bytes and all, which is why git treats them as binary. |
 | `manifest-1.json`, `manifest-2.json` | Each run's `runs/<run id>/manifest.json`, verbatim. |
-| `counts-1.md`, `counts-2.md` | `counts.sh` over each run's record: inputs and nested parts by route and outcome, parts by depth, output lines by kind, the 15 slowest inputs, the inspection flags, and every failed, encrypted, quarantined, or error line with its reason. |
+| `counts-1.md`, `counts-2.md` | `counts.sh` over each run's record: inputs and nested parts by route and outcome, parts by depth, output lines by kind, the 15 slowest inputs, the inspection flags, and every failed, encrypted, quarantined, or error line with its reason, reduced to one printable line as the terminal now prints it. They were regenerated from the same records, their SHA-256s below, when `counts.sh` took up that reduction; only the reason text changed, no count. |
 | `counts.sh` | The jq that derives the counts from a record. |
 | `du.txt` | `du -sb` and `du -sh` of the run directory and its `outputs/`, `index/`, and `runs/`, after each run. |
 

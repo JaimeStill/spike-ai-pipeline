@@ -6,6 +6,15 @@
 set -euo pipefail
 rec=$1
 
+# brief reduces an error to one printable line, as docproc's terminal prints it (internal/run's
+# brief): its first line, each rune that isn't printable replaced by U+FFFD, cut at 400 runes,
+# an ellipsis when any of it is left out. Processing's errors can run to several lines, and one
+# carries Ghostscript's raw PNG output.
+# shellcheck disable=SC2016 # the $s, $nl, and $l are jq's variables.
+brief='def brief: (sub("^\\s+"; "") | sub("\\s+$"; "")) as $s | ($s | index("\n")) as $nl
+  | (if $nl then $s[0:$nl] else $s end | gsub("[^\\p{L}\\p{M}\\p{N}\\p{P}\\p{S} ]"; "\ufffd")) as $l
+  | if ($l | length) > 400 then $l[0:400] + "…" elif $nl then $l + "…" else $l end;'
+
 # secs turns a schema "1" time, RFC 3339 with nine digits of nanoseconds, into seconds.
 secs='def secs: (.[0:19] + "Z" | fromdateiso8601) + ("0." + .[20:29] | tonumber);'
 
@@ -73,13 +82,14 @@ echo "Identical lines, the same part name, route, outcome, input, and reason, ar
 echo
 echo "| Lines | Event | Depth | Route | Outcome | Part | Input | Reason or error |"
 echo "|---|---|---|---|---|---|---|---|"
-jq -rs '[.[] | select(.event == "error" or (.event == "part"
+jq -rs "$brief"' [.[] | select(.event == "error" or (.event == "part"
     and (.outcome == "failed" or .outcome == "encrypted" or .outcome == "quarantined"
       or .recorded == "failed" or .recorded == "encrypted" or .recorded == "quarantined")))
   | {e: .event, d: (.part.depth // "-"), r: (.part.content_type.route // "-"),
      o: ((.outcome // "error") + (if .recorded then " (recorded \(.recorded))" else "" end)),
      n: (.part.name // "-"), i: .input,
-     why: ([.reason, .error, (.quarantine.file // null)] | map(select(. != null)) | unique
+     why: ([(.reason, .error | values | brief), (.quarantine.file // null)]
+       | map(select(. != null)) | unique
        | join("; ") | gsub("\\|"; "\\|") | gsub("\n"; " "))}]
   | group_by([.e, .d, .r, .o, .n, .i, .why]) | .[]
   | "| \(length) | \(.[0].e) | \(.[0].d) | \(.[0].r) | \(.[0].o) | \(.[0].n) | `\(.[0].i)` | \(.[0].why) |"' "$rec"
