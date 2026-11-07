@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** building
+- **State:** brief ready
 - **Task:** docproc
 - **Branch:** docproc
 
@@ -146,7 +146,7 @@ Door          two-way: code on a branch, no tag, pins and
 
 ## Progress
 
-slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23; 6 docs and schema contract c5c89b4; 7 finding 18e3c0a: run 1 1614.67 s, re-run 142.21 s with 545 of 592 seen) · standards — · spec — · editor —
+slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23; 6 docs and schema contract c5c89b4; 7 finding 18e3c0a: run 1 1614.67 s, re-run 142.21 s with 545 of 592 seen) · standards done (4dd1ef0 298e9bd bb40e89 c74e9c3) · spec done (2 gaps closed: cdea4f6, 10d8e7c 2778ba8) · editor done (475a802); brief ready
 
 ## Decisions
 
@@ -1930,6 +1930,50 @@ slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mo
   with a warning. Rejected: stating the limit and having readers union every run record.
 - docproc (build, spec review): a failed input's terminal line shows its error reduced to one
   printable line; the record keeps the full error.
+- docproc (build): tools are found through a "tool lookup" graph node, exec.LookPath in
+  production and apptest's fixtures in tests, so no test runs a host tool. A stage is wired only
+  when every tool its row names is found and new enough, even where processing could build it over
+  fewer (archive without 7zz, document without qpdf or pdfdetach, picture without soffice), so a
+  stage runs as the stage table says or not at all. Rejected: wiring the reduced stages.
+- docproc (build): any tool or stage constructor error, not only a missing or too-old tool, leaves
+  the stage out with the error as its reason; building the stages never fails the run.
+- docproc (build): a tool only excluded stages need is never looked up, so excluding office and
+  vision-converted runs no docker.
+- docproc (build): --exclude takes processing's route names (vision-converted, nested, ...),
+  repeatable by cli.StringsVar's convention and never comma-split; an unknown route is a usage
+  error from Validate, before any tool is built.
+- docproc (build, the session's correction after slice 4): an input's path, a file's arg, and the
+  manifest's inputs are absolute and cleaned; only the files docproc writes (refs, quarantine
+  files, the manifest's record) are relative to the run directory. Rejected: slice 4's rule that
+  every path, inputs included, is relative to the run directory, which wrote ~/docs inputs as
+  "../../home/...".
+- docproc (build): outputs are always copied into the store, never moved or linked, since the
+  text and vision stages pass the part's own file through, which for an input is the user's file.
+  An output or quarantine already stored is left as it is, so content prepared again is stored
+  once.
+- docproc (build): every output gets a stored file, an inline Value included (a record as .json),
+  so every ref names a file, and the Value is cleared before the index records it. The store's
+  path is outputs/<sha256>/<stage>/<n><ext>: <stage> is the stage's name plus 12 hex digits of
+  the SHA-256 of its whole identity, <n> counts the part's outputs from 1, and <ext> comes from a
+  fixed media-type table, else the output file's extension, so a ref is the same on any host.
+- docproc (build): the report is a file per run, runs/<run id>/report.html, written as each run
+  ends and rendered again by `docproc report <run-dir> [--run <id>]`, the latest run by default.
+  The standards review made a --run that is a path or a dot entry a usage error, so the command
+  can't read or write outside runs/.
+- docproc (build): every record line carries "input", the input's absolute path, since the pool
+  interleaves inputs; "outputs" and "children" appear on part lines only.
+- docproc (build, spec review): the terminal cuts an error at 400 runes with an ellipsis. Rejected:
+  the review's 160, which cut off the cause of every long error in the ~/docs runs, whose first
+  lines reach 325 runes behind a path into the working directory.
+- docproc (build): subtree replay is keyed by part SHA-256 and stage identity, the index's own
+  key, so content prepared under another stage version is never copied. The earlier records are
+  read once before the run, earliest first, and this run's lines are searched last, for content
+  seen twice in one run. A record that can't be read is skipped with a terminal warning. Rejected:
+  keying by SHA-256 alone.
+- docproc (build): behavior 6's "every input is Seen" holds for 545 of 592 ~/docs inputs, since
+  processing's index records neither a part that failed or holds a failed or limited part, nor a
+  part whose route has no stage. The README, schema page, and finding state processing's rule.
+  Rejected: changing processing's index, which is out of scope.
 
 ## Pending edits
 
@@ -2385,3 +2429,13 @@ slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mo
   an ffmpeg that decodes the source from its start, so a 4.4 h audiobook took 1,614 s in docproc's
   ~/docs run while every other input finished in 332 s (docproc finding). Seeking per window, or
   one decode streamed into windows, would bound it.
+- coordinator · roadmap, the docproc task's summary: "and writes a run directory, a versioned
+  contract (schema "1"): outputs stored once by content, a JSON Lines record of every event, and a
+  static HTML report." reads "and writes a run directory, a versioned contract (schema "1"):
+  outputs stored once by content, a JSON Lines record of every event per run, whole on its own
+  since a re-run copies each seen part's subtree from the earliest record that holds it, and a
+  static HTML report per run, rendered again by `docproc report`." and "A finding records a run
+  over ~/docs." reads "A finding records a run over ~/docs and its re-run."
+- coordinator · roadmap, the docinfer task's summary: "that reads a docproc run directory" reads
+  "that reads one run of a docproc run directory, its manifest and its record, which is whole on
+  its own".
