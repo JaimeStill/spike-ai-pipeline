@@ -1,0 +1,664 @@
+TOOL                       VERSION   MINIMUM  FROM
+gs                         10.8.0    10.0     /usr/bin/gs
+qpdf                       12.4.2    11.0     /usr/bin/qpdf
+pdfdetach                  26.10.0   22.02    /usr/bin/pdfdetach
+magick                     7.1.2     7.1      /usr/bin/magick
+soffice                    26.8.2.2  24.2     gotenberg/gotenberg:9.1.0-libreoffice@sha256:4ff340bb7b0753e7d037ceb75a08b09c3a9aebd0e6484df9516ec29ec31074ff
+spike-ai-pipeline-office   0.1.0     0.1.0    /home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-office/0.1.0/spike-ai-pipeline-office
+spike-ai-pipeline-mail     0.3.1     0.2.0    /home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-mail/0.3.1/spike-ai-pipeline-mail
+spike-ai-pipeline-onenote  0.1.0     0.1.0    /home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-onenote/0.1.0/spike-ai-pipeline-onenote
+7zz                        26.6      24.01    /home/jaime/.local/share/mise/installs/github-ip7z-7zip/26.06/7zz
+ffmpeg                     9.0.2     9.0      /usr/bin/ffmpeg
+ffprobe                    9.0.2     9.0      /usr/bin/ffprobe
+
+ROUTE             STAGE     STATE  TOOLS
+document          document  wired  gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0
+office            office    wired  spike-ai-pipeline-office 0.1.0, soffice 26.8.2.2, magick 7.1.2
+vision-converted  picture   wired  magick 7.1.2, soffice 26.8.2.2
+vision            vision    wired  none
+nested            email     wired  spike-ai-pipeline-mail 0.3.1
+onenote           onenote   wired  spike-ai-pipeline-onenote 0.1.0
+archive           archive   wired  7zz 26.6
+audio             audio     wired  ffmpeg 9.0.2, ffprobe 9.0.2
+video             video     wired  ffmpeg 9.0.2, ffprobe 9.0.2
+text              text      wired  none
+/home/jaime/docs/audio/long/earnings21-4330115.truth.rttm  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/MANIFEST.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/archive/mixed-bundle.tar.zst  archive  seen  outputs 0  children 1  0s
+/home/jaime/docs/archive/mixed-bundle.7z  archive  seen  outputs 0  children 6  0s
+/home/jaime/docs/archive/unicode-filenames.zip  archive  seen  outputs 0  children 1  1ms
+/home/jaime/docs/archive/high-ratio-200mb.zip  archive  seen  outputs 0  children 1  2ms
+/home/jaime/docs/archive/mixed-bundle.tar.gz  archive  seen  outputs 0  children 1  2ms
+/home/jaime/docs/archive/zip-in-zip.zip  archive  seen  outputs 0  children 2  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.A.segments.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.B.segments.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/earnings21-4330115.truth.nlp  unrouted  no processor yet  outputs 0  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.A.words.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.D.words.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/earnings21.LICENSE.md  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.C.segments.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.C.words.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/earnings22.LICENSE.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/README.md  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/long/earnings22-4479944.truth.nlp  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.D.segments.xml  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/archive/mixed-bundle.zip  archive  seen  outputs 0  children 6  2ms
+/home/jaime/docs/audio/long/librivox-stella-maberly.truth-approx.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/archive/password-protected.zip  archive  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.ogg  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/long/earnings22-4479944.truth-aligned.nlp  unrouted  no processor yet  outputs 0  children 0  2ms
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.B.words.xml  text  seen  outputs 1  children 0  3ms
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in.truth.json  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.m4a  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1519.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1730.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.opus  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.mp3  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1993.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1607.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1554.wav  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1602.wav  audio  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn.truth.json  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0002.flac  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1634.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1608.wav  audio  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1601.wav  audio  seen  outputs 2  children 0  4ms
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1995.wav  audio  seen  outputs 2  children 0  4ms
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1605.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0001.flac  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1614.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0000.flac  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0003.flac  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000-stereo-44k.wav  audio  seen  outputs 2  children 0  4ms
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1608.wav  audio  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-1.wav  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-0.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1581.wav  audio  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-2.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/email/eml/cpython/cpython.LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1579.wav  audio  seen  outputs 2  children 0  3ms
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-0.wav  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-1.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-1.wav  audio  seen  outputs 2  children 0  1ms
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-0.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-2.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-2.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/audio/short/phrase.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_11.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_01.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/audio/short/tone.wav  audio  seen  outputs 2  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_06.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_08.eml  nested  seen  outputs 2  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_12a.eml  nested  seen  outputs 2  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_12.eml  nested  seen  outputs 2  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_03.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_04.eml  nested  seen  outputs 3  children 1  2ms
+/home/jaime/docs/email/eml/cpython/msg_09.eml  nested  seen  outputs 2  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_10.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_18.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_19.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_07.eml  nested  seen  outputs 3  children 1  2ms
+/home/jaime/docs/email/eml/cpython/msg_14.eml  nested  seen  outputs 2  children 1  2ms
+/home/jaime/docs/email/eml/cpython/msg_05.eml  nested  seen  outputs 5  children 0  3ms
+/home/jaime/docs/email/eml/cpython/msg_17.eml  nested  seen  outputs 2  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_13.eml  nested  seen  outputs 3  children 1  2ms
+/home/jaime/docs/email/eml/cpython/msg_24.eml  nested  seen  outputs 2  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_23.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_25.eml  nested  seen  outputs 2  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_20.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_22.eml  nested  seen  outputs 3  children 2  1ms
+/home/jaime/docs/email/eml/cpython/msg_15.eml  nested  seen  outputs 4  children 1  2ms
+/home/jaime/docs/email/eml/cpython/msg_21.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_26.eml  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_29.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_27.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_31.eml  nested  seen  outputs 2  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_39.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_38.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_40.eml  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/email/eml/cpython/msg_16.eml  nested  seen  outputs 5  children 1  3ms
+/home/jaime/docs/email/eml/cpython/msg_37.eml  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_35.eml  nested  seen  outputs 2  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_32.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_33.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_28.eml  nested  seen  outputs 6  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_41.eml  nested  seen  outputs 2  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_36.eml  nested  seen  outputs 3  children 2  2ms
+/home/jaime/docs/email/eml/cpython/msg_43.eml  nested  seen  outputs 3  children 2  1ms
+/home/jaime/docs/email/eml/cpython/msg_47.eml  nested  seen  outputs 2  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_42.eml  nested  seen  outputs 4  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_34.eml  nested  seen  outputs 5  children 0  2ms
+/home/jaime/docs/email/eml/cpython/msg_44.eml  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_02.eml  nested  seen  outputs 13  children 0  5ms
+/home/jaime/docs/email/generated/eml/01-plain.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/eml/cpython/msg_45.eml  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/eml/cpython/msg_30.eml  nested  seen  outputs 6  children 0  3ms
+/home/jaime/docs/email/eml/cpython/msg_46.eml  nested  seen  outputs 4  children 0  2ms
+/home/jaime/docs/email/generated/eml/02-reply-latin1.eml  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/generated/eml/04-attachment-cyrillic.eml  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/generated/eml/05-japanese.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/layout.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/generated/eml/06-chinese.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/msg/01-plain.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/manifest.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/generated/msg/04-attachment-cyrillic.msg  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/generated/msg/05-japanese.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/msg/06-chinese.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/msg/03-html-inline-image.msg  nested  seen  outputs 3  children 1  1ms
+/home/jaime/docs/email/generated/msg/02-reply-latin1.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/msg/07-html-only-bcc.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/eml/03-html-inline-image.eml  nested  seen  outputs 3  children 1  2ms
+/home/jaime/docs/email/generated/eml/07-html-only-bcc.eml  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/msg/poi/NOTICE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/email/generated/truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/generated/eml/08-forward-attached-message.eml  nested  seen  outputs 5  children 1  2ms
+/home/jaime/docs/email/msg/poi/LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/email/msg/tika/LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/email/msg/sources.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/msg/tika/test-outlook2003.msg  nested  seen  outputs 3  children 11  1ms
+/home/jaime/docs/email/msg/tika/testMSG_chinese.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/generated/msg/08-forward-attached-message.msg  nested  seen  outputs 3  children 2  2ms
+/home/jaime/docs/email/msg/tika/testMSG_forwarded.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/msg/poi/ASCII_UTF-8_CP1252_LCID1031_HTML.msg  nested  seen  outputs 3  children 0  2ms
+/home/jaime/docs/email/msg/tika/NOTICE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/pst/java-libpst/LICENSE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/pst/libyal/LICENSE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/msg/poi-truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/msg/poi/msgClassAppointment.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/msg/poi/outlook_30_msg.msg  nested  seen  outputs 3  children 0  1ms
+/home/jaime/docs/email/msg/tika-truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/msg/tika/testMSG_att_msg.msg  nested  seen  outputs 5  children 1  1ms
+/home/jaime/docs/email/msg/poi/example_sent_regular.msg  nested  seen  outputs 3  children 1  2ms
+/home/jaime/docs/email/pst/tika/NOTICE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/email/pst/sources.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/tika/LICENSE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/image/formats/avif/bbb-alpha-inverted.avif  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/avif/hdr-cosmos.avif  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/tika-threading.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/avif/example.avif  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/emf/vector-image.emf  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/avif/monochrome.avif  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/emf/wrench.emf  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/emf/simple-emf-windows.emf  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/heic/libheif-examples.COPYING  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/image/formats/gif/animated-shapes.gif  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/gif/photo.gif  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/tiff/old-style-jpeg-compression.tif  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/jpeg/rotated-exif-orientation.jpg  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/webp/text-lossless.webp  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/bmp/photo.bmp  vision  seen  outputs 1  children 0  2ms
+/home/jaime/docs/image/formats/tiff/scanned-3page-g4.tif  vision-converted  seen  outputs 3  children 0  1ms
+/home/jaime/docs/image/formats/webp/photo.webp  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/heic/example.heic  vision-converted  seen  outputs 1  children 0  2ms
+/home/jaime/docs/image/formats/jpeg/photo-with-gps-exif.jpg  vision  seen  outputs 1  children 0  2ms
+/home/jaime/docs/image/formats/wmf/fuzz-minimized.wmf  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/wmf/file-45.wmf  vision-converted  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/wmf/poi-61338.wmf  vision-converted  seen  outputs 1  children 0  0s
+/home/jaime/docs/image/formats/wmf/santa.wmf  vision-converted  seen  outputs 1  children 0  0s
+/home/jaime/docs/image/graphics/logo.jpg  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/tiff/photo-deflate.tif  vision-converted  seen  outputs 1  children 0  2ms
+/home/jaime/docs/image/graphics/shapes.png  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/vector/pipeline-diagram.svg  vision-converted  seen  outputs 1  children 0  0s
+/home/jaime/docs/image/vector/script-bearing.svg  vision-converted  seen  outputs 1  children 0  0s
+/home/jaime/docs/image/graphics/speech.png  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/MANIFEST  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/office/legacy/generated/cells.libreoffice.xls  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/charts.libreoffice.doc  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/comments.libreoffice.doc  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/charts.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/photo/test.jpg  vision  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/charts.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/tika/testPST_variousBodyTypes.pst  nested  seen  outputs 13  children 0  4ms
+/home/jaime/docs/office/legacy/generated/docx/charts.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/java-libpst/passworded.pst  nested  seen  outputs 17  children 0  5ms
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/bullets.libreoffice.ppt  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/comments.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/comments.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/comments.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headings.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headings.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/headings.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/lists.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/lists.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/media.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/media.python-docx.docx  office  seen  outputs 1  children 4  1ms
+/home/jaime/docs/office/legacy/generated/docx/lists.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/media.libreoffice.docx  office  seen  outputs 1  children 4  1ms
+/home/jaime/docs/office/legacy/generated/docx/media.libreoffice.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/formats/tiff/scanned-3page-lzw-gray.tif  vision-converted  seen  outputs 3  children 0  4ms
+/home/jaime/docs/office/legacy/generated/docx/notes.libreoffice.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/java-libpst/dist-list.pst  nested  seen  outputs 21  children 0  6ms
+/home/jaime/docs/office/legacy/generated/docx/notes.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/notes.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/image/photo/house-chair-bicycle.jpg  vision  seen  outputs 1  children 0  3ms
+/home/jaime/docs/office/legacy/generated/docx/notes.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/generated/pst/mailbox.pst  nested  seen  outputs 26  children 3  7ms
+/home/jaime/docs/office/legacy/generated/docx/sections.libreoffice.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/sections.libreoffice.docx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/legacy/generated/docx/sections.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/sections.python-docx.docx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/legacy/generated/docx/tables.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/tables.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/tables.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/email/pst/libyal/outlook.pst  nested  seen  outputs 22  children 22  7ms
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.libreoffice.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/drawings.libreoffice.xls  office  seen  outputs 1  children 2  1ms
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.python-docx.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/formulas.libreoffice.xls  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/media.libreoffice.doc  office  seen  outputs 1  children 4  1ms
+/home/jaime/docs/office/legacy/generated/merges.libreoffice.xls  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/lists.libreoffice.doc  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/bullets.libreoffice.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/notes.libreoffice.doc  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/bullets.python-pptx.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/groups.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/bullets.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/groups.python-pptx.pptx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.libreoffice.pptx  office  seen  outputs 1  children 2  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.python-pptx.pptx  office  seen  outputs 1  children 2  1ms
+/home/jaime/docs/office/legacy/generated/pptx/groups.libreoffice.pptx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.libreoffice.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slides.libreoffice.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slides.python-pptx.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/pptx/slides.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/sections.libreoffice.doc  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/cells.libreoffice.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.libreoffice.xlsx  office  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.openpyxl.xlsx  office  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.libreoffice.xlsx  office  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.openpyxl.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.libreoffice.xlsx  office  seen  outputs 1  children 2  0s
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/merges.libreoffice.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/merges.openpyxl.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/merges.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/slides.libreoffice.ppt  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.openpyxl.xlsx  office  seen  outputs 1  children 2  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.libreoffice.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/tables.libreoffice.doc  office  seen  outputs 1  children 0  2ms
+/home/jaime/docs/email/pst/tika/testPST.pst  nested  seen  outputs 19  children 0  9ms
+/home/jaime/docs/office/legacy/other/word-perfect-6.wpd  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.openpyxl.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.libreoffice.truth.json  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.libreoffice.xlsx  office  seen  outputs 1  children 0  2ms
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.libreoffice.truth.json  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/office/legacy/generated/slide-objects.libreoffice.ppt  office  seen  outputs 1  children 2  3ms
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.truth.json  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.openpyxl.xlsx  office  seen  outputs 1  children 0  2ms
+/home/jaime/docs/office/legacy/real/SampleSS.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/real/SampleSS.xls  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/real/basic_test_ppt_file.ppt  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/protected-passtika.poi.xlsb  office  seen  outputs 0  children 0  0s
+/home/jaime/docs/office/legacy/real/basic_test_ppt_file.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/real/simple-table.doc  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/simple.poi.xlsb  office  seen  outputs 0  children 0  0s
+/home/jaime/docs/office/macro-template/macro-enabled.openxmlsdk.dotm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/macro-enabled.openxmlsdk.docm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/macro.openxmlsdk.xltm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/ed-stud-pres.potx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/macro.openxmlsdk.xlsm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/simple-invoice.xltx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/legacy/real/simple-table.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/bingo-sheet.dotx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/simple-macro.poi.docm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/test-ppt.poi.ppsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/multilang/multilang-rtl.odt  office  seen  outputs 0  children 0  0s
+/home/jaime/docs/office/odf/draw-odf13.odg  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/odf/impress-odf13.odp  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/odf/formulas.libreoffice.ods  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/multilang/multilang-rtl.source.html  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/office/odf/tables.libreoffice.odt  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/macro-template/xlm-macro.poi.xlsm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/simple-macro.poi.pptm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/multilang/multilang-rtl.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/macro-template/simple-macro.poi.xlsm  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/odf/slides.libreoffice.odp  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/odf/writer-odf13.odt  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/odf/calc-odf13.ods  office  seen  outputs 0  children 0  1ms
+/home/jaime/docs/office/multilang/multilang-rtl.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chart-column.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/SOURCES.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chart-column.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex-funnel-word.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex-funnel-word.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex-waterfall-word.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex-waterfall-word.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/complex-numbered-lists.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/chartex.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/content-control-rows.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/complex-numbered-lists.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/content-control-rows.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/delins.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/footnote.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/form-footnotes.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/office/realworld/docx/strict-column-charts.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/form-footnotes.docx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/docx/ruby.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/endnotes.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/endnotes.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/strict-column-charts.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/footnote.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/ruby.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/delins.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/licenses/Open-XML-SDK.NOTICE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/office/realworld/licenses/docling.LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/office/realworld/licenses/poi.LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/office/realworld/docx/unit-test-formatting.docx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/docx/test-comment.docx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/docx/unit-test-formatting.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/word-tables.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/licenses/poi.NOTICE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/office/realworld/docx/test-comment.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/word-tables.docx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/word-with-attachments.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/docx/word-with-attachments.docx  office  seen  outputs 1  children 5  1ms
+/home/jaime/docs/office/realworld/licenses/Open-XML-SDK.LICENSE  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/licenses/rsWordParser.LICENSE-MIT  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/office/realworld/licenses/rsWordParser.LICENSE-APACHE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/linked-pictures.pptx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/pptx/chartex-slide.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/chart-2d.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/layouts.pptx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/pptx/layouts.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/chartex-slide.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/linked-pictures.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/powerpoint-sample.pptx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/chart-sheet.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/shapes.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/chart-2d.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/powerpoint-sample.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/copy-rows.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/copy-rows.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/pptx/shapes.pptx  office  seen  outputs 1  children 1  1ms
+/home/jaime/docs/office/realworld/xlsx/date-format-tests.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/chart-sheet.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/excel-online-index-space.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/date-format-tests.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/simple-monthly-budget.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/excel-online-index-space.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/simple-strict.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/simple-strict.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/simple-monthly-budget.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/with-drawing.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/with-two-charts.truth.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/with-two-charts.xlsx  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/realworld/xlsx/with-drawing.xlsx  office  seen  outputs 1  children 5  1ms
+/home/jaime/docs/onenote/interop/LICENSE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/office/rtf/lists.libreoffice.rtf  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/rtf/lorem-ipsum-calibre.rtf  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/content.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/rtf/test-rtf.rtf  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/office/rtf/tables.libreoffice.rtf  office  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/interop/Resources/Open Notebook.onetoc2  onenote  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/interop/Resources/AlternativePackaging.onetoc2  onenote  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/interop/Resources/NoSection.onetoc2  onenote  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/onenote/interop/sources.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/interop/SUT/Encryption.one  onenote  failed: onenote: refused: Unexpected end of file  outputs 0  children 0  1ms
+/home/jaime/docs/onenote/notebooks.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/interop/Resources/AlternativePackaging.one  onenote  seen  outputs 4  children 0  2ms
+/home/jaime/docs/onenote/interop/SUT/OneWithoutFileData.one  onenote  seen  outputs 4  children 0  2ms
+/home/jaime/docs/onenote/interop/SUT/InvalidData.one  onenote  seen  outputs 4  children 0  2ms
+/home/jaime/docs/onenote/interop/SUT/OneWithFileData.one  onenote  seen  outputs 4  children 1  2ms
+/home/jaime/docs/onenote/onenote-rs/New Section Group/New Section 1.one  onenote  seen  outputs 4  children 0  1ms
+/home/jaime/docs/onenote/interop/SUT/FileSyncWOPI_OneNoteWithODB.one  onenote  seen  outputs 4  children 1  2ms
+/home/jaime/docs/onenote/onenote-rs/OneNote_RecycleBin/OneNote_DeletedPages.one  onenote  seen  outputs 4  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/OneNote_RecycleBin/Open Notebook.onetoc2  onenote  seen  outputs 4  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/New Section 1.one  onenote  seen  outputs 4  children 2  2ms
+/home/jaime/docs/onenote/onenote-rs/New Section Group/New Section 2.one  onenote  seen  outputs 6  children 2  2ms
+/home/jaime/docs/onenote/onenote-rs/Open Notebook.onetoc2  onenote  seen  outputs 5  children 2  2ms
+/home/jaime/docs/onenote/onenote-rs/sources.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/object-revision/Open Notebook.onetoc2  onenote  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/sections.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/sources.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/New Section Group/Open Notebook.onetoc2  onenote  seen  outputs 9  children 2  2ms
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 3.one  onenote  seen  outputs 4  children 0  1ms
+/home/jaime/docs/onenote/onenote-rs/handwriting_recognition.one  onenote  seen  outputs 6  children 2  2ms
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 2.one  onenote  seen  outputs 6  children 0  1ms
+/home/jaime/docs/onenote/interop/SUT/Open Notebook.onetoc2  onenote  seen  outputs 12  children 1  3ms
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 1 2.one  onenote  seen  outputs 6  children 2  2ms
+/home/jaime/docs/pdf/born-digital/text-0.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/attachments/file-attachment-annotation.pdf  document  seen  outputs 2  children 1  1ms
+/home/jaime/docs/pdf/edge/encrypted/encryption-openpassword.pdf  document  seen  outputs 0  children 0  0s
+/home/jaime/docs/pdf/edge/encrypted/simple-open-password.pdf  document  seen  outputs 0  children 0  0s
+/home/jaime/docs/pdf/edge/encrypted/unicode-password-corrigendum5.pdf  document  seen  outputs 0  children 0  0s
+/home/jaime/docs/pdf/edge/encrypted/encryption-nocopy.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/attachments/file-attachment.pdf  document  seen  outputs 2  children 1  1ms
+/home/jaime/docs/pdf/edge/encrypted/encryption-notextaccess.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/born-digital/mgrs-field-report.pdf  document  seen  outputs 6  children 0  2ms
+/home/jaime/docs/pdf/born-digital/speech.pdf  document  seen  outputs 4  children 0  1ms
+/home/jaime/docs/pdf/edge/encrypted/unicode-passwords-corrigendum5.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/edge/encrypted/unicode-password-baseline.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/encrypted/unicode-passwords.README.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/edge/fonts/no-fonts-embedded.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/forms/pdfa2b-interactive-form-pass.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/header-no-version-info.pdf  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/pdf/edge/forms/isartor-interactive-form.pdf  document  seen  outputs 3  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/corruption-one-byte-missing.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/dialect-dict-is-stream.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/dual-startxref.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/javascript.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/malformed/no-page-contents.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/edge/attachments/embedded-video-avi.pdf  document  seen  outputs 2  children 0  3ms
+/home/jaime/docs/pdf/edge/safedocs.LICENSE  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/onenote/onenote-rs/non-legacy/Open Notebook.onetoc2  onenote  seen  outputs 14  children 2  4ms
+/home/jaime/docs/pdf/edge/malformed/utf16le-test.pdf  document  seen  outputs 2  children 0  2ms
+/home/jaime/docs/pdf/edge/safedocs.NOTICE  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/pdf/edge/pdfa/pdfa3b-embedded-files-fail.pdf  document  seen  outputs 1  children 1  1ms
+/home/jaime/docs/pdf/edge/pdfa/pdfa3b-embedded-files-pass.pdf  document  seen  outputs 1  children 1  1ms
+/home/jaime/docs/pdf/edge/pdfa/pdfa1b-filters-fail.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/pdfa/embedded-lucinda-sans-pdfa-1a.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/tagged/pdfua1-annotations-pass.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/edge/pdfa/balloon-a1b-jp2k.pdf  document  seen  outputs 1  children 0  2ms
+/home/jaime/docs/pdf/edge/verapdf.README.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-el.html  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-bg.html  unrouted  no processor yet  outputs 0  children 0  1ms
+/home/jaime/docs/pdf/edge/tagged/pdfua1-text-pass.pdf  document  seen  outputs 2  children 0  2ms
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-en.html  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-pl.html  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/pdf/scanned/clean/page-1.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/README.md  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/clean/page-2.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/clean/page-3.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/multilang/multilang-rtl.pdf  document  seen  outputs 4  children 0  1ms
+/home/jaime/docs/pdf/scanned/clean/page-4.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/clean/page-6.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/clean/page-5.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/clean.typ  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-bg.pdf  document  seen  outputs 8  children 0  2ms
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-el.pdf  document  seen  outputs 8  children 0  2ms
+/home/jaime/docs/pdf/scanned/degraded/page-1.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/degraded/page-2.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-en.pdf  document  seen  outputs 8  children 0  2ms
+/home/jaime/docs/pdf/born-digital/vortex-150-mini-manual.pdf  document  seen  outputs 34  children 0  6ms
+/home/jaime/docs/pdf/scanned/degraded/page-3.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/long/earnings21-4330115.mp3  audio  seen  outputs 97  children 0  37ms
+/home/jaime/docs/pdf/scanned/degraded/page-4.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/degraded/page-5.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-pl.pdf  document  seen  outputs 8  children 0  2ms
+/home/jaime/docs/pdf/scanned/degraded/page-7.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/degraded/page-6.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/degraded/page-8.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/degraded/page-9.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/generate.sh  unrouted  no processor yet  outputs 0  children 0  0s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0a2b678b6c6825364a5a18154dd59064922e_page_8_pg1.pdf  document  seen  outputs 2  children 0  0s
+/home/jaime/docs/pdf/scanned/clean.pdf  document  seen  outputs 12  children 0  2ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0925342e1efabb7957efa34203f65d3cbc4d_page_6_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column.truth.jsonl  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0b128decb905a38700baf486672b8634c308_page_4_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0e5f0c3447c4f1335b330d58b5e14d6f15b1_page_8_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-09f90a8fad0997f7cf454cbcbe79cab3bc0f_page_1_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-15.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-013a3686ef75b4150c07d3ebc510ca2455d6_page_6_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-17.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-31.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-5.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-4.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-30.pdf  document  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/degraded.pdf  document  seen  outputs 9  children 0  2ms
+/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.truth.xml  text  seen  outputs 1  children 0  5ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans.truth.jsonl  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-46.pdf  document  seen  outputs 1  children 0  2ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/table_tests.truth.jsonl  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-033c1efd2c0e15b829f9e9164f0e7bc1fecf_pg5_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-64.pdf  document  seen  outputs 1  children 0  2ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-63.pdf  document  seen  outputs 1  children 0  3ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-0953927d7a3f032c46a2e6d0ead837398a0b_pg20.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-26076dc369efd78b3087643cc7153509bd18_pg3_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-69.pdf  document  seen  outputs 1  children 0  3ms
+/home/jaime/docs/pdf/scanned/scanned/page-2.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-4c77cbf4de004721c9da33c7f3843716c9a6_pg4_pg1.pdf  document  seen  outputs 2  children 0  2ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-fa18a15c1dbbfcb71b1f1ea1b8f116e24b8a_pg2_pg1.pdf  document  seen  outputs 2  children 0  1ms
+/home/jaime/docs/pdf/scanned/scanned/page-1.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/scanned/page-3.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-71.pdf  document  seen  outputs 1  children 0  3ms
+/home/jaime/docs/pdf/scanned/scanned/page-5.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/scanned/page-6.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/scanned/page-4.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/report.md  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/csv/employees.csv  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-c8c858692b4b469c2af1fc55edcf6292f6ed_pg4_pg1.pdf  document  seen  outputs 2  children 0  2ms
+/home/jaime/docs/pdf/scanned/scanned/page-7.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/csv/sample-data.csv  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/csv/semicolon-decimal-comma.csv  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/crlf-windows-1252.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/csv/server-inventory.csv  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-70.pdf  document  seen  outputs 1  children 0  4ms
+/home/jaime/docs/text/encodings/encodings.truth.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/csv/tab-separated.tsv  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/koi8-r.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/utf16be-nobom.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/shift-jis.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/euc-jp.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/iso-8859-1.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/utf16le-bom.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/encodings/windows-1252.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/encodings/utf8-bom.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/encodings/windows-1256-arabic.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/encodings/utf8-nobom.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/epub/lorem-ipsum.epub  archive  seen  outputs 0  children 9  1ms
+/home/jaime/docs/text/json/config.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/json/malformed-trailing-comma.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/json/incident-reports.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/json/deeply-nested-64.json  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/json/sample-data.json  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/json/records.ndjson  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/markdown/swarm-capstone.md  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/txt/geopoints.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/txt/entity-extraction.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/xml/billion-laughs-small.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/txt/product-catalog.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/txt/text-0.txt  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/text/xml/catalog.xml  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/txt/ssh-session-log.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/text/txt/meeting-notes.txt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/scanned/scanned.pdf  document  seen  outputs 7  children 0  4ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.A.segments.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.B.segments.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.A.words.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.B.words.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.D.segments.xml  text  seen  outputs 1  children 0  0s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.C.words.xml  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.C.segments.xml  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.D.words.xml  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/audio/long/ami-es2002a-mix-headset.wav  audio  seen  outputs 51  children 0  47ms
+/home/jaime/docs/video/nasa-epps-interviews/nasa-epps-interviews.srt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/nasa-iss-inflight-pittsburgh/nasa-iss-inflight-pittsburgh.srt  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/text/csv/large-100k-rows.csv  text  seen  outputs 1  children 0  8ms
+/home/jaime/docs/audio/long/earnings22-4479944.mp3  audio  seen  outputs 157  children 0  49ms
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover.asr.srt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/pdf/born-digital/dodm-5200-01.pdf  document  seen  outputs 222  children 0  21ms
+/home/jaime/docs/video/tears-of-steel/copyright.txt  text  seen  outputs 1  children 0  2ms
+/home/jaime/docs/video/tears-of-steel/tos-clip-30s-360p.webm  video  seen  outputs 9  children 0  4ms
+/home/jaime/docs/video/tears-of-steel/tos-en.srt  text  seen  outputs 1  children 0  4ms
+/home/jaime/docs/video/tears-of-steel/tos-he.srt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/tears-of-steel/tos-jp.srt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/tears-of-steel/tos-ru.srt  text  seen  outputs 1  children 0  1ms
+/home/jaime/docs/video/tears-of-steel/tos-clip-180s-480p.mp4  video  seen  outputs 43  children 0  14ms
+/home/jaime/docs/video/tears-of-steel/tos-clip-180s-480p-subs.mkv  video  seen  outputs 43  children 0  15ms
+/home/jaime/docs/pdf/scanned/real/stella-maberly-1896-ia-scan.pdf  document  seen  outputs 491  children 0  26ms
+/home/jaime/docs/email/mbox/tika-dev-2024-03.mbox  nested  seen  outputs 987  children 1  64ms
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-divx.avi  video  seen  outputs 160  children 0  31ms
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-theora.ogv  audio  seen  outputs 24  children 0  32ms
+/home/jaime/docs/pdf/edge/malformed/no-document-catalog.pdf  document  failed: document: ghostscript: page count of /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/afc03273-6e3b-4a83-9166-56b04d6e8a9b/scratchpad/run/.work-1423210844/part-1407187702/spool-2646491443.pdf: gs printed "   **** Error: Couldn't initialise file.\n               Output may be incorrect.\n0\n"
+document: qpdf: qpdf: /home/jaime/docs/pdf/edge/malformed/no-document-catalog.pdf: unable to find trailer dictionary while recovering damaged file: tool: qpdf: exit code 2
+document: pdfdetach: list no-document-catalog.pdf: Syntax Error: Invalid XRef entry 5 Internal Error: xref num 5 not found but needed, try to reconstruct Syntax Error: Invalid XRef entry 5 Syntax Error: Invalid XRef entry 5 Syntax Error: Catalog object is wrong type (null) Syntax Error: Couldn't read page catalog: tool: pdfdetach: exit code 1  outputs 0  children 0  51ms
+/home/jaime/docs/video/ami-es2002a/ami-es2002a-overhead.avi  video  seen  outputs 126  children 0  56ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-corner.avi  video  seen  outputs 270  children 0  56ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-closeup1.avi  video  seen  outputs 270  children 0  61ms
+/home/jaime/docs/onenote/large/Large Desktop.one  onenote  seen  outputs 4  children 13  82ms
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-mix-headset.wav  audio  seen  outputs 108  children 0  69ms
+/home/jaime/docs/audio/long/librivox-stella-maberly.m4b  audio  seen  outputs 646  children 0  113ms
+/home/jaime/docs/onenote/large/Large OneDrive.one  onenote  seen  outputs 4  children 13  115ms
+/home/jaime/docs/video/nasa-epps-interviews/nasa-epps-interviews-640x360.mp4  video  seen  outputs 163  children 0  154ms
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-mpeg2.mpeg  unrouted  no processor yet  outputs 0  children 0  177ms
+/home/jaime/docs/video/nasa-iss-inflight-pittsburgh/nasa-iss-inflight-pittsburgh-640x360.mp4  video  seen  outputs 219  children 0  196ms
+/home/jaime/docs/pdf/edge/malformed/compacted-syntax.pdf  document  failed: document stage: 1 of 1 pages failed: document: page 1 of 1: render: document: ghostscript: page 1 of /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/afc03273-6e3b-4a83-9166-56b04d6e8a9b/scratchpad/run/.work-1423210844/part-3806757779/spool-580470791.pdf: no PNG on stdout: **** Error: Page drawing error occurred.
+               Output may be incorrect.
+âPNG
+
+   IHDR  '  '   Ô]Ìo   sRGBŸ…,   	pHYs    gü“R    tEXtSoftware GPL Ghostscript 10.08.0πœa…    IDATxúÏ›Õï≥∫ö∞aÍ¨ì 'É¶B†B¿”ûQÉ áÄC∞C¿!òpf≠N¿Ñ`B7–⁄|4HB¿∆Æ˚Ì]/ Ù˚ ‡Î˘|z        !ˇzı       ¿G!Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       íà∫      Ä$¢Æ        â®+       H"Í
+       í˛˝Í    ˛ú<œÛ</À2Ç8éì$yıamUUÂy^UUUUÍÉ </CU*|ﬂo6ŒÛ¸˜˜7M”„Ò8a_u]_Ø◊≤,´™™Î⁄ÛºÎıEëÁyæÔAEë˙ﬂıUUuΩ^´™*ÀR˝%Cﬂ˜„8V2VYñ*Aï±*?£(öñöR◊µ™∞Möqáa∏ùJ 0Às™9;ı}?ä¢$Ié«„˝~7Ì¢(ä˘ªH”Ùvª≠yvÉ&Á9¶\ÒØ>F  FòŸµıc¨Ií¨ve‚àﬂÛä¢0•YEß©∞`;ÃÍy^«Yñ›Ô˜«„°∂O”tÏÒgY«±„1'Ib9lqEQÿè-ä¢QSπ~∆vÚ”2˜4y<Ì
+´"¬ÕUª\./Op°4 ÛMètdYñ¶©„≠3ﬂ˜-[ÜaòeYè«CÌ≈Ò∂§Â¶Ô˚£∆óÀ%MS«ää*ù°í÷‰<ﬁ‘Ìv¨ÀØ>F  Fò”µôh«√xπ¢(“4MíƒeJ¢&iö^.ó«„°M0M”f˚ ≤,koyøﬂ≥,3ÌkT‘ıx<v“Ò}ø≥$•(ä˛=Ä(äñéΩ>˜X∞c’hgÏ¸‘î¢(ö˘]Ü*h€	qé∫e"û‡Bi DD:Ïπ4ÌærøﬂM›aÜñ;ôˆN4ä¢Œ}ÀÀÂ¢}PkÏ‚vªY©æÔkSªﬂÔ*n´0πÔò,M”5ó*8z<¶Yƒ´ÌlÛ¢¿gõ–µô^&«ÒöGæAÔ»Öaö"≠çˆJ˚ˆ⁄Èèc‘ıvªıóºƒql⁄›ÌvÎ„$IOgÌÓÏ∆®wt8^≥,kˇ™3WmüÇcLS<¡Ö“ HëâtXzMmó÷Èª@À^L›pQ⁄_Y∆}ñÄØK◊u<;q[«˝ì©B;·¥ò∆ƒØ>Æ∑∑Âã üml◊fz:ä¢5{kﬁ¢#ªﬂÔ¶yÅÁyÉœq∑ßæÔ>Ì~π\:Ûó¸—Nµß-⁄˚ˆe1”¥µ4Ôì|^0Kö^ã<∆Ω›nù¨Ël–Y{4ò√‚	.î& @–ø∆ˆOZñ∑hÉûIíò∫∆˝~ﬂºF›%);ı&†˛·Ây˛ÛÛc⁄QáÂÏ\ﬁ'†n⁄ªl	à∏^Øß”È’GaD]X¬∆/: |∂±]õil9ÁS?ÔÓ]:≤ ,ó…˛ÓµŒ9∫|*JΩ◊u‘ûœÁ˝~ﬂ?∞¡t|ﬂø\.ù?ñeπ€Ì'M.Í∫ﬁÔ˜u]´W¨ﬁÔ˜¢(ä¢x<EQX2∞˝≠≠éÛ˘|>ü«âΩº’uΩ€Ì⁄Èﬂ,È¸Â|>ÁyæZÇ•	 ê%uù0F¥, ÌÊ}?À≤˛h∏™*«1ƒ¸ ëÀ@QU’ÔÔÔ´è´‚¢¿{±ºa`Â#Ÿà˜Í»,˚ú®túbƒqÏ¯∫Rœrı<œ˛F∏FÜ˝¬©B{UU9É›·p(À2À≤ÀÂ“….µ\∆Ú-¨Îı⁄ˇc]◊á√A˝∑Ô˚*ª“4¸ﬁ›ızµÃáC]◊ÌøÙ#¬˝ø®ÄÚ:	.î& @ñL‘uÀç‚≤,eo¡iûÙ¬.écóo›s‘u˝˚˚À@ÍO·¢¿€QPÍ¸1À≤ø9V¸#Y]◊ì'8«„—Â∆◊ÎUrUè;ÓK·U◊»1ãÎız>ü’ß…L€Xñ™hIyL”ÙÒx\.ó„Òx<’˙Y{¿⁄tE™™Í/û’F…;◊•ÆkÌZÒJ  ÓeQWœz7X{'sé˛<©1Ñã	ÔFQÀ^}X ﬁQí$Í≥ ˝~ˇ≥≈?“ëÕú›.VUOÓkˇiT—
+Ç@ªÊ∫,ÀfIÈdß”)ä"˚π®7Ω:&ÿDo∑[?Yﬂ˜è«£%åk*x⁄†§v.ŸèrûœÁ~tX<¡Ö“ à{e‘’˛‚Ò›ô⁄*Àrù€}qÛFK,gøﬂOxßﬁ ﬁW«¸Ÿ7∫˛ùé¨‡µÙ5ä"{!9ùN⁄	îzËﬁ}Gûy“d⁄ÖªÀÂ“ulü˚ãèU·±ØNíƒtF⁄”1≠Jv¨§˝üã'∏Pö Ä%º2Íj±D‘’rõ˜t:…ﬁÓ´™ÍÎÎ´O˚o>8ÜúNß?2iAÉã xkº#´™j‘ÍQÀ\∆ÚÃ¯ÑŸáÂ'3ó™¯æ?gJˇ¿ŒÁsEÉÔΩ5m†ùrÊyÓ>1‘F{;s@ÒJ ∞ÑçF]óÅÈ.h]◊≤c>”„*v!u8Ê?ÛÖ˜¬E º5:2œÛNßì˚ßç,KV-¡Pó¬v¯æo˙’˘|^Áì}IítfRUU%I‚Ú°∞0µ≥0m|y˛˚.:!QÒJ ∞Ñø˙ ÙäNFQdÍ¢Ú<wˇ<Ë ”^‘CdR{QœÜîeYUUYñu]áa®∆I˝qâEUUyû_Ø◊∫ÆÀ≤T)® ı‡[Ï∑I’ÒtˆRUUUU*˝(äL:S´≥≥o¨®0˝k{¯x>ü€)´∑G≈q<*«öîÊdU÷M~õƒÑkjy4ØÆÎˆ≤å°õÛjÔ]mØåz6ÌzΩÊyÆrI%¢Æ›:oÿ∏^ØÍÍ®sWO‰µÛ~øWÔ˘jˇƒ%Âˆ7 M?Q◊ÀΩ4™+Æ≤´™*U~ÏE›∫Ë3ã±j.,Ÿh⁄K>∑€ä	&\Ù>©ÚØ4çXsE‘Q©÷¶≥qYñ˚˝˛x<∂ßÓ≠´ΩºyŒŸ;!ñ.ÍZ"}ü»Â)xéÍw§ÇIÕì49c“©bÁÛY∞™òˆ“(’µŸ´vÁc≥+W1ı=[’∂´„T«3π%¥ΩL+3[†∆•.ﬂRÇ‡˘|jˇ…Ú¥¯Ñ®´gù4ùœg¡ÈåVøöÑaÿﬂ©zGácöa:∆ãEÅñeŸ\PÒJ ∞àßKº≤(
+”Ø,≠|ö¶£∂∑Ï•≠(
+KV‹Ô˜±ø“ÁÛ˘T#f«£ö‡ÒxtÜ—˝ó=EQd:£∆ÌvkÁ™Ô˚QµgæÔ´ÔÅöR∞‰g;,%$√€Ì÷NÛrπòÜ»At6nÿQ©Ûµ=MW≥ìcÌYá 1Ì—&Ib…∑æi◊t‘lJeÇ˚ﬁ€yÅKyÓî®6ﬂ˜/óÀ”\‹Û }ÔùK£Êç˝¨pÃ¿v	1m£r…•4>ßı˘]§€õ”∂¶‰∏l3÷‰ãﬁ&U˛M©yˇ7í“iÙé«£:ÊŒ.sı9Tﬁ\≤wr,Z‘èslﬂ'rπE
+û£Ö˙©ÅÑ`RÛ«$É∑œõ÷ì$q9∞∂	]õ˝;Cë’™XñeùK¶¬ ùìçt≤,LøCjÙ2øÃLcπ.ñ_YæÈ‘úÈ¥ﬁvªYíùv˙ñh¶
+˛.ß?¿à¢h˛E‘V“˛‡ˇÒxå∫∏¶∫ﬂ§,û‡Bi Ú ®´%˛• Œè∫ﬁÔwS
+ûÁ©qsﬂÿ®k≥˝BQ◊Œÿ∫=ÀÍ\ﬂ˜-CÌŒ∆Ì…∆ÌvkÔ¬2døﬂÔYñô∆˙EQ<è¡{ÏæÔ7ß08$5ù‘„Ò∏\.¶}©˘ﬁ‡zá0-£∫ˆ±u‚&è«£_ö…ÿ†…◊‘~:˝L–ÓΩsπ€ô–˘'˚Ã™(ä¡Œ≤l°®kÁPè«c;{;≠G'+Ï_éˆ}?À≤~º†(äˆØ‚8n.ç™¶µ]jÔÉ—SQ∑ˇJªØ6¡bl©qÕ€ÍÒxt2MÕá›Éns.∫)ë…Â_˚ï`SxÓ˜{ìc«„±˙Èt∑€ÕΩoµ±`,Z‘;D˙>ëÀ-R-‘ÔH$ìì<{-sá 7K√’øÓ‚]õΩ∂vñ+T±«„—èÆ6€ªå‚&nÏ	jO≥O™ÃL0-ÍjüÜ¥œwÏ¬^¶ù„¥•*ÛıãúTdP€2ÙÜÂƒµ…ö2ø)∑‚	.î& `!/ã∫ZF¶`~‘ıiÁô:ı±Q◊f¨∞D‘µîÏÁUÁ€Õ∂˛≤îŒù≥∂ŸM°“ˆ‰ßøh¢-é„v:Í±8”<'C”ëò ïZé°˛#À≤¢(L¡bS‚ùs‘7µkgã¡úkZ¸C{÷Ií-⁄+ÿu
+LßvõÊÛ¶uiö™Ω7ÛF”¸ÕûKvùêz;“hØ⁄–62ˆi≠â⁄FªÓ√î'™6?[‘Á\tÒb¸x<,¨¥?iéºéú@‰¢Kï•ﬂˆo‰<SI”f≤)~§›ÿ‘[Z!ëX®®[ÚvZﬂ'r≤"œ—B˝é‘@B0)Ÿ1…”<b¥¸ì¢F#çÂ∫∂QKœñ´b⁄†j'ÙlYUg9fª˘£Ò23 ¥®Î”PaµF≈^-…NnÇÏQW«Uv⁄Ô"•,˜Øö6s,ã|µ…öÍrSÈƒ\(M ¿B^u5˝ƒ˜}”<\$Íjy≥Xg®›pè∫v≤  outputs 0  children 0  332ms
+/home/jaime/docs/onenote/large/LargeData.one  onenote  prepared  outputs 4  children 136  4.084s
+/home/jaime/docs/pdf/edge/signed/digitally-signed-3d-portfolio.pdf  document  prepared  outputs 2  children 5  6.044s
+/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.pdf  document  failed: document: qpdf: form of cfr-2024-title32-vol1.pdf: field "USGPOSignature": value "3033 0 R": neither a string nor a name  outputs 1823  children 0  2m21.465s
+
+ROUTE             OUTCOME           INPUTS
+document          failed            3
+document          prepared          1
+document          seen              63
+office            seen              117
+vision-converted  seen              20
+vision            seen              10
+nested            seen              72
+onenote           failed            1
+onenote           prepared          1
+onenote           seen              24
+archive           seen              9
+audio             seen              41
+video             seen              9
+text              seen              180
+unrouted          no processor yet  41
+total                               592
+
+run 01a1b6b7-7611-78a7-9713-78f04b7df7fc  runs/01a1b6b7-7611-78a7-9713-78f04b7df7fc/record.jsonl
+report runs/01a1b6b7-7611-78a7-9713-78f04b7df7fc/report.html

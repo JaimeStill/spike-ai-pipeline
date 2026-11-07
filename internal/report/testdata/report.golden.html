@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docproc run 019a5f00-0000-7000-8000-000000000000</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa; --fg: #1d1d1b; --muted: #6b6b66; --line: #dddcd6; --panel: #f1f0ec;
+  --link: #1f5fa8; --ok: #2f7a3a; --warn: #9a6400; --bad: #b3261e; --info: #4b5ea6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a; --fg: #e6e5e1; --muted: #9a9a94; --line: #34363a; --panel: #212226;
+    --link: #8ab8f0; --ok: #79c487; --warn: #e0b45c; --bad: #f08a80; --info: #a6b4f0;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto; max-width: 72rem; padding: 1.5rem 1rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; border-bottom: 1px solid var(--line); padding-bottom: .25rem; }
+a { color: var(--link); }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
+.muted { color: var(--muted); }
+.error { color: var(--bad); }
+.warning { color: var(--warn); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: .3rem .6rem .3rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+td.n, th.n { text-align: right; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: .15rem 1rem; margin: .5rem 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+.badge { display: inline-block; padding: 0 .45rem; border-radius: .6rem; border: 1px solid var(--line); background: var(--panel); font-size: .85em; white-space: nowrap; }
+[data-outcome="prepared"] { color: var(--ok); border-color: currentColor; }
+[data-outcome="seen"] { color: var(--info); border-color: currentColor; }
+[data-outcome="quarantined"], [data-outcome="failed"], [data-outcome="error"], [data-outcome="encrypted"] { color: var(--bad); border-color: currentColor; }
+[data-outcome="no processor yet"], [data-outcome="limited"], [data-outcome="cycle"] { color: var(--warn); border-color: currentColor; }
+details.input { border: 1px solid var(--line); border-radius: .4rem; margin: .6rem 0; background: var(--bg); }
+details.input > summary { cursor: pointer; padding: .5rem .75rem; background: var(--panel); border-radius: .4rem; overflow-wrap: anywhere; }
+details.input[open] > summary { border-bottom: 1px solid var(--line); border-radius: .4rem .4rem 0 0; }
+details.input > .body { padding: .25rem .75rem .75rem; }
+ul.tree { list-style: none; margin: 0; padding: 0; }
+ul.tree ul.tree { margin-left: .5rem; padding-left: 1rem; border-left: 2px solid var(--line); }
+li.part { margin: .6rem 0; }
+.part-head { overflow-wrap: anywhere; }
+.part-head .name { font-weight: 600; }
+.flags { margin: .25rem 0; }
+.outputs { margin: .25rem 0; }
+.outputs ul { margin: .15rem 0; padding-left: 1.2rem; }
+.images { display: flex; flex-wrap: wrap; gap: .5rem; margin: .4rem 0; }
+.images figure { margin: 0; max-width: 16rem; }
+.images img { display: block; max-width: 100%; max-height: 16rem; border: 1px solid var(--line); background: #fff; }
+.images figcaption { font-size: .85em; color: var(--muted); overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+<h1>docproc run <code>019a5f00-0000-7000-8000-000000000000</code></h1>
+<dl class="facts">
+<dt>Schema</dt><dd>1</dd>
+<dt>Start</dt><dd class="mono">2026-11-07T12:00:00.000000000Z</dd>
+<dt>End</dt><dd class="mono">2026-11-07T12:00:01.250000000Z (1.25s)</dd>
+<dt>Workers</dt><dd>1</dd>
+<dt>Inputs</dt><dd><code>/in</code></dd>
+</dl>
+</header>
+
+<h2>Stages</h2>
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>State</th><th>Stage</th><th>Tools</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>document</td><td>missing</td><td></td><td></td><td>qpdf: not found</td></tr>
+<tr><td>vision</td><td>excluded</td><td></td><td></td><td></td></tr>
+<tr><td>archive</td><td>wired</td><td>archive <span class="muted">v2</span> <code class="muted" title="0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69">0f2a7a60887f</code></td><td>7zz 26.06</td><td></td></tr>
+<tr><td>text</td><td>wired</td><td>text <span class="muted">v1</span> <code class="muted" title="c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835">c953ea6e98fa</code></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+
+<h2>Tools</h2>
+<div class="scroll"><table>
+<thead><tr><th>Program</th><th>Minimum</th><th>Version</th><th>From</th><th>Error</th></tr></thead>
+<tbody>
+<tr><td><code>qpdf</code></td><td>11.0.0</td><td></td><td><code></code></td><td class="error">qpdf: not found</td></tr>
+<tr><td><code>7zz</code></td><td>23.01</td><td>26.06</td><td><code>/usr/local/bin/7zz</code></td><td class="error"></td></tr>
+</tbody>
+</table></div>
+
+<h2>Missing and excluded routes</h2>
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>State</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>document</td><td>missing</td><td>qpdf: not found</td></tr>
+<tr><td>vision</td><td>excluded</td><td>--exclude vision</td></tr>
+</tbody>
+</table></div>
+<p class="muted">Their parts have no processor yet.</p>
+
+<h2>Summary</h2>
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>Outcome</th><th class="n">Inputs</th><th class="n">Parts</th></tr></thead>
+<tbody>
+<tr><td>archive</td><td><span class="badge" data-outcome="prepared">prepared</span></td><td class="n">1</td><td class="n">1</td></tr>
+<tr><td>archive</td><td><span class="badge" data-outcome="quarantined">quarantined</span></td><td class="n">1</td><td class="n">1</td></tr>
+<tr><td>text</td><td><span class="badge" data-outcome="prepared">prepared</span></td><td class="n">1</td><td class="n">2</td></tr>
+<tr><td>-</td><td><span class="badge" data-outcome="error">error</span></td><td class="n">1</td><td class="n">1</td></tr>
+<tr><th>total</th><th></th><th class="n">4</th><th class="n">5</th></tr>
+</tbody>
+</table></div>
+<p class="muted">Parts count every part, an input and each part found in it.</p>
+
+<h2>Inputs</h2>
+<details class="input" id="input-0" open>
+<summary><code>/in/evil.zip</code> <span class="badge">archive</span> <span class="badge" data-outcome="quarantined">quarantined</span> <span class="muted">1ms</span></summary>
+<div class="body">
+<dl class="facts">
+<dt>Argument</dt><dd><code>/in</code>, path <code>evil.zip</code></dd>
+<dt>File</dt><dd>199 B <span class="muted">(199 bytes)</span>, <code>-rw-r--r--</code></dd>
+<dt>Modified</dt><dd class="mono">2026-11-07T12:00:00.001000000Z</dd>
+<dt>Time</dt><dd><span class="mono">2026-11-07T12:00:00.002000000Z</span> to <span class="mono">2026-11-07T12:00:00.003000000Z</span>, 1ms</dd>
+</dl>
+<ul class="tree"><li class="part">
+<div class="part-head"><span class="name">evil.zip</span>
+<span class="badge">archive</span>
+<span class="badge" data-outcome="quarantined">quarantined</span></div>
+<dl class="facts">
+<dt>Content</dt><dd>199 B, sha256 <code title="63f3700e4eff26038936b9c8bda4b95351b8cac4657b990676c3bb53fb7ea0c8">63f3700e4eff</code>, kind zip, detected <code>application/zip</code></dd>
+<dt>Routed</dt><dd>ZIP signature without an OOXML extension or ODF mimetype</dd>
+<dt>Stage</dt><dd>archive <span class="muted">v2</span> <code class="muted" title="0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69">0f2a7a60887f</code></dd>
+<dt>Reason</dt><dd>zip-traversal: entry &#34;../evil.txt&#34;</dd>
+<dt>Flags</dt><dd><ul class="flags"><li><code>zip-traversal</code> <span class="badge">unsafe</span> entry &#34;../evil.txt&#34;</li></ul></dd>
+<dt>Quarantine</dt><dd><a href="../../quarantine/63f3700e4eff26038936b9c8bda4b95351b8cac4657b990676c3bb53fb7ea0c8/content">kept file</a>, <a href="../../quarantine/63f3700e4eff26038936b9c8bda4b95351b8cac4657b990676c3bb53fb7ea0c8/flags.json">flags</a></dd>
+</dl>
+</li>
+</ul>
+</div>
+</details>
+<details class="input" id="input-1" open>
+<summary><code>/in/hello.txt</code> <span class="badge">text</span> <span class="badge" data-outcome="prepared">prepared</span> <span class="muted">1ms</span></summary>
+<div class="body">
+<dl class="facts">
+<dt>Argument</dt><dd><code>/in</code>, path <code>hello.txt</code></dd>
+<dt>File</dt><dd>73 B <span class="muted">(73 bytes)</span>, <code>-rw-r--r--</code></dd>
+<dt>Modified</dt><dd class="mono">2026-11-07T12:00:00.004000000Z</dd>
+<dt>Time</dt><dd><span class="mono">2026-11-07T12:00:00.005000000Z</span> to <span class="mono">2026-11-07T12:00:00.006000000Z</span>, 1ms</dd>
+</dl>
+<ul class="tree"><li class="part">
+<div class="part-head"><span class="name">hello.txt</span>
+<span class="badge">text</span>
+<span class="badge" data-outcome="prepared">prepared</span></div>
+<dl class="facts">
+<dt>Content</dt><dd>73 B, sha256 <code title="df83d0a0bb18f003bc0c2871c743f8802bc96fbc225e8457e5081a0bc963cd5d">df83d0a0bb18</code>, detected <code>text/plain; charset=utf-8</code></dd>
+<dt>Routed</dt><dd>text by its .txt extension</dd>
+<dt>Stage</dt><dd>text <span class="muted">v1</span> <code class="muted" title="c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835">c953ea6e98fa</code></dd>
+<dt>Yielded</dt><dd>outputs 1, parts 0</dd>
+</dl>
+<div class="outputs">
+<ul>
+<li><a href="../../outputs/df83d0a0bb18f003bc0c2871c743f8802bc96fbc225e8457e5081a0bc963cd5d/text-dbb27b7d468c/1.txt">text</a> <span class="muted">text, text/plain, encoding utf-8</span></li>
+</ul></div>
+</li>
+</ul>
+</div>
+</details>
+<details class="input" id="input-2" open>
+<summary><code>/in/notes.zip</code> <span class="badge">archive</span> <span class="badge" data-outcome="prepared">prepared</span> <span class="muted">1ms</span></summary>
+<div class="body">
+<dl class="facts">
+<dt>Argument</dt><dd><code>/in</code>, path <code>notes.zip</code></dd>
+<dt>File</dt><dd>183 B <span class="muted">(183 bytes)</span>, <code>-rw-r--r--</code></dd>
+<dt>Modified</dt><dd class="mono">2026-11-07T12:00:00.007000000Z</dd>
+<dt>Time</dt><dd><span class="mono">2026-11-07T12:00:00.008000000Z</span> to <span class="mono">2026-11-07T12:00:00.009000000Z</span>, 1ms</dd>
+</dl>
+<ul class="tree"><li class="part">
+<div class="part-head"><span class="name">notes.zip</span>
+<span class="badge">archive</span>
+<span class="badge" data-outcome="prepared">prepared</span></div>
+<dl class="facts">
+<dt>Content</dt><dd>183 B, sha256 <code title="b82bdcbfb963cda2e3a4c27bbc802242f8c698a4ea8fa78394a84927feba30bf">b82bdcbfb963</code>, kind zip, detected <code>application/zip</code></dd>
+<dt>Routed</dt><dd>ZIP signature without an OOXML extension or ODF mimetype</dd>
+<dt>Stage</dt><dd>archive <span class="muted">v2</span> <code class="muted" title="0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69">0f2a7a60887f</code></dd>
+<dt>Yielded</dt><dd>outputs 0, parts 1</dd>
+</dl>
+<ul class="tree"><li class="part">
+<div class="part-head"><span class="name">notes.txt</span>
+<span class="badge">text</span>
+<span class="badge" data-outcome="prepared">prepared</span> <span class="muted">zip entry notes.txt</span></div>
+<dl class="facts">
+<dt>Content</dt><dd>26 B, sha256 <code title="e11da66dcf7901baed5cba327ca288bcfa4d978e022a5878ab3d92ff22a99c8f">e11da66dcf79</code></dd>
+<dt>Routed</dt><dd>text by its .txt extension</dd>
+<dt>Stage</dt><dd>text <span class="muted">v1</span> <code class="muted" title="c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835">c953ea6e98fa</code></dd>
+<dt>Yielded</dt><dd>outputs 1, parts 0</dd>
+</dl>
+<div class="outputs">
+<ul>
+<li><a href="../../outputs/e11da66dcf7901baed5cba327ca288bcfa4d978e022a5878ab3d92ff22a99c8f/text-dbb27b7d468c/1.txt">text</a> <span class="muted">text, text/plain, encoding utf-8</span></li>
+</ul></div>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<details class="input" id="input-3" open>
+<summary><code>/in/zz-unreadable.txt</code> <span class="badge">-</span> <span class="badge" data-outcome="error">error</span> <span class="muted">1ms</span></summary>
+<div class="body">
+<dl class="facts">
+<dt>Argument</dt><dd><code>/in</code>, path <code>zz-unreadable.txt</code></dd>
+<dt>File</dt><dd>7 B <span class="muted">(7 bytes)</span>, <code>----------</code></dd>
+<dt>Modified</dt><dd class="mono">2026-11-07T12:00:00.010000000Z</dd>
+<dt>Time</dt><dd><span class="mono">2026-11-07T12:00:00.011000000Z</span> to <span class="mono">2026-11-07T12:00:00.012000000Z</span>, 1ms</dd>
+<dt>Error</dt><dd class="error">dispatch: open /in/zz-unreadable.txt: permission denied</dd>
+</dl>
+</div>
+</details>
+</body>
+</html>
+
+

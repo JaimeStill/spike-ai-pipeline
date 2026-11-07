@@ -1,0 +1,179 @@
+{
+  "schema": "1",
+  "run": "01a1b69e-a80b-7ece-871b-775878f2b217",
+  "start": "2026-11-07T15:26:53.451924784Z",
+  "end": "2026-11-07T15:53:47.359089399Z",
+  "workers": 22,
+  "inputs": [
+    "/home/jaime/docs"
+  ],
+  "record": "runs/01a1b69e-a80b-7ece-871b-775878f2b217/record.jsonl",
+  "tools": [
+    {
+      "program": "gs",
+      "minimum": "10.0",
+      "from": "/usr/bin/gs",
+      "version": "10.8.0"
+    },
+    {
+      "program": "qpdf",
+      "minimum": "11.0",
+      "from": "/usr/bin/qpdf",
+      "version": "12.4.2"
+    },
+    {
+      "program": "pdfdetach",
+      "minimum": "22.02",
+      "from": "/usr/bin/pdfdetach",
+      "version": "26.10.0"
+    },
+    {
+      "program": "magick",
+      "minimum": "7.1",
+      "from": "/usr/bin/magick",
+      "version": "7.1.2"
+    },
+    {
+      "program": "soffice",
+      "minimum": "24.2",
+      "from": "gotenberg/gotenberg:9.1.0-libreoffice@sha256:4ff340bb7b0753e7d037ceb75a08b09c3a9aebd0e6484df9516ec29ec31074ff",
+      "version": "26.8.2.2"
+    },
+    {
+      "program": "spike-ai-pipeline-office",
+      "minimum": "0.1.0",
+      "from": "/home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-office/0.1.0/spike-ai-pipeline-office",
+      "version": "0.1.0"
+    },
+    {
+      "program": "spike-ai-pipeline-mail",
+      "minimum": "0.2.0",
+      "from": "/home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-mail/0.3.1/spike-ai-pipeline-mail",
+      "version": "0.3.1"
+    },
+    {
+      "program": "spike-ai-pipeline-onenote",
+      "minimum": "0.1.0",
+      "from": "/home/jaime/.local/share/mise/installs/github-jaime-still-spike-ai-pipeline-onenote/0.1.0/spike-ai-pipeline-onenote",
+      "version": "0.1.0"
+    },
+    {
+      "program": "7zz",
+      "minimum": "24.01",
+      "from": "/home/jaime/.local/share/mise/installs/github-ip7z-7zip/26.06/7zz",
+      "version": "26.6"
+    },
+    {
+      "program": "ffmpeg",
+      "minimum": "9.0",
+      "from": "/usr/bin/ffmpeg",
+      "version": "9.0.2"
+    },
+    {
+      "program": "ffprobe",
+      "minimum": "9.0",
+      "from": "/usr/bin/ffprobe",
+      "version": "9.0.2"
+    }
+  ],
+  "stages": [
+    {
+      "route": "document",
+      "state": "wired",
+      "stage": {
+        "name": "document",
+        "version": "gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0",
+        "config": "94f4373a87cf67b943a25380fed712e462c1199a81f0833b015be106196e4a94"
+      },
+      "tools": "gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0"
+    },
+    {
+      "route": "office",
+      "state": "wired",
+      "stage": {
+        "name": "office",
+        "version": "spike-ai-pipeline-office 0.1.0, soffice 26.8.2.2, magick 7.1.2",
+        "config": "36bc8610fd9115d8553bdda249cfcd021df5e746c543503624a041f88088b4b9"
+      },
+      "tools": "spike-ai-pipeline-office 0.1.0, soffice 26.8.2.2, magick 7.1.2"
+    },
+    {
+      "route": "vision-converted",
+      "state": "wired",
+      "stage": {
+        "name": "picture",
+        "version": "magick 7.1.2, soffice 26.8.2.2",
+        "config": "e169b899af8f37c3d552a0a751749d1d96a0614d9d88b02347a2465e4c46008c"
+      },
+      "tools": "magick 7.1.2, soffice 26.8.2.2"
+    },
+    {
+      "route": "vision",
+      "state": "wired",
+      "stage": {
+        "name": "vision",
+        "version": "1",
+        "config": "c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835"
+      }
+    },
+    {
+      "route": "nested",
+      "state": "wired",
+      "stage": {
+        "name": "email",
+        "version": "spike-ai-pipeline-mail 0.3.1",
+        "config": "7f0bf24d5862b41a86b7a77a36d78790bd6f4ba8b91dd7b7b9f99af65e34e0e6"
+      },
+      "tools": "spike-ai-pipeline-mail 0.3.1"
+    },
+    {
+      "route": "onenote",
+      "state": "wired",
+      "stage": {
+        "name": "onenote",
+        "version": "spike-ai-pipeline-onenote 0.1.0",
+        "config": "7f0bf24d5862b41a86b7a77a36d78790bd6f4ba8b91dd7b7b9f99af65e34e0e6"
+      },
+      "tools": "spike-ai-pipeline-onenote 0.1.0"
+    },
+    {
+      "route": "archive",
+      "state": "wired",
+      "stage": {
+        "name": "archive",
+        "version": "2",
+        "config": "0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69"
+      },
+      "tools": "7zz 26.6"
+    },
+    {
+      "route": "audio",
+      "state": "wired",
+      "stage": {
+        "name": "audio",
+        "version": "ffmpeg 9.0.2, ffprobe 9.0.2",
+        "config": "a4aae033b193a00beaab43db198550d69707f24d1557ea1754e1bc9965d179aa"
+      },
+      "tools": "ffmpeg 9.0.2, ffprobe 9.0.2"
+    },
+    {
+      "route": "video",
+      "state": "wired",
+      "stage": {
+        "name": "video",
+        "version": "ffmpeg 9.0.2, ffprobe 9.0.2",
+        "config": "dc1af98ebd4574d8b6d1995a7c9c8cd6668fb2cf226e746d5b2b4c533355cf3f"
+      },
+      "tools": "ffmpeg 9.0.2, ffprobe 9.0.2"
+    },
+    {
+      "route": "text",
+      "state": "wired",
+      "stage": {
+        "name": "text",
+        "version": "1",
+        "config": "c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835"
+      }
+    }
+  ]
+}

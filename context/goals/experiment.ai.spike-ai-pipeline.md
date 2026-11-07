@@ -26,7 +26,7 @@
 18. [x] audio
 19. [x] streams
 20. [x] formats
-21. [ ] docproc
+21. [x] docproc
 22. [ ] docinfer
 
 ## Task brief · experiment.ai.spike-ai-pipeline · docproc
@@ -1920,6 +1920,60 @@ Door          two-way: code on a branch, no tag, pins and
 - docproc (r5): two tasks, `docproc` then `docinfer`; the sync follows docinfer. Rejected: one
   task (two applications from nothing, too large for a session).
 - docproc (plan): run ids use Go 1.27's uuid.NewV7; standard library first throughout.
+- docproc (build, escalation, the architect): a re-run's record copies a seen part's subtree
+  (its nested part and output lines) from the earliest run record that holds it, marked seen, so
+  every run's record is complete on its own; a seen part found in no earlier record is recorded
+  with a warning. Rejected: stating the limit and having readers union every run record.
+- docproc (build, spec review): a failed input's terminal line shows its error reduced to one
+  printable line; the record keeps the full error.
+- docproc (build): tools are found through a "tool lookup" graph node, exec.LookPath in
+  production and apptest's fixtures in tests, so no test runs a host tool. A stage is wired only
+  when every tool its row names is found and new enough, even where processing could build it over
+  fewer (archive without 7zz, document without qpdf or pdfdetach, picture without soffice), so a
+  stage runs as the stage table says or not at all. Rejected: wiring the reduced stages.
+- docproc (build): any tool or stage constructor error, not only a missing or too-old tool, leaves
+  the stage out with the error as its reason; building the stages never fails the run.
+- docproc (build): a tool only excluded stages need is never looked up, so excluding office and
+  vision-converted runs no docker.
+- docproc (build): --exclude takes processing's route names (vision-converted, nested, ...),
+  repeatable by cli.StringsVar's convention and never comma-split; an unknown route is a usage
+  error from Validate, before any tool is built.
+- docproc (build, the session's correction after slice 4): an input's path, a file's arg, and the
+  manifest's inputs are absolute and cleaned; only the files docproc writes (refs, quarantine
+  files, the manifest's record) are relative to the run directory. Rejected: slice 4's rule that
+  every path, inputs included, is relative to the run directory, which wrote ~/docs inputs as
+  "../../home/...".
+- docproc (build): outputs are always copied into the store, never moved or linked, since the
+  text and vision stages pass the part's own file through, which for an input is the user's file.
+  An output or quarantine already stored is left as it is, so content prepared again is stored
+  once.
+- docproc (build): every output gets a stored file, an inline Value included (a record as .json),
+  so every ref names a file, and the Value is cleared before the index records it. The store's
+  path is outputs/<sha256>/<stage>/<n><ext>: <stage> is the stage's name plus 12 hex digits of
+  the SHA-256 of its whole identity, <n> counts the part's outputs from 1, and <ext> comes from a
+  fixed media-type table, else the output file's extension, so a ref is the same on any host.
+- docproc (build): the report is a file per run, runs/<run id>/report.html, written as each run
+  ends and rendered again by `docproc report <run-dir> [--run <id>]`, the latest run by default.
+  The standards review made a --run that is a path or a dot entry a usage error, so the command
+  can't read or write outside runs/.
+- docproc (build): every record line carries "input", the input's absolute path, since the pool
+  interleaves inputs; "outputs" and "children" appear on part lines only.
+- docproc (build, spec review): the terminal cuts an error at 400 runes with an ellipsis. Rejected:
+  the review's 160, which cut off the cause of every long error in the ~/docs runs, whose first
+  lines reach 325 runes behind a path into the working directory.
+- docproc (build): subtree replay is keyed by part SHA-256 and stage identity, the index's own
+  key, so content prepared under another stage version is never copied. The earlier records are
+  read once before the run, earliest first, and this run's lines are searched last, for content
+  seen twice in one run. A record that can't be read is skipped with a terminal warning. Rejected:
+  keying by SHA-256 alone.
+- docproc (build): behavior 6's "every input is Seen" holds for 545 of 592 ~/docs inputs, since
+  processing's index records neither a part that failed or holds a failed or limited part, nor a
+  part whose route has no stage. The README, schema page, and finding state processing's rule.
+  Rejected: changing processing's index, which is out of scope.
+- docproc (accept): the architect accepted the session brief after a manual verification run of the
+  whole sequence (build, a varied run, the record against the contract, the report, a re-run all
+  seen with subtrees copied, re-render, usage errors, --exclude, missing pinned tools, quarantine,
+  the check). No tag.
 
 ## Pending edits
 
@@ -2366,3 +2420,22 @@ Door          two-way: code on a branch, no tag, pins and
   repository is a test's.
 - roadmap note · spike-ai-pipeline-client (its next task): its CI trails jdx/mise-action
   v5.2.4 -> v5.2.7 and taiki-e/create-gh-release-action v1.11.0 -> v1.12.0.
+- roadmap note · spike-ai-pipeline-processing (its next task): a PDF whose form read fails
+  (qpdf refuses a field whose value is an indirect reference, as in ~/docs' cfr-2024-title32-vol1.pdf)
+  fails the whole document part after its pages render, so the index never records it and every
+  docproc re-run renders its 1,823 pages again (docproc finding). A failed form read could be a
+  warning beside the pages.
+- roadmap note · spike-ai-pipeline-processing (its next task): the audio stage's windows each run
+  an ffmpeg that decodes the source from its start, so a 4.4 h audiobook took 1,614 s in docproc's
+  ~/docs run while every other input finished in 332 s (docproc finding). Seeking per window, or
+  one decode streamed into windows, would bound it.
+- coordinator · roadmap, the docproc task's summary: "and writes a run directory, a versioned
+  contract (schema "1"): outputs stored once by content, a JSON Lines record of every event, and a
+  static HTML report." reads "and writes a run directory, a versioned contract (schema "1"):
+  outputs stored once by content, a JSON Lines record of every event per run, whole on its own
+  since a re-run copies each seen part's subtree from the earliest record that holds it, and a
+  static HTML report per run, rendered again by `docproc report`." and "A finding records a run
+  over ~/docs." reads "A finding records a run over ~/docs and its re-run."
+- coordinator · roadmap, the docinfer task's summary: "that reads a docproc run directory" reads
+  "that reads one run of a docproc run directory, its manifest and its record, which is whole on
+  its own".

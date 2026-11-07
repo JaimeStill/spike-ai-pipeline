@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docproc run {{.M.Run}}</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa; --fg: #1d1d1b; --muted: #6b6b66; --line: #dddcd6; --panel: #f1f0ec;
+  --link: #1f5fa8; --ok: #2f7a3a; --warn: #9a6400; --bad: #b3261e; --info: #4b5ea6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a; --fg: #e6e5e1; --muted: #9a9a94; --line: #34363a; --panel: #212226;
+    --link: #8ab8f0; --ok: #79c487; --warn: #e0b45c; --bad: #f08a80; --info: #a6b4f0;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto; max-width: 72rem; padding: 1.5rem 1rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; border-bottom: 1px solid var(--line); padding-bottom: .25rem; }
+a { color: var(--link); }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
+.muted { color: var(--muted); }
+.error { color: var(--bad); }
+.warning { color: var(--warn); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: .3rem .6rem .3rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+td.n, th.n { text-align: right; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: .15rem 1rem; margin: .5rem 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+.badge { display: inline-block; padding: 0 .45rem; border-radius: .6rem; border: 1px solid var(--line); background: var(--panel); font-size: .85em; white-space: nowrap; }
+[data-outcome="prepared"] { color: var(--ok); border-color: currentColor; }
+[data-outcome="seen"] { color: var(--info); border-color: currentColor; }
+[data-outcome="quarantined"], [data-outcome="failed"], [data-outcome="error"], [data-outcome="encrypted"] { color: var(--bad); border-color: currentColor; }
+[data-outcome="no processor yet"], [data-outcome="limited"], [data-outcome="cycle"] { color: var(--warn); border-color: currentColor; }
+details.input { border: 1px solid var(--line); border-radius: .4rem; margin: .6rem 0; background: var(--bg); }
+details.input > summary { cursor: pointer; padding: .5rem .75rem; background: var(--panel); border-radius: .4rem; overflow-wrap: anywhere; }
+details.input[open] > summary { border-bottom: 1px solid var(--line); border-radius: .4rem .4rem 0 0; }
+details.input > .body { padding: .25rem .75rem .75rem; }
+ul.tree { list-style: none; margin: 0; padding: 0; }
+ul.tree ul.tree { margin-left: .5rem; padding-left: 1rem; border-left: 2px solid var(--line); }
+li.part { margin: .6rem 0; }
+.part-head { overflow-wrap: anywhere; }
+.part-head .name { font-weight: 600; }
+.flags { margin: .25rem 0; }
+.outputs { margin: .25rem 0; }
+.outputs ul { margin: .15rem 0; padding-left: 1.2rem; }
+.images { display: flex; flex-wrap: wrap; gap: .5rem; margin: .4rem 0; }
+.images figure { margin: 0; max-width: 16rem; }
+.images img { display: block; max-width: 100%; max-height: 16rem; border: 1px solid var(--line); background: #fff; }
+.images figcaption { font-size: .85em; color: var(--muted); overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<header>
+<h1>docproc run <code>{{.M.Run}}</code></h1>
+<dl class="facts">
+<dt>Schema</dt><dd>{{.M.Schema}}</dd>
+<dt>Start</dt><dd class="mono">{{time .M.Start}}</dd>
+<dt>End</dt><dd class="mono">{{if .M.End.IsZero}}<span class="muted">never ended</span>{{else}}{{time .M.End}} ({{.Took}}){{end}}</dd>
+<dt>Workers</dt><dd>{{.M.Workers}}</dd>
+<dt>Inputs</dt><dd>{{range $i, $p := .M.Inputs}}{{if $i}}<br>{{end}}<code>{{$p}}</code>{{end}}</dd>
+{{- if .M.Error}}
+<dt>Stopped</dt><dd class="error">{{.M.Error}}</dd>
+{{- end}}
+{{- with .Warnings}}
+<dt>Warnings</dt><dd class="warning">{{.}} seen {{if eq . 1}}part has{{else}}parts have{{end}} children no record in the run directory holds, not replayed; each part says so</dd>
+{{- end}}
+</dl>
+</header>
+
+<h2>Stages</h2>
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>State</th><th>Stage</th><th>Tools</th><th>Reason</th></tr></thead>
+<tbody>
+{{- range .M.Stages}}
+<tr><td>{{.Route}}</td><td>{{.State}}</td><td>{{with .Stage}}{{.Name}} <span class="muted">v{{.Version}}</span> <code class="muted" title="{{.Config}}">{{short .Config}}</code>{{end}}</td><td>{{.Tools}}</td><td>{{.Reason}}</td></tr>
+{{- end}}
+</tbody>
+</table></div>
+
+<h2>Tools</h2>
+<div class="scroll"><table>
+<thead><tr><th>Program</th><th>Minimum</th><th>Version</th><th>From</th><th>Error</th></tr></thead>
+<tbody>
+{{- range .M.Tools}}
+<tr><td><code>{{.Program}}</code></td><td>{{.Minimum}}</td><td>{{.Version}}</td><td><code>{{.From}}</code></td><td class="error">{{.Error}}</td></tr>
+{{- end}}
+</tbody>
+</table></div>
+
+<h2>Missing and excluded routes</h2>
+{{- if .Unwired}}
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>State</th><th>Reason</th></tr></thead>
+<tbody>
+{{- range .Unwired}}
+<tr><td>{{.Route}}</td><td>{{.State}}</td><td>{{if .Reason}}{{.Reason}}{{else if eq .State "excluded"}}--exclude {{.Route}}{{end}}</td></tr>
+{{- end}}
+</tbody>
+</table></div>
+<p class="muted">Their parts have no processor yet.</p>
+{{- else}}
+<p class="muted">None: every route's stage is wired.</p>
+{{- end}}
+
+<h2>Summary</h2>
+<div class="scroll"><table>
+<thead><tr><th>Route</th><th>Outcome</th><th class="n">Inputs</th><th class="n">Parts</th></tr></thead>
+<tbody>
+{{- range .Summary}}
+<tr><td>{{.Route}}</td><td><span class="badge" data-outcome="{{.Outcome}}">{{.Outcome}}</span></td><td class="n">{{.Inputs}}</td><td class="n">{{.Parts}}</td></tr>
+{{- end}}
+<tr><th>total</th><th></th><th class="n">{{.Total.Inputs}}</th><th class="n">{{.Total.Parts}}</th></tr>
+</tbody>
+</table></div>
+<p class="muted">Parts count every part, an input and each part found in it.</p>
+
+<h2>Inputs</h2>
+{{- range $i, $in := .Inputs}}
+<details class="input" id="input-{{$i}}" open>
+<summary><code>{{$in.Path}}</code> <span class="badge">{{$in.Route}}</span> <span class="badge" data-outcome="{{$in.Outcome}}">{{$in.Outcome}}</span>{{with $in.Time}} <span class="muted">{{took .}}</span>{{end}}</summary>
+<div class="body">
+<dl class="facts">
+{{- with $in.File}}
+<dt>Argument</dt><dd><code>{{.Arg}}</code>, path <code>{{.Path}}</code></dd>
+<dt>File</dt><dd>{{bytes .Size}} <span class="muted">({{.Size}} bytes)</span>, <code>{{.Mode}}</code></dd>
+<dt>Modified</dt><dd class="mono">{{time .Modified}}</dd>
+{{- if not .Created.IsZero}}
+<dt>Created</dt><dd class="mono">{{time .Created}}</dd>
+{{- end}}
+{{- end}}
+{{- with $in.Time}}
+<dt>Time</dt><dd><span class="mono">{{time .Start}}</span> to <span class="mono">{{time .End}}</span>, {{took .}}</dd>
+{{- end}}
+{{- if $in.Error}}
+<dt>Error</dt><dd class="error">{{$in.Error}}</dd>
+{{- end}}
+</dl>
+{{- if $in.Roots}}
+<ul class="tree">
+{{- range $in.Roots}}{{template "part" .}}{{end}}
+</ul>
+{{- end}}
+{{- if $in.Loose}}
+<div class="outputs"><span class="muted">Outputs whose part had no event:</span>{{template "outputs" $in.Loose}}</div>
+{{- end}}
+</div>
+</details>
+{{- else}}
+<p class="muted">The record has no input.</p>
+{{- end}}
+</body>
+</html>
+{{define "part" -}}
+<li class="part">
+<div class="part-head"><span class="name">{{.Ev.Part.Name}}</span>
+<span class="badge">{{with .Ev.Part.ContentType.Route}}{{.}}{{else}}-{{end}}</span>
+<span class="badge" data-outcome="{{.Ev.Outcome}}">{{.Ev.Outcome}}</span>
+{{- if .Ev.Recorded}} <span class="muted">recorded {{.Ev.Recorded}}</span>{{end}}
+{{- with .Ev.Part.Where}} <span class="muted">{{.}}</span>{{end}}</div>
+<dl class="facts">
+<dt>Content</dt><dd>{{bytes .Ev.Part.Size}}{{with .Ev.Part.SHA256}}, sha256 <code title="{{.}}">{{short .}}</code>{{end}}{{with .Ev.Part.ContentType.Kind}}, kind {{.}}{{end}}{{with .Ev.Part.ContentType.Stored}}, stored <code>{{.}}</code>{{end}}{{with .Ev.Part.ContentType.Detected}}, detected <code>{{.}}</code>{{end}}</dd>
+{{- with .Ev.Part.ContentType.RouteReason}}
+<dt>Routed</dt><dd>{{.}}</dd>
+{{- end}}
+{{- with .Ev.Stage}}
+<dt>Stage</dt><dd>{{.Name}} <span class="muted">v{{.Version}}</span> <code class="muted" title="{{.Config}}">{{short .Config}}</code></dd>
+{{- end}}
+{{- with .Ev.Reason}}
+<dt>Reason</dt><dd>{{.}}</dd>
+{{- end}}
+{{- with .Ev.Error}}
+<dt>Error</dt><dd class="error">{{.}}</dd>
+{{- end}}
+{{- with .Ev.Warning}}
+<dt>Warning</dt><dd class="warning">{{.}}</dd>
+{{- end}}
+{{- if or (n .Ev.Outputs) (n .Ev.Children)}}
+<dt>Yielded</dt><dd>outputs {{n .Ev.Outputs}}, parts {{n .Ev.Children}}</dd>
+{{- end}}
+{{- with .Ev.Part.Flags}}
+<dt>Flags</dt><dd><ul class="flags">{{range .}}<li><code>{{.Check}}</code> <span class="badge">{{.Class}}</span> {{.Evidence}}</li>{{end}}</ul></dd>
+{{- end}}
+{{- with .Ev.Quarantine}}
+<dt>Quarantine</dt><dd><a href="{{href .File}}">kept file</a>, <a href="{{href .Flags}}">flags</a></dd>
+{{- end}}
+</dl>
+{{- with .Outputs}}
+<div class="outputs">{{template "outputs" .}}</div>
+{{- end}}
+{{- with .Children}}
+<ul class="tree">
+{{- range .}}{{template "part" .}}{{end}}
+</ul>
+{{- end}}
+</li>
+{{- end}}
+{{define "outputs" -}}
+{{- with links .}}
+<ul>
+{{- range .}}
+<li><a href="{{.Href}}">{{with .Name}}{{.}}{{else}}{{.Kind}}{{end}}</a> <span class="muted">{{.Kind}}{{with .MediaType}}, {{.}}{{end}}{{range $k, $v := .Meta}}, {{$k}} {{$v}}{{end}}</span>{{if .Seen}} <span class="badge" data-outcome="seen">seen</span>{{end}}</li>
+{{- end}}
+</ul>
+{{- end}}
+{{- with images .}}
+<div class="images">
+{{- range .}}
+<figure><a href="{{.Href}}"><img src="{{.Href}}" alt="{{with .Name}}{{.}}{{else}}{{.Kind}}{{end}}" loading="lazy"></a><figcaption>{{with .Name}}{{.}}{{else}}{{.Kind}}{{end}}{{range $k, $v := .Meta}}, {{$k}} {{$v}}{{end}}{{if .Seen}}, seen{{end}}</figcaption></figure>
+{{- end}}
+</div>
+{{- end}}
+{{- end}}

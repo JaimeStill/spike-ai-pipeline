@@ -48,6 +48,134 @@ This repository holds the spike's record, gb10-2's host scripts, the consumer ch
 on the layers by tag, and, once its gates clear, the capstone: a backend on the layers and a web
 UI on experiment.html's stack.
 
+## docproc
+
+docproc runs processing's whole suite over an input set: every file goes through processing's
+dispatcher and its ten routes' stages, every part found inside one (an attachment, a ZIP entry, a
+OneNote page's media) with it, and what each stage prepares is stored in a run directory. It runs
+no inference; docinfer, planned, reads the run directory and does.
+
+### Building
+
+```sh
+go build ./cmd/docproc   # or: go install ./cmd/docproc
+```
+
+Run it under mise (`mise exec -- docproc …`, or with mise activated in the shell): the root's
+`mise.toml` pins the spike's own CLIs, office 0.1.0, mail 0.3.1, and onenote 0.1.0, and 7-Zip's
+7zz 26.06, each from its GitHub release with its digest checked, and docproc finds every tool on
+`PATH`.
+
+### Host prerequisites
+
+The rest come from the host. At start, docproc finds each tool, reads its version, and checks it
+against processing's minimum:
+
+| Tool | Minimum | Source | Stages that need it |
+|---|---|---|---|
+| `gs` (Ghostscript) | 10.0 | host | document |
+| `qpdf` | 11.0 | host | document |
+| `pdfdetach` (Poppler) | 22.02 | host | document |
+| `magick` (ImageMagick) | 7.1 | host | office, vision-converted |
+| `soffice` (LibreOffice) | 24.2 | processing's pinned image, run through `docker` | office, vision-converted |
+| `spike-ai-pipeline-office` | 0.1.0 | mise pin | office |
+| `spike-ai-pipeline-mail` | 0.2.0 | mise pin | nested (email) |
+| `spike-ai-pipeline-onenote` | 0.1.0 | mise pin | onenote |
+| `7zz` | 24.01 | mise pin | archive |
+| `ffmpeg`, `ffprobe` | 9.0 | host | audio, video |
+
+The vision and text stages need no tool. A tool that is missing or too old leaves out every stage
+that needs it: docproc still runs, lists the stage as missing with the reason, and that route's
+parts come to `no processor yet`.
+
+### Running
+
+```sh
+docproc run <path>... --out <dir> [--workers N] [--exclude <route>]...
+docproc report <run-dir> [--run <id>]
+```
+
+`docproc run` takes files, and directories walked for their regular files; no symbolic link is
+followed, and a file reached twice is one input. `--out` (required) is the run directory, made when
+it doesn't exist and reused when it does. `--workers` is how many inputs are dispatched at once,
+this machine's CPU count by default, and from 1 to that count. `--exclude`, repeatable, leaves a
+route's stage out (`document`, `office`, `vision-converted`, `vision`, `nested`, `onenote`,
+`archive`, `audio`, `video`, `text`); its parts come to `no processor yet`.
+
+`docproc report` renders a run's HTML report again from its manifest and record, the latest run's
+by default, and prints its path. `docproc run` writes the same page as each run ends.
+
+docproc exits with one of three codes:
+
+- **0** when the run completes, even with failed parts or inputs.
+- **1** when an error stops the whole dispatch (the context ending, or the run directory or
+  terminal refusing a write), once the manifest names it; when a path can't be read; or, for
+  `report`, when the run directory has no such run.
+- **2** on a usage error, before any tool is looked up: no path, no `--out`, `--workers` outside 1
+  to the CPU count, an unknown `--exclude` route, or a `report --run` that is a path rather than a
+  run id.
+
+### Terminal output
+
+docproc first prints two tables: each tool with its version, its minimum, and where it was found,
+and each route with its stage, its state (`wired`, `missing`, or `excluded`), and its tools'
+versions or its reason. A record in the run directory that can't be read prints
+`warning: a record replays nothing: <error>` and is skipped. Then, as each input's last event
+arrives, docproc prints one line for it:
+
+```
+<path>  <route>  <outcome>[: <error>]  outputs <n>  children <n>[  warnings <n>]  <time>
+```
+
+`warnings <n>` counts the seen parts in the input whose children no record in the run directory
+holds, so docproc copied none of their lines
+([replayed subtrees](docs/docproc-schema.md#seen-content-and-replayed-subtrees)). An input whose
+dispatch an error stopped prints `<path>  -  error: <error>  <time>`.
+
+The terminal prints an error as one line: the error's first line, trimmed, with each character
+that isn't printable replaced by U+FFFD, and cut at 400 characters (runes), ending in `…` when
+anything is cut. The record's `error` field holds the whole error.
+
+A closing summary lists the inputs by route and outcome, in the stage table's route order, and
+their total. When any seen part had children no record holds, a `warnings <n>` line counts them.
+The last lines name the run's id and record, and its report once written.
+
+### The run directory
+
+```
+index/                               processing's file index, shared by every run
+outputs/<sha256>/<stage>/<n><ext>    each output, stored once by content and stage identity
+quarantine/<sha256>/{content,flags.json}
+runs/<run id>/manifest.json          each run's manifest
+runs/<run id>/record.jsonl           its record, one event per line
+runs/<run id>/report.html            its report
+```
+
+A run over an existing run directory reuses its index and output store under a new run id: content
+an earlier run prepared is seen, not prepared again, and its outputs' refs name the copies already
+stored. A seen part's subtree, which processing doesn't dispatch again, is copied into the new
+record from the earliest record that holds it, each line marked seen, so every run's record is
+whole on its own. Content that failed, or holds a part that failed or was limited, is prepared
+again, and a part with no stage comes to `no processor yet` again. The directory is schema `"1"`,
+the contract docinfer reads: every field of the manifest and the record, the path rules, and the
+store's naming are in [docs/docproc-schema.md](docs/docproc-schema.md).
+
+[The docproc finding](docs/findings/docproc.md) records docproc over ~/docs and its re-run.
+
+### Updating the golden files
+
+Two tests compare docproc's output with a golden file, and `-update` makes each rewrite its file
+instead; no other package takes the flag. The `internal/report` package's test renders the
+`internal/app` package's record golden, so a regenerated record golden needs the report golden
+regenerated after it:
+
+```sh
+go test ./internal/app -update      # internal/app/testdata/record.golden.jsonl
+go test ./internal/report -update   # internal/report/testdata/report.golden.html
+```
+
+`git diff` then shows what changed.
+
 ## gb10-2
 
 gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,

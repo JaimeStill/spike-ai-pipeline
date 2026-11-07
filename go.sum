@@ -1,0 +1,12 @@
+github.com/JaimeStill/spike-ai-pipeline-client v0.4.0 h1:skYV3Z2QN2EzaP5xI2LgYI6dlV0cMJRMJg0VnE8u4YM=
+github.com/JaimeStill/spike-ai-pipeline-client v0.4.0/go.mod h1:PYZMqb60WQRVpiElCqDL0lME+thAQs9QUuRel4d65cA=
+github.com/JaimeStill/spike-ai-pipeline-processing v0.9.0 h1:ZtCnVQEOf1b4JYuDNVQHNE7oUciFhLRz/vxH0kf426w=
+github.com/JaimeStill/spike-ai-pipeline-processing v0.9.0/go.mod h1:tCprQ5rWa3oz50WRZvULPP0MBUeqHSatu6Vm0uV2mDM=
+github.com/standards-lab/go-cli-sdk v0.2.0 h1:MrIkdYqtBsOqV5Dw+CLk4JbPmiKv6xYgZ7hk8M3Ts68=
+github.com/standards-lab/go-cli-sdk v0.2.0/go.mod h1:Oga+KQsA8FQyqZ0bQjJqc+9Rp2J78LBDkBCQiI7yLAU=
+github.com/standards-lab/go-core v0.10.0 h1:Sb5xuyl/j+7bRwFXegXkEa8CnDUQ4Kz7/vWDogjDptg=
+github.com/standards-lab/go-core v0.10.0/go.mod h1:Yl/R+gM9YWczsePBCKXdPGh3FSdZ/5i8SapLIh3BDHU=
+golang.org/x/sys v0.49.0 h1:XbzkgYJHdqh/8m2Uu0W/dQv8nktxx4BFHp1M0gROTXA=
+golang.org/x/sys v0.49.0/go.mod h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og=
+golang.org/x/text v0.43.0 h1:1QivrlhwAsnMOcqgOdl9my7s9OyZl8O5/UGUTJVXoWc=
+golang.org/x/text v0.43.0/go.mod h1:hbSIYA/amXcRXTFSZqh8tWHEoqRvvbKPJ2uz/KU+a+s=

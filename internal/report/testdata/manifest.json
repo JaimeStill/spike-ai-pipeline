@@ -1,0 +1,54 @@
+{
+  "schema": "1",
+  "run": "019a5f00-0000-7000-8000-000000000000",
+  "start": "2026-11-07T12:00:00.000000000Z",
+  "end": "2026-11-07T12:00:01.250000000Z",
+  "workers": 1,
+  "inputs": [
+    "/in"
+  ],
+  "record": "runs/019a5f00-0000-7000-8000-000000000000/record.jsonl",
+  "tools": [
+    {
+      "program": "qpdf",
+      "minimum": "11.0.0",
+      "error": "qpdf: not found"
+    },
+    {
+      "program": "7zz",
+      "minimum": "23.01",
+      "from": "/usr/local/bin/7zz",
+      "version": "26.06"
+    }
+  ],
+  "stages": [
+    {
+      "route": "document",
+      "state": "missing",
+      "reason": "qpdf: not found"
+    },
+    {
+      "route": "vision",
+      "state": "excluded"
+    },
+    {
+      "route": "archive",
+      "state": "wired",
+      "stage": {
+        "name": "archive",
+        "version": "2",
+        "config": "0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69"
+      },
+      "tools": "7zz 26.06"
+    },
+    {
+      "route": "text",
+      "state": "wired",
+      "stage": {
+        "name": "text",
+        "version": "1",
+        "config": "c953ea6e98fa93d682dab2a14cdfe1455cf8c995cb7d276006a137b25a958835"
+      }
+    }
+  ]
+}

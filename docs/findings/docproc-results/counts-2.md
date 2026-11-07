@@ -1,0 +1,116 @@
+### Inputs by route and outcome
+
+| Route | Outcome | Count |
+|---|---|---|
+| archive | seen | 9 |
+| audio | seen | 41 |
+| document | failed | 3 |
+| document | prepared | 1 |
+| document | seen | 63 |
+| nested | seen | 72 |
+| office | seen | 117 |
+| onenote | failed | 1 |
+| onenote | prepared | 1 |
+| onenote | seen | 24 |
+| text | seen | 180 |
+| unrouted | no processor yet | 41 |
+| video | seen | 9 |
+| vision | seen | 10 |
+| vision-converted | seen | 20 |
+| total | | 592 |
+
+### Nested parts (depth 1 and more) by route and outcome
+
+| Route | Outcome | Count |
+|---|---|---|
+| document | failed | 1 |
+| document | seen | 4 |
+| office | failed | 135 |
+| office | seen | 1 |
+| total | | 141 |
+
+### Parts by depth
+
+| Depth | Parts |
+|---|---|
+| 0 | 592 |
+| 1 | 141 |
+
+### Output lines by kind and whether seen
+
+| Kind | Outcome | Lines |
+|---|---|---|
+| audio | seen | 1255 |
+| image | prepared | 917 |
+| image | seen | 1662 |
+| markdown | prepared | 1 |
+| markdown | seen | 718 |
+| record | prepared | 3 |
+| record | seen | 878 |
+| text | prepared | 910 |
+| text | seen | 615 |
+| total | | 6959 |
+
+Distinct refs: 6949
+
+### The 15 slowest inputs
+
+| Time (s) | Route | Outcome | Outputs | Children | Input |
+|---|---|---|---|---|---|
+| 141.465 | document | failed | 1823 | 0 | `/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.pdf` |
+| 6.044 | document | prepared | 2 | 5 | `/home/jaime/docs/pdf/edge/signed/digitally-signed-3d-portfolio.pdf` |
+| 4.084 | onenote | prepared | 4 | 136 | `/home/jaime/docs/onenote/large/LargeData.one` |
+| 0.332 | document | failed | 0 | 0 | `/home/jaime/docs/pdf/edge/malformed/compacted-syntax.pdf` |
+| 0.196 | video | seen | 219 | 0 | `/home/jaime/docs/video/nasa-iss-inflight-pittsburgh/nasa-iss-inflight-pittsburgh-640x360.mp4` |
+| 0.177 | unrouted | no processor yet | 0 | 0 | `/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-mpeg2.mpeg` |
+| 0.154 | video | seen | 163 | 0 | `/home/jaime/docs/video/nasa-epps-interviews/nasa-epps-interviews-640x360.mp4` |
+| 0.115 | onenote | seen | 4 | 13 | `/home/jaime/docs/onenote/large/Large OneDrive.one` |
+| 0.113 | audio | seen | 646 | 0 | `/home/jaime/docs/audio/long/librivox-stella-maberly.m4b` |
+| 0.082 | onenote | seen | 4 | 13 | `/home/jaime/docs/onenote/large/Large Desktop.one` |
+| 0.069 | audio | seen | 108 | 0 | `/home/jaime/docs/video/ami-es2002d/ami-es2002d-mix-headset.wav` |
+| 0.064 | nested | seen | 987 | 1 | `/home/jaime/docs/email/mbox/tika-dev-2024-03.mbox` |
+| 0.061 | video | seen | 270 | 0 | `/home/jaime/docs/video/ami-es2002d/ami-es2002d-closeup1.avi` |
+| 0.056 | video | seen | 270 | 0 | `/home/jaime/docs/video/ami-es2002d/ami-es2002d-corner.avi` |
+| 0.056 | video | seen | 126 | 0 | `/home/jaime/docs/video/ami-es2002a/ami-es2002a-overhead.avi` |
+
+### Inspection flags by check and class, on part lines
+
+| Check | Class | Flags |
+|---|---|---|
+| executable | active | 1 |
+| external-relationship | active | 3 |
+| macro-sheet | active | 1 |
+| ole-object | active | 1 |
+| ooxml-encrypted | active | 1 |
+| pdf-aa | active | 1 |
+| pdf-embeddedfile | active | 6 |
+| pdf-encrypt | active | 5 |
+| pdf-javascript | active | 5 |
+| pdf-js | active | 5 |
+| pdf-openaction | active | 7 |
+| signature-mismatch | active | 1 |
+| svg-event-handler | active | 1 |
+| svg-external-href | active | 1 |
+| svg-script | active | 1 |
+| vba-project | active | 5 |
+| zip-encrypted | active | 1 |
+
+Flagged part lines by outcome: failed 2, no processor yet 2, seen 30
+
+### Failed, encrypted, quarantined, and error lines
+
+Identical lines, the same part name, route, outcome, input, and reason, are counted once.
+
+| Lines | Event | Depth | Route | Outcome | Part | Input | Reason or error |
+|---|---|---|---|---|---|---|---|
+| 1 | part | 0 | archive | seen (recorded encrypted) | password-protected.zip | `/home/jaime/docs/archive/password-protected.zip` | recorded by archive@2#0f2a7a60887f7a007a08d29be392a69920acbc8268e7e13eb80e9db803dc0d69 |
+| 1 | part | 0 | document | failed | cfr-2024-title32-vol1.pdf | `/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.pdf` | document: qpdf: form of cfr-2024-title32-vol1.pdf: field "USGPOSignature": value "3033 0 R": neither a string nor a name |
+| 1 | part | 0 | document | failed | compacted-syntax.pdf | `/home/jaime/docs/pdf/edge/malformed/compacted-syntax.pdf` | document stage: 1 of 1 pages failed: document: page 1 of 1: render: document: ghostscript: page 1 of /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/afc03273-6e3b-4a83-9166-56b04d6e8a9b/scratchpad/run/.work-1423210844/part-3806757779/spool-580470791.pdf: no PNG on stdout: **** Error: Page drawing error occurred.… |
+| 1 | part | 0 | document | failed | no-document-catalog.pdf | `/home/jaime/docs/pdf/edge/malformed/no-document-catalog.pdf` | document: ghostscript: page count of /tmp/claude-1000/-home-jaime-experiments-spike-ai-pipeline/afc03273-6e3b-4a83-9166-56b04d6e8a9b/scratchpad/run/.work-1423210844/part-1407187702/spool-2646491443.pdf: gs printed "   **** Error: Couldn't initialise file.\n               Output may be incorrect.\n0\n"… |
+| 1 | part | 0 | document | seen (recorded encrypted) | encryption-openpassword.pdf | `/home/jaime/docs/pdf/edge/encrypted/encryption-openpassword.pdf` | recorded by document@gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0#94f4373a87cf67b943a25380fed712e462c1199a81f0833b015be106196e4a94 |
+| 1 | part | 0 | document | seen (recorded encrypted) | simple-open-password.pdf | `/home/jaime/docs/pdf/edge/encrypted/simple-open-password.pdf` | recorded by document@gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0#94f4373a87cf67b943a25380fed712e462c1199a81f0833b015be106196e4a94 |
+| 1 | part | 0 | document | seen (recorded encrypted) | unicode-password-corrigendum5.pdf | `/home/jaime/docs/pdf/edge/encrypted/unicode-password-corrigendum5.pdf` | recorded by document@gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0#94f4373a87cf67b943a25380fed712e462c1199a81f0833b015be106196e4a94 |
+| 1 | part | 0 | office | seen (recorded encrypted) | protected-passtika.poi.xlsb | `/home/jaime/docs/office/macro-template/protected-passtika.poi.xlsb` | recorded by office@spike-ai-pipeline-office 0.1.0, soffice 26.8.2.2, magick 7.1.2#36bc8610fd9115d8553bdda249cfcd021df5e746c543503624a041f88088b4b9 |
+| 1 | part | 0 | onenote | failed | Encryption.one | `/home/jaime/docs/onenote/interop/SUT/Encryption.one` | onenote: refused: Unexpected end of file |
+| 1 | part | 1 | document | failed | Design of Landing Gear.pdf | `/home/jaime/docs/pdf/edge/signed/digitally-signed-3d-portfolio.pdf` | document: qpdf: form of 4d69dedd7e7c97e5b61f8384fc36b3ae428afa19d2f9dd3d25e62eb6b22ffbee: field "topmostSubform[0].Page1[0].CertificationField[0]": value "73 0 R": neither a string nor a name |
+| 135 | part | 1 | office | failed | testing - large.docx | `/home/jaime/docs/onenote/large/LargeData.one` | office stage: office: refused: not a docx, xlsx, or pptx package |
