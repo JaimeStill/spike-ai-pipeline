@@ -115,11 +115,11 @@ stage by stage in real time?
 
 ## Gates
 
-The host, client, and processing tasks run now. The capstone waits for those tasks
-(formats remains) and for two answers: experiment.hosting's
+The capstone waits for the host, client, and processing tasks, the last of them a planned CLI that
+runs the processing suite over an input set, and for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
-spike-html-apps have answered, and neither experiment's intake is a gate. The spike returns to
-`planned` in between.
+spike-html-apps have answered, and neither experiment's intake is a gate. Once the CLI ships, the
+spike returns to `planned` until the answers arrive.
 
 ## Capability map
 
