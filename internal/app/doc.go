@@ -6,7 +6,8 @@
 //     in layer order, lowest first;
 //   - infrastructure.go: defineInfrastructure, the lifecycle configuration, read from DOCPROC_
 //     variables, and the tool lookup every stage's tools are found through, the host's PATH;
-//   - domain.go: defineDomain and mountDomain, which mounts the run command;
+//   - domain.go: defineDomain and mountDomain, which mounts the run command and the report
+//     command;
 //   - version.go: the version command, which declares no nodes.
 //
 // A command declares the nodes it needs with Use; the dispatcher builds them only when the

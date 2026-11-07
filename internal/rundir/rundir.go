@@ -172,6 +172,63 @@ func (r *Run) writeManifest() error {
 	})
 }
 
+// Latest returns the id of the latest run in the run directory at root, the greatest of the
+// version 7 ids under runs/, which sort by when each run began. A run directory with no run is an
+// error.
+func Latest(root string) (string, error) {
+	entries, err := os.ReadDir(filepath.Join(root, runsDir))
+	if err != nil {
+		return "", err
+	}
+	latest := ""
+	for _, e := range entries {
+		if e.IsDir() && e.Name() > latest {
+			latest = e.Name()
+		}
+	}
+	if latest == "" {
+		return "", fmt.Errorf("%s holds no run", root)
+	}
+	return latest, nil
+}
+
+// Load reads the run id in the run directory at root: its manifest, and its record's events in
+// the order they were written.
+func Load(root, id string) (schema.Manifest, []schema.Event, error) {
+	var m schema.Manifest
+	dir := filepath.Join(root, runsDir, id)
+	b, err := os.ReadFile(filepath.Join(dir, "manifest.json"))
+	if err != nil {
+		return m, nil, err
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return m, nil, fmt.Errorf("%s: %w", filepath.Join(dir, "manifest.json"), err)
+	}
+	f, err := os.Open(filepath.Join(root, filepath.FromSlash(m.Record)))
+	if err != nil {
+		return m, nil, err
+	}
+	defer func() { _ = f.Close() }() // read only: a close error loses nothing
+	var evs []schema.Event
+	dec := json.NewDecoder(f)
+	for {
+		var ev schema.Event
+		if err := dec.Decode(&ev); errors.Is(err, io.EOF) {
+			return m, evs, nil
+		} else if err != nil {
+			return m, nil, fmt.Errorf("%s: event %d: %w", m.Record, len(evs)+1, err)
+		}
+		evs = append(evs, ev)
+	}
+}
+
+// WriteRunFile writes the file name into the directory of the run id in the run directory at
+// root, whole, through write, and returns its path relative to root, runs/<run id>/<name>.
+func WriteRunFile(root, id, name string, write func(io.Writer) error) (string, error) {
+	rel := path.Join(runsDir, id, name)
+	return rel, writeFile(filepath.Join(root, filepath.FromSlash(rel)), write)
+}
+
 // stageDir returns the output store's directory name for the stage id: its name and the first
 // twelve hex digits of the SHA-256 of its whole identity, so a new tool version or configuration
 // stores its outputs apart.

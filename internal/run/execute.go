@@ -17,6 +17,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline-processing/dispatch"
 	"github.com/JaimeStill/spike-ai-pipeline-processing/route"
 
+	"github.com/JaimeStill/spike-ai-pipeline/internal/report"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
@@ -70,8 +71,9 @@ func execute(ctx context.Context, w io.Writer, set stages.Set, out string, args 
 
 	stopped := rec.dispatch(ctx, d, inputs, workers)
 	ended := run.End(time.Now(), stopped)
-	summary := rec.summary()
-	return errors.Join(stopped, ended, summary)
+	page, rendered := report.Write(dir.Root(), run.ID())
+	summary := rec.summary(page)
+	return errors.Join(stopped, ended, rendered, summary)
 }
 
 // tallyKey is one cell of the closing summary: a route and an outcome.
@@ -243,8 +245,9 @@ func (r *recorder) line(s string) error {
 }
 
 // summary writes the closing summary to the terminal: how many inputs came to each route and
-// outcome, in the stage table's route order, then the total and where the run's record is.
-func (r *recorder) summary() error {
+// outcome, in the stage table's route order, then the total, where the run's record is, and
+// where its report is, page, when it was written.
+func (r *recorder) summary(page string) error {
 	keys := slices.SortedFunc(func(yield func(tallyKey) bool) {
 		for k := range r.tally {
 			if !yield(k) {
@@ -274,6 +277,9 @@ func (r *recorder) summary() error {
 	row("total", "", fmt.Sprint(total))
 	row()
 	row("run " + r.run.ID() + "  " + r.run.Record())
+	if page != "" {
+		row("report " + page)
+	}
 	return errors.Join(err, tw.Flush())
 }
 

@@ -8,6 +8,7 @@
 //	quarantine/<sha256>/flags.json       beside its flags
 //	runs/<run id>/manifest.json          each run's schema.Manifest
 //	runs/<run id>/record.jsonl           and its record, a schema.Event per line
+//	runs/<run id>/report.html            and its report, internal/report's
 //
 // <stage> is the stage's name and the first twelve hex digits of the SHA-256 of its whole
 // identity, name, version, and configuration hash, so a new tool version prepares content again
@@ -32,4 +33,6 @@
 //     output and returns its Ref, and [Dir.Quarantine], which keeps a quarantined part's file
 //   - [Run], begun by [Dir.Begin], with its [Run.ID], [Run.Record], [Run.Write], which appends a
 //     record line, and [Run.End], which closes the record and writes the manifest's end
+//   - [Latest], the latest run in a run directory, [Load], which reads a run's manifest and
+//     record, and [WriteRunFile], which writes a file beside them, such as its report
 package rundir
