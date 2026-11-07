@@ -39,7 +39,14 @@ stage by stage in real time?
    run worse, so it doesn't smooth the seams. Gemma 4 E4B also answered one window a few seconds
    long with its own instruction in 2 of 3 runs, which the join can't tell from speech.
 6. Chat history: Skype for Business conversation history, archived from Exchange's Conversation
-   History folder into a PST, passes through processing as conversation records.
+   History folder into a PST, passes through processing as conversation records. Processing's
+   [formats finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/formats.md)
+   records it on a PST that mail's fixture generator writes: each conversation and missed IM item
+   is one conversation record whose participants, start and end, topic, missed flag, HTML
+   transcript, and Markdown equal the hand truth, and an ordinary message in the same folder reads
+   as a message. What it doesn't prove: a real store's transcript HTML, since no open sample exists
+   and the fixture's shape is invented; the turns within a transcript, which aren't parsed; and
+   voice items and Teams, which the deployment doesn't use.
 7. Capstone, after its gates: metadata capture, inference extraction, and embeddings in pgvector
    with a semantic search, each stage transactional. The event layer tracks every stage event in
    sequence, in real time, and the UI shows each stage as it runs.
