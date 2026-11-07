@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** formats
+- **Branch:** formats
 
 ## Tasks
 
@@ -27,171 +27,198 @@
 19. [x] streams
 20. [ ] formats
 
-## Task brief · experiment.ai.spike-ai-pipeline · streams
+## Task brief · experiment.ai.spike-ai-pipeline · formats
 
 ```
-Problem       Processing prepares audio only from finished files, and
-              routes recorded video to "no processor yet". A live or
-              real-time-paced source can't be prepared as it arrives,
-              so evidence 13 is unproven. Live windows also need a
-              silence threshold that survives a level change, which
-              audio's two-pass detection can't give. Processing's
-              ffmpeg image trails a rebuild (linuxserver/ffmpeg
-              9.0.2-cli-ls89).
+Problem       Processing reports "no processor yet" for multi-page
+              TIFF beyond its first page, HEIC, WebP, AVIF, RTF,
+              text, and every archive but a ZIP's stored and deflate
+              entries. It renders a PDF without knowing whether it
+              needs a password, and it drops form values and embedded
+              files. Evidence 6, Skype for Business conversation
+              history in a PST, has no fixture and no records. Real
+              share drives hold all of these. processing's Gotenberg
+              image trails 9.1.0, and mail trails smallvec v1.16.5
+              and mise-action v5.2.7.
 
 Behaviors
-  1. Upgrade: ffmpeg and ffprobe run in linuxserver/ffmpeg
-     9.0.2-cli-ls89 by digest. Exec and container runs give
-     byte-identical windows. scdet, select, showinfo and the srt,
-     rtmp, http, https, hls and udp protocols work in the pinned
-     image. Currency exits 0.
-  2. Sources: a media request names one source. It is a reader the
-     caller holds, fed to ffmpeg's stdin; a file read at real time;
-     a file read unpaced; or an input URL whose scheme is srt, rtmp,
-     http, https (live HLS included) or udp. rtsp, any other scheme,
-     or a request naming no source or more than one is refused
-     before ffmpeg runs. Each URL run allows only its own scheme's
-     protocols, so a playlist can't open another protocol or a local
-     file. Through the container runner a URL run joins the docker
-     network the caller names, and one with no network named is
-     refused.
-  3. One run, one stream: each source is read by one ffmpeg run, and
-     its events come as one lazy stream: window events for its audio
-     and frame events for its video. Each event carries its source
-     time and the wall-clock time its last sample or frame arrived.
-     Window events come in plan order and frame events in
-     source-time order, each yielded as soon as it is complete. An
-     audio-only source yields windows only, and a video-only source
-     frames only. A video with an audio track yields both.
-  4. Incremental plan: the stream's windows follow PlanWindows'
-     policy: at most 30 s including the 2 s default overlap, each cut
-     at the middle of the latest silence before the limit, or at the
-     limit. Each window is fixed once the stream passes its limit or
-     the source ends. Fed the same duration and silences, audio's
-     incremental planner gives exactly PlanWindows' plan (a property
-     test).
-  5. Live silences: the live path finds silences with a noise-floor
-     tracker over the PCM the run writes: a rolling low percentile of
-     10 ms frame energy plus a margin. The percentile, the rolling
-     window and the margin are request fields, defaulted to the
-     values the build tunes. A request may give a fixed threshold
-     instead. No silencedetect runs on the live path. The tracker is
-     deterministic over the same PCM. Each window event names the
-     threshold it was cut under. On the committed fixture's variants,
-     a 12 dB gain step and pink noise added partway through, the
-     tracker finds the known silences after the change, where a
-     threshold fixed from the first 30 s finds none.
-  6. Windows: each window is 16 kHz mono 16-bit PCM WAV with the
-     canonical 44-byte header, named by its SHA-256 in the caller's
-     media directory. Its event carries its index, span, cut (silence,
-     limit or end), seams, samples and threshold.
-  7. Frames: a frame is taken at the first frame, at each scene
-     change past the request's scene threshold, and after the
-     request's maximum gap with no frame (10 s by default). Each is
-     PNG named by its SHA-256, at the source's resolution or scaled
-     losslessly to a largest side the request sets. Its event carries
-     its reason (first, scene or interval), source time, and the
-     width and height written. On the committed fixture the frame
-     reasons and times are exactly its known cuts and gaps.
-  8. File detector: audio's file request chooses its silence
-     detector: volumedetect and silencedetect (the default and
-     unchanged), or the tracker. With the tracker, the file path's
-     plan equals the live path's over the same PCM and request (a
-     property test).
-  9. Join's settled prefix: re-running audio's Join over the
-     transcripts received so far leaves every word before the latest
-     seam unchanged. This is documented and tested, with no new API.
- 10. Cancellation: a context that ends stops ffmpeg through either
-     runner, and the stream yields the context's error once and ends.
-     A loop that stops early stops the run. The media directory keeps
-     only the windows and frames the stream yielded. A source error
-     ends the stream with its error, after the events already
-     complete.
- 11. Protocols: in the integration tier, each of srt, rtmp, http,
-     live HLS and udp carries the committed fixture from ffmpeg as
-     sender over loopback. The stream yields the fixture's windows
-     and frames, with no outside service. A reader source does the
-     same.
- 12. Dispatch: route.Video's parts (MP4, MKV, WebM, AVI) get a video
-     stage over media's unpaced run. It yields sampled frames as image
-     outputs and the audio track's windows as audio outputs, after a
-     plan record. A video with no audio track yields frames only. The
-     stage's identity hashes the sampling and detection settings, not
-     its concurrency. With no ffmpeg, no video stage is registered.
-     Processing runs no inference.
- 13. Harness (test code): through the client on gb10-2, E4B
-     transcribes the windows and Gemma 4 26B-A4B reads the frames as
-     they arrive. The settled transcript is shown as each window
-     lands, and the committed fixture meets its truth in the
-     integration tier.
- 14. Corpus: fetched into ~/docs/video, each with its SHA-256,
-     manifest entry (source URL, license and its status,
-     redistributable, truth, covers) and the README's video row:
-       - AMI ES2002d Corner, Closeup1 and its headset mix
-       - NASA's ISS in-flight event and Jeanette Epps interviews,
-         at 640x360
-       - Prelinger's "Duck and Cover" as Cinepak AVI, MPEG-2 and
-         Ogg Theora
-     None of it is committed.
- 15. Finding: Tears of Steel's 180 s MP4 (3 runs, its English .srt as
-     approximate truth) and AMI ES2002a's overhead camera muxed with
-     its headset mix (about 21 min, 1 run), each read at real time.
-     For each window and frame it reports the lag from the last
-     sample's or frame's arrival to its event, and from the event to
-     the model's answer. It reports AMI's word error rate against
-     audio's file path, and a cancellation midway through each run.
-     It may add the NASA in-flight event. Results are committed
-     beside the finding, and the root's evidence 13 links it.
+  1. Upgrades: processing's LibreOffice runs in
+     gotenberg/gotenberg 9.1.0-libreoffice by digest. A golden sum
+     is re-recorded only after its renders are compared, with the
+     reason in the testdata README (the exception accepted in
+     audio). mail takes smallvec v1.16.5 and mise-action v5.2.7.
+     Each repository's currency exits 0. The root's currency reports
+     only llama.cpp, held at b12098.
+  2. Conversation fixture: mail's generator writes a PST whose
+     Conversation History folder holds IPM.Note.Microsoft.Conversation
+     and IPM.Note.Microsoft.Missed items: text chats with HTML
+     transcript bodies, participants, times and topics, beside an
+     IPM.Note for contrast. Hand truth covers every field. mail's
+     tests read the store, and each item's class, sender,
+     recipients, times, HTML body and Markdown equal the truth.
+     Regenerating it reports any drift. The CLI is unchanged. mail
+     v0.3.1 is released with both archives and SHA256SUMS before
+     processing copies the fixture.
+  3. Conversation records: the email package reads each Conversation
+     or Missed item as one conversation record: its participants
+     (sender and recipients), start and end times, topic, whether it
+     was missed, the transcript as mail's Markdown, and the HTML as
+     stored. Every other class reads as today. Dispatch's email
+     stage yields the conversation record, then its Markdown. Over
+     the copied fixture every record equals the hand truth. No turn
+     is parsed from the HTML.
+  4. tar and gzip: the archive stage reads tar through the standard
+     library. Each regular file is written under its SHA-256 and
+     found as a part, named by its stored name, "tar entry <name>".
+     The stored name is never a path. A directory is no part, and
+     the bomb rule is enforced on the bytes written, as for ZIP. A
+     gzip stream yields one decompressed part, named by its header's
+     name else the stream's stem, and routed again, so a .tar.gz is
+     a gzip part holding a tar part. inspect reads a tar's headers
+     as it reads a ZIP's central directory. A traversing or absolute
+     name, a symbolic or hard link, or a device quarantines the tar
+     with its evidence.
+  5. 7-Zip: an adapter over 7-Zip's 7zz, minimum 24.01, pinned by
+     mise from its GitHub release with its digest checked, has its
+     version checked at construction. 7zz writes only to its stdout,
+     never to a path. Through it:
+       - a 7z archive's files are found as parts, "7z entry <name>";
+       - a zstd stream yields one decompressed part, routed again;
+       - a ZIP entry whose method archive/zip doesn't read, such as
+         Deflate64, LZMA, xz, zstd, PPMd or implode, is read entry
+         by entry under the zip stage's rules, unchanged. bzip2
+         entries are read through compress/bzip2;
+       - a cabinet not named .onepkg has its files found as parts.
+     Before anything is extracted, 7-Zip's listing is checked
+     against the rules in behavior 4 and quarantines the archive. An
+     encrypted 7z entry, or encrypted headers, makes the archive
+     Encrypted after its readable entries. The bomb rule is enforced
+     on the bytes read from 7zz. With no 7-Zip, these kinds report
+     no processor yet, and ZIP's stored and deflate entries are
+     unaffected.
+  6. TIFF pages: a standalone TIFF yields one PNG per page, in page
+     order, each output's Meta naming its page and the page count.
+     A TIFF an office document embeds still converts its first image
+     only. Output is lossless, and a page converted twice is the
+     same bytes.
+  7. HEIC, WebP and AVIF: each converts to PNG through magick: a
+     HEIC's primary image, and the first frame of an animated WebP
+     or AVIF, with stored orientation applied. The Converter checks
+     magick's HEIC, WebP and AVIF readers at construction, and a
+     kind whose reader is missing reports no processor yet.
+  8. Text: route.Text's parts get a text stage that yields one UTF-8
+     text output. The encoding is decided by a byte order mark
+     (UTF-8, UTF-16 or UTF-32), else by valid UTF-8, else windows-
+     1252 as a fallback with a warning, decoded through
+     golang.org/x/text. Meta names the encoding, "windows-1252
+     (fallback)" for the last. Bytes the chosen encoding can't
+     decode become U+FFFD, with a warning in Meta. No encoding is
+     detected.
+  9. RTF: the office stage converts an RTF through LibreOffice to
+     docx, then office, yielding Markdown and media as for a legacy
+     document, and ConvertedFrom names "rtf". Without LibreOffice it
+     reports no processor yet. ODF, WordPerfect and .xlsb still
+     report no processor yet.
+ 10. PDF encryption: before rendering, the document stage asks qpdf
+     --requires-password. A PDF that needs a password ends Encrypted,
+     with nothing rendered. A PDF restricted only by permissions
+     renders as today. inspect's /Encrypt flag is unchanged. With no
+     qpdf, behavior is today's.
+ 11. PDF forms: a PDF with an AcroForm yields a forms record before
+     its pages, from qpdf's JSON: each field's full name, type and
+     value, with a checkbox's and a choice's state. A PDF without one
+     yields none. An XFA form is flagged only, as today, and its
+     pages render as Ghostscript draws them.
+ 12. PDF attachments: each embedded file, from the name tree and
+     from file-attachment annotations, is saved through pdfdetach
+     to a path the stage chooses, never the stored name. It is named
+     by its SHA-256 and found as a part, "attachment <name>", then
+     inspected and routed again. Media behind a Screen or Rendition
+     annotation isn't extracted.
+ 13. Fixtures: committed with source, license and SHA-256:
+       - commons-compress (Apache-2.0): lorem-ipsum-deflate64.zip,
+         bzip2-zip.zip, lorem-ipsum-implode.zip, test-method-xz.zip
+         and bla.deflate64.7z;
+       - libarchive's tests (BSD-2): LZMA, PPMd and zstd zips;
+       - generated: small tar, tar.gz, tar.zst, 7z and cabinet
+         archives with traversal, link and bomb cases, the cabinet
+         a .onepkg fixture under another name;
+       - generated: an AcroForm with several filled fields.
+     The integration tier also reads ~/docs's mixed bundle in four
+     forms, its TIFF, HEIC, WebP and AVIF samples, its encodings
+     with their truth, and its encrypted, form and attachment PDFs.
+ 14. Finding: for each new route, the outcome over the fixtures and
+     ~/docs, against truth where truth exists. It records the
+     encodings fixture's results, including where the windows-1252
+     fallback is wrong (UTF-16 without a byte order mark, and the
+     legacy CJK, Cyrillic and Arabic files), as the text limit. It
+     records the conversation records against the fixture's hand
+     truth, with their limits: a generated fixture, and records per
+     item, not turns. The root's evidence 6 links it.
+ 15. Evidence 6: the root's evidence 6 gains the finding's link and
+     one sentence on what was proven and its limits.
 
-Test seams    media's event stream (sources, windows, frames,
-              cancellation) in the unit and integration tiers;
-              audio's incremental planner, tracker, file detector
-              choice and Join prefix property in the unit tier;
-              dispatch's Stage for the video route
+Test seams    dispatch's Stage per route: archive, picture, text,
+              office, document and email, through the unit tier on
+              fakes and the integration tier on the real tools; the
+              email Reader's records over the copied fixture; mail's
+              CLI over its generated store
 
 Slices
-  1. Upgrade: linuxserver/ffmpeg 9.0.2-cli-ls89 by digest. Runners
-     byte-identical, scdet, select, showinfo and the protocols
-     confirmed in the image, currency exits 0.
-  2. Fixture: audio's LibriSpeech fixture with a generated test
-     pattern of known scene cuts, plus its gain-step and added-noise
-     variants. Rebuilt by a fixtures task, SHA-256s recorded, the
-     truth printed.
-  3. Audio: the incremental planner held equal to PlanWindows, the
-     tracker on the level-change variants, the file path's detector
-     choice and Join's settled prefix.
-  4. Media over files: one run, paced and unpaced, yielding
-     interleaved windows and frames with exact reasons, through both
-     runners, with cancellation.
-  5. Live sources: the reader and the srt, rtmp, http(s) with live
-     HLS and udp URLs over loopback; protocol allow-lists; the named
-     network; rtsp refused.
-  6. Dispatch's video stage.
-  7. Harness: the fixture read live, with windows transcribed and
-     frames read on gb10-2, and the settled transcript against its
-     truth.
-  8. Corpus: the new videos fetched into ~/docs with manifest
-     entries and the README's video row.
-  9. Findings: the evidence 13 runs, the finding and the root's
-     evidence 13 link.
- 10. Release: CHANGELOG v0.8.0, tag.
+  1. Upgrade mail: smallvec v1.16.5, mise-action v5.2.7, currency
+     exits 0, check passes.
+  2. Upgrade processing: Gotenberg 9.1.0-libreoffice by digest,
+     goldens compared and re-recorded under the exception, currency
+     exits 0.
+  3. Conversation fixture in mail: the generator's Conversation
+     History folder, hand truth, mail's tests over it.
+  4. Release mail v0.3.1: CHANGELOG, tag, both archives and
+     SHA256SUMS.
+  5. tar and gzip: inspect's tar header checks and the archive
+     stage's tar and gzip readers, with the generated tar fixtures.
+  6. 7-Zip: the adapter and mise pin; 7z, zstd, ZIP's other methods
+     and cabinets, with the commons-compress, libarchive and
+     generated fixtures.
+  7. Pictures: standalone TIFF pages; HEIC, WebP and AVIF through
+     magick's readers.
+  8. Text: the text stage's decoding order, fallback and warnings
+     over the encodings fixture.
+  9. RTF through LibreOffice into office.
+ 10. PDFs: qpdf's password check and forms record; pdfdetach's
+     attachments as parts.
+ 11. Conversation records: copy mail v0.3.1's fixtures, the email
+     package's records and the dispatch email stage's output.
+ 12. Finding: the outcomes per route and the conversation records
+     against truth, with their limits.
+ 13. Release processing v0.9.0: CHANGELOG, tag.
+ 14. Evidence 6: the root's sentence and the finding's link.
 
-Out of scope  chat streams and exports (task chats, evidence 6);
-              capture devices (v4l2, pulse/alsa, x11grab) and rtsp
-              (backlog); http(s) reconnect options; voice-activity
-              models; dynaudnorm or any other level normalization
-              ahead of detection; inference in processing; an LLM
-              seam pass; a video's subtitle tracks as outputs;
-              diarization; M4B chapters; server timestamps; any
-              preset change (escalation); llama.cpp past b12098
-              (held)
+Out of scope  ODF, WordPerfect, .xlsb and ODG (still no processor
+              yet); legacy OLE2 macro detection; web content (HTML,
+              MHTML, WARC, EPUB); encoding detection (uchardet);
+              parsing XFA; media behind Screen or Rendition
+              annotations; turns parsed from transcript HTML; the
+              Voice classes and Teams; RAR, ISO and bare xz or
+              bzip2 streams (unrouted); any mail CLI change; PDF
+              names inside compressed object streams; inference in
+              processing; llama.cpp past b12098 (held); the
+              suite-runner task (a pending edit)
 
-Door          one-way for the v0.8.0 tag, since a pushed tag reaches
-              consumers. The rest is two-way: code on a branch, the
-              image pin reverts by digest, and the ~/docs additions
-              are local and removable.
-Release       spike-ai-pipeline-processing v0.8.0
+Door          one-way for the mail v0.3.1 and processing v0.9.0
+              tags, since a pushed tag reaches consumers. The rest
+              is two-way: code on branches, the image and 7-Zip pins
+              revert by digest, and the root's evidence edit is
+              text.
+Release       spike-ai-pipeline-mail v0.3.1
+              spike-ai-pipeline-processing v0.9.0
 ```
+
+## Progress
+
+slices 0/14 committed · standards — · spec — · editor —
+
+mail v0.3.1 (slice 4) is tagged mid-build so processing can copy its fixture: BUILD checkpoints
+with the architect before slice 4 publishes, merges, and tags mail.
 
 ## Decisions
 
@@ -1815,6 +1842,31 @@ Release       spike-ai-pipeline-processing v0.8.0
 - plan 2026-11-06 (r1 q2): evidence 6 reworded to Skype for Business conversation history in a PST
   passing through processing as conversation records, proven in formats; the roadmap's formats
   summary gains it, and formats keeps processing v0.9.0.
+- formats (r1 q1, narrowed by the architect): one task, the goal's last, the sync following. In:
+  multi-page TIFF, PDF encryption, forms and attachments, an archive layer (ZIP's other methods
+  including Deflate64, tar, gzip, zstd, 7z; cabinets not named .onepkg through 7-Zip), RTF,
+  HEIC/WebP/AVIF, text, and SfB conversation history (Conversation and Missed text chats only; no
+  voice in the deployment, legacy data so no Teams). Out: ODF, WordPerfect, .xlsb, ODG, legacy
+  OLE2 macro detection, web content.
+- formats (r2 q1): one conversation record per item. Rejected: turns parsed from the HTML (no
+  real sample).
+- formats (r2 q2): a generated PST fixture through mail's generator; mail v0.3.1, no CLI change.
+  Rejected: an export of a real mailbox (real people's chats).
+- formats (r2 q3): the root's evidence 6 gains the finding's link and a sentence; no root tag.
+- formats (r2 q4): only PDFs that need a password are refused, via qpdf --requires-password.
+  Rejected: refusing every /Encrypt PDF.
+- formats (r2 q5): AcroForm fields as a record via qpdf's JSON. Rejected: pages only.
+- formats (r2 q6): XFA flagged only. Rejected: extracting the datasets XML (no fixture).
+- formats (r2 q7): attachments via pdfdetach. Rejected: qpdf (name tree only, 1 of 2 found).
+- formats (r2 q8): std archive/tar and compress/gzip; 7-Zip ≥ 24.01 for 7z, zstd and ZIP's other
+  methods. Rejected: bodgit/sevenzip, klauspost/compress, bsdtar (no Deflate64), Info-ZIP UnZip
+  (unmaintained).
+- formats (r2 q9): standalone TIFF pages only. (r2 q10): primary image only.
+- formats (r2 q11, r3): no encoding detection; BOM, valid UTF-8, then windows-1252 with a
+  warning; revisit if many cases need it. Rejected: uchardet (10/11, last release 2022),
+  charset-normalizer (6/11, Python), file (can't name code pages), chardetng (library only).
+- formats (r2 q12): golang.org/x/text v0.43.0. Rejected: iconv (names vary by libc).
+  (r2 q13): lossy U+FFFD with a warning. Rejected: failing the part.
 
 ## Pending edits
 
@@ -2114,11 +2166,21 @@ Release       spike-ai-pipeline-processing v0.8.0
   store resumed by cursor. Processing runs no inference. A finding; tags processing v0.6.0; the
   root's evidence 17 links the finding. Evidence 17.
   ```
-- coordinator · roadmap, the `formats` task's summary: "zip archives recursed within size and
-  depth limits" is cut, since the `onenote` task's dispatcher reads ZIP. It gains processors for
-  text, decoded by its encoding, for .xlsb, WordPerfect, and ODG, and for tar, gzip, zstd, and 7z
-  archives, each a route processing v0.6.0 reports as "no processor yet", and legacy OLE2 macro
-  detection in `inspect`.
+- coordinator · roadmap, the `formats` task (this replaces the earlier pending edit to its
+  summary): `repos` reads `["spike-ai-pipeline-mail", "spike-ai-pipeline-processing",
+  "spike-ai-pipeline"]`, and its summary says what the task delivered: multi-page TIFF pages;
+  HEIC, WebP, and AVIF through magick; RTF through LibreOffice into office; text decoded by its
+  byte order mark, else as UTF-8, else windows-1252 with a warning (no detection); PDFs needing a
+  password refused through qpdf, AcroForm fields as a record, and embedded files through
+  pdfdetach; tar and gzip through the standard library and 7z, zstd, ZIP's other methods
+  (Deflate64 among them), and cabinets through 7-Zip; and Skype for Business conversation history
+  (Conversation and Missed text chats) in a PST generated by mail's fixture generator, read as one
+  conversation record per item. Tags mail v0.3.1 and processing v0.9.0. Evidence 6.
+- coordinator · roadmap, a backlog note for experiment.ai.spike-ai-pipeline: ODF, WordPerfect,
+  .xlsb, and ODG still report "no processor yet", and legacy OLE2 macros go unflagged; the
+  architect judged them unlikely on the deployment's share drives (formats r1). Text encoding
+  detection (uchardet named 10 of 11 sample encodings) is revisited if the windows-1252 fallback
+  misreads many files (formats r3).
 - coordinator · roadmap, the `audio` task: `repos` gains `"spike-ai-pipeline"`, for evidence 5's
   result, and its summary says what the task delivered (this replaces the earlier pending edits to
   the summary, the audio route's processor and the LibriVox audiobook, audio r1 q2 and q7):
