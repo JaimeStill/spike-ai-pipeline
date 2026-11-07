@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** docproc
-- **Branch:** docproc
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -26,7 +26,7 @@
 18. [x] audio
 19. [x] streams
 20. [x] formats
-21. [ ] docproc
+21. [x] docproc
 22. [ ] docinfer
 
 ## Task brief · experiment.ai.spike-ai-pipeline · docproc
@@ -143,10 +143,6 @@ Door          two-way: code on a branch, no tag, pins and
               requirements revert, and the contract and finding
               are text
 ```
-
-## Progress
-
-slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23; 6 docs and schema contract c5c89b4; 7 finding 18e3c0a: run 1 1614.67 s, re-run 142.21 s with 545 of 592 seen) · standards done (4dd1ef0 298e9bd bb40e89 c74e9c3) · spec done (2 gaps closed: cdea4f6, 10d8e7c 2778ba8) · editor done (475a802); brief ready
 
 ## Decisions
 
@@ -1974,6 +1970,10 @@ slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mo
   processing's index records neither a part that failed or holds a failed or limited part, nor a
   part whose route has no stage. The README, schema page, and finding state processing's rule.
   Rejected: changing processing's index, which is out of scope.
+- docproc (accept): the architect accepted the session brief after a manual verification run of the
+  whole sequence (build, a varied run, the record against the contract, the report, a re-run all
+  seen with subtrees copied, re-render, usage errors, --exclude, missing pinned tools, quarantine,
+  the check). No tag.
 
 ## Pending edits
 
