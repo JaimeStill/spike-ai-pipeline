@@ -146,7 +146,7 @@ Door          two-way: code on a branch, no tag, pins and
 
 ## Progress
 
-slices 4/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36) · standards — · spec — · editor —
+slices 5/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23) · standards — · spec — · editor —
 
 ## Decisions
 
