@@ -133,7 +133,7 @@ func TestRun_RootHelp(t *testing.T) {
 			if code != process.ExitUsage {
 				t.Errorf("code = %d, want %d; stderr = %q", code, process.ExitUsage, stderr)
 			}
-			for _, cmd := range []string{"run", "version"} {
+			for _, cmd := range []string{"report", "run", "version"} {
 				if !strings.Contains(stdout.String(), cmd) {
 					t.Errorf("stdout = %q, want the root help listing %s", stdout, cmd)
 				}

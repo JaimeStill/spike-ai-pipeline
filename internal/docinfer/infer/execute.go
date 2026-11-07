@@ -10,6 +10,9 @@ import (
 	"math"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"text/tabwriter"
 	"time"
 	"uuid"
 
@@ -17,6 +20,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/embed"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/report"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/source"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 )
@@ -38,12 +42,15 @@ const embeddings = "embeddings"
 // run by vision (visionTexts), when it is configured, and a transcript of every part's audio
 // windows by transcription (transcriptionTexts), when it is configured, embeds every text of the
 // run, vision's and the transcripts among them (embedTexts), and writes the run's chunk record
-// and its manifest again, with its end, its embedding space, its transcripts, and its counts.
-// Vision and transcription run one after the other, and both before any text is embedded, so the
-// embeddings are sent in one pass, as the embedder takes them. A run that stops writes its
-// manifest with its end and the error that stopped it, and no chunk record; the results it stored
-// are held for the next run.
+// and its manifest again, with its end, its embedding space, its transcripts, its failures, and
+// its counts, and then its report, internal/docinfer/report's page. Vision and transcription run
+// one after the other, and both before any text is embedded, so the embeddings are sent in one
+// pass, as the embedder takes them. Each input's terminal line, progress's, is written as its
+// work ends; then the warnings, each capability's counts, the closing summary, the chunk record's
+// path, and the report's. A run that stops writes its manifest with its end and the error that
+// stopped it, no chunk record, and its report; the results it stored are held for the next run.
 func execute(ctx context.Context, w io.Writer, j job) error {
+	start := time.Now()
 	if _, err := fmt.Fprintf(w, "docproc run %s: outputs %d: %s\n", j.run.Manifest.Run, len(j.run.Outputs), j.run.Counts()); err != nil {
 		return err
 	}
@@ -55,7 +62,7 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	m := outdir.Manifest{
 		Schema:  outdir.Version,
 		Run:     uuid.NewV7().String(),
-		Start:   schema.Time(time.Now()),
+		Start:   schema.Time(start),
 		Docproc: outdir.Docproc{Dir: j.run.Root, Run: j.run.Manifest.Run},
 	}
 	if v := j.cfg.Vision; v != nil {
@@ -85,6 +92,7 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	var lines []outdir.Line
 	var warnings, failed, rejected []string
 	occs, err := occurrences(j.run)
+	p := newProgress(w, start, j.run, occs)
 	if err == nil {
 		occs, warnings, err = visionTexts(ctx, j, dir, &m, occs)
 	}
@@ -93,7 +101,8 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 		warnings = append(warnings, failed...)
 	}
 	if err == nil {
-		lines, rejected, err = embedTexts(ctx, j, dir, &m, occs)
+		p.failed(m.Failures)
+		lines, rejected, err = embedTexts(ctx, j, dir, &m, occs, p)
 	}
 	if err == nil {
 		m.Chunks, err = dir.WriteChunks(m.Run, lines)
@@ -101,9 +110,17 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	m.End = schema.Time(time.Now())
 	if err != nil {
 		m.Error = err.Error()
-		return errors.Join(err, dir.WriteManifest(m))
+		if werr := dir.WriteManifest(m); werr != nil {
+			return errors.Join(err, werr)
+		}
+		_, rerr := report.Write(dir.Root(), m.Run)
+		return errors.Join(err, rerr)
 	}
 	if err := dir.WriteManifest(m); err != nil {
+		return err
+	}
+	page, err := report.Write(dir.Root(), m.Run)
+	if err != nil {
 		return err
 	}
 	for _, r := range rejected {
@@ -134,11 +151,54 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(w, "embeddings: texts %d, metadata %d, chunks %d: held %d, embedded %d, rejected %d; requests %d\n"+
-		"docinfer run %s: lines %d: %s\n",
-		c.Texts, c.Metadata, c.Chunks, c.Held, c.Embedded, c.Rejected, c.Requests,
-		m.Run, c.Lines, filepath.Join(dir.Root(), filepath.FromSlash(m.Chunks)))
+	_, err = fmt.Fprintf(w, "embeddings: texts %d, metadata %d, chunks %d: held %d, embedded %d, rejected %d; requests %d\n",
+		c.Texts, c.Metadata, c.Chunks, c.Held, c.Embedded, c.Rejected, c.Requests)
+	if err != nil {
+		return err
+	}
+	if err := summary(w, m); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "docinfer run %s: lines %d: %s\nreport %s\n",
+		m.Run, c.Lines, filepath.Join(dir.Root(), filepath.FromSlash(m.Chunks)), page)
 	return err
+}
+
+// summary writes the closing summary to w: a table of each capability, in the order the run
+// runs them, with the requests it sent and its failures, the distinct images or windows the
+// endpoint refused, or the distinct chunks it rejected, this run or held; a capability skipped
+// shows neither, and why.
+func summary(w io.Writer, m outdir.Manifest) error {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	var err error
+	row := func(cells ...string) {
+		if err == nil {
+			_, err = io.WriteString(tw, strings.Join(cells, "\t")+"\n")
+		}
+	}
+	skipped := func(name string) {
+		for _, s := range m.Skipped {
+			if s.Name == name {
+				row(name, "-", "-", "skipped: "+s.Reason)
+			}
+		}
+	}
+	c := m.Counts
+	row()
+	row("CAPABILITY", "REQUESTS", "FAILURES")
+	if vc := c.Vision; vc != nil {
+		row(visionName, strconv.Itoa(vc.Requests), strconv.Itoa(vc.Refused))
+	} else {
+		skipped(visionName)
+	}
+	if tc := c.Transcription; tc != nil {
+		row(transcriptionName, strconv.Itoa(tc.Requests), strconv.Itoa(tc.Failed))
+	} else {
+		skipped(transcriptionName)
+	}
+	row(embeddings, strconv.Itoa(c.Requests), strconv.Itoa(c.Rejected))
+	row()
+	return errors.Join(err, tw.Flush())
 }
 
 // sum returns the lowercase hex SHA-256 of s.
@@ -148,8 +208,11 @@ func sum(s string) string {
 }
 
 // embedTexts cuts and embeds every text of occs, the occurrences of j's docproc run's texts,
-// vision's and the transcripts among them, filling m's counts and embedding space, and returns the chunk lines, one per chunk per occurrence, in the record's order and
-// each text's, and a description of each chunk the endpoint rejected.
+// vision's and the transcripts among them, filling m's counts and embedding space, and returns
+// the chunk lines, one per chunk per occurrence, in the record's order and each text's, and a
+// description of each chunk the endpoint rejected. It writes each input's line to p as the
+// input's work ends: an input with no chunk to send at once, and each other as its last chunk's
+// result arrives.
 //
 // Each distinct text is cut once, and each distinct chunk is embedded once: a chunk an earlier
 // run held a result for, by its content, the model, and the chunk settings, is sent in no
@@ -157,7 +220,7 @@ func sum(s string) string {
 // chunk the endpoint rejects is recorded on its lines, not fatal; a rejection the endpoint gives
 // with a 4xx reply is held too, a verdict on the chunk, while one it gives with any other is
 // not, so the next run sends that chunk again.
-func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence) ([]outdir.Line, []string, error) {
+func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence, p *progress) ([]outdir.Line, []string, error) {
 	emb := j.cfg.Embeddings
 	bound := *emb.ChunkSize
 	settings := fmt.Sprintf("chunk_size=%d chunker=%s", bound, chunk.Version)
@@ -200,6 +263,20 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 	}
 	m.Counts.Chunks = len(results)
 
+	// Each input's chunk lines, and the queued chunks it waits for; an input that waits for none
+	// has ended its work.
+	for _, o := range occs {
+		for _, c := range cuts[o.source.SHA256] {
+			s := sum(c.Text)
+			e := results[s]
+			p.chunk(o.input, s, e == nil, e != nil && e.Error != "")
+		}
+	}
+	waiters := p.waiters()
+	if err := p.idle(); err != nil {
+		return nil, nil, err
+	}
+
 	if len(pending) > 0 {
 		cl, err := j.cfg.Endpoints[emb.Endpoint].Client(j.http)
 		if err != nil {
@@ -210,17 +287,20 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 			s := pendingSums[i]
 			held := &outdir.Embedding{Model: emb.Model, Settings: settings, Content: s}
 			results[s] = held
+			hold := true
 			if r.Rejected != nil {
 				held.Error = r.Rejected.Error()
-				if r.Rejected.Status < 400 || r.Rejected.Status > 499 {
-					return nil
-				}
+				hold = r.Rejected.Status >= 400 && r.Rejected.Status <= 499
 			} else {
 				held.Vector, held.Dimensions = outdir.EncodeVector(r.Vector), len(r.Vector)
 				m.Counts.Embedded++
 			}
-			_, err := dir.Hold(embeddings, outdir.Key(embeddings, emb.Model, settings, s), held)
-			return err
+			if hold {
+				if _, err := dir.Hold(embeddings, outdir.Key(embeddings, emb.Model, settings, s), held); err != nil {
+					return err
+				}
+			}
+			return p.embedded(waiters[s], s, r.Rejected != nil)
 		})
 		if err != nil {
 			return nil, nil, fmt.Errorf("embeddings: %w", err)

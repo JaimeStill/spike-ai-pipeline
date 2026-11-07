@@ -37,8 +37,8 @@ type window struct {
 // windows in m and recording each transcript it joins there, and returns occs with each part's
 // window occurrences replaced by one of its transcript, as a source of kind transcript naming the
 // stored text, at the place of the part's first window in the record, and a warning for each
-// window the endpoint refused. With transcription unset, every window occurrence is dropped,
-// counted, and skipped.
+// window the endpoint refused, each output line of a refused window recorded in m's failures.
+// With transcription unset, every window occurrence is dropped, counted, and skipped.
 //
 // Each distinct window, by its bytes' SHA-256, is sent once: a window an earlier run held a
 // result for, under the model and the settings, is sent in no request; the rest are sent through
@@ -155,6 +155,16 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 			return nil, nil, fmt.Errorf("transcription: transcript of window %s: %w", w.ref, err)
 		}
 		texts[s] = text
+	}
+
+	// Each window output line whose window was refused is a failure, the input's.
+	for _, o := range occs {
+		if o.audio == "" {
+			continue
+		}
+		if r := windows[sums[o.audio]].result; r.Error != "" {
+			m.Failures = append(m.Failures, outdir.Failure{Capability: transcriptionName, Input: o.input, Ref: o.output.Ref, Error: r.Error})
+		}
 	}
 
 	// Each part's windows, by plan index, the first line of an index kept; and the parts in the

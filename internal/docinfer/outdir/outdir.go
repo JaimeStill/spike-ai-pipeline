@@ -48,6 +48,23 @@ func Open(root string) (*Dir, error) {
 	return &Dir{root: abs}, nil
 }
 
+// OpenExisting opens docinfer's directory at root, which must exist: a reader, such as the report
+// command, opens it so, and makes nothing.
+func OpenExisting(root string) (*Dir, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	fi, err := os.Stat(abs)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() {
+		return nil, fmt.Errorf("%s is no directory", abs)
+	}
+	return &Dir{root: abs}, nil
+}
+
 // Root returns the directory's absolute path.
 func (d *Dir) Root() string { return d.root }
 
@@ -241,9 +258,24 @@ type Manifest struct {
 	// Transcripts are the transcripts the run joined, one per part and stage with audio windows,
 	// in the record's order. Absent when transcription was skipped, or until the run joins them.
 	Transcripts []Transcript `json:"transcripts,omitempty"`
-	Counts      Counts       `json:"counts"`
+	// Failures are the image output lines whose image vision refused and the audio window
+	// output lines whose window transcription refused, each with why, vision's first, each in
+	// the record's order. A refused image or window has no text and so no chunk line; this is
+	// where a reader, such as the report, finds it. Absent when nothing was refused.
+	Failures []Failure `json:"failures,omitempty"`
+	Counts   Counts    `json:"counts"`
 	// Error is what stopped the run. Absent when nothing did.
 	Error string `json:"error,omitzero"`
+}
+
+// Failure is one output line a capability refused: the capability, vision or transcription, the
+// input, the output's stored file, relative to the docproc run directory, and the endpoint's
+// reply. An image or window under two output lines is two failures.
+type Failure struct {
+	Capability string `json:"capability"`
+	Input      string `json:"input"`
+	Ref        string `json:"ref"`
+	Error      string `json:"error"`
 }
 
 // Docproc names the docproc run a docinfer run read: its run directory, absolute, and its id.

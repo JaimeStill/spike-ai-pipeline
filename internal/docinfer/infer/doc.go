@@ -42,7 +42,16 @@
 // transcription results are held apart from the chunk settings, so a changed bound cuts and
 // embeds again and sends no image and no window.
 // The run writes a chunk line per chunk per occurrence, the same content under two inputs two
-// lines, one vector, and its manifest, with the embedding space.
+// lines, one vector, and its manifest, with the embedding space and its failures, each image or
+// window output line whose image or window the endpoint refused, which have no chunk line.
+//
+// As each input's work ends, the terminal prints its line: its path, its image and audio window
+// output lines, its chunk lines, its failures, refused images and windows and rejected chunks,
+// and how long after the run began its work ended. The capabilities run one after another over
+// every input, so an input's work ends with its last chunk's embedding, at once when none of its
+// chunks is sent. A closing summary then counts each capability's requests and failures, a
+// skipped capability saying so, and the run writes its report, internal/docinfer/report's page,
+// runs/<run id>/report.html, and prints its path.
 //
 // The package exports:
 //
