@@ -178,6 +178,12 @@ directory is 1.08 times ~/docs' bytes.
 
 ## Results: the re-run
 
+> **Note, 2026-11-07:** this re-run was recorded before docproc copied a seen part's subtree into
+> its record ([schema page](../docproc-schema.md#seen-content-and-replayed-subtrees)). Its record
+> has no lines for the parts inside a seen input, so its nested counts, 141 part lines, reflect
+> only the 6 inputs dispatched again. A re-run now records every seen part's subtree; the
+> [addendum](#addendum-the-re-run-with-subtree-replay) measures one.
+
 **docproc ~/docs 2**, run `01a1b6b7-7611-78a7-9713-78f04b7df7fc`, 15:53:59 to 15:56:20 UTC, the
 same command over the same run directory, 22 workers, exit 0, stderr empty. **142.21 s wall.**
 
@@ -225,6 +231,30 @@ came the portfolio at 6.04 s and `LargeData.one` at 4.08 s; every seen input end
 
 The run directory grew by 9,627,973 bytes, the re-run's manifest, record (6,057,525), and report
 (3,565,408).
+
+## Addendum: the re-run with subtree replay
+
+Recorded 2026-11-07, after the finding, to show the replay; it doesn't change the numbers above.
+**docproc ~/docs 3**, run `01a1b6d1-df4a-7a7d-b7bb-69e784458ac9`, 16:22:49 to 16:25:08 UTC (138.80 s
+by its manifest), the same command over the same run directory, after runs 1 and 2, with a binary
+built from the code of `10d8e7c`, the commit that added subtree replay. Exit 0, stderr empty. Its
+inputs' outcomes are run 2's, row for row.
+
+| Record | Nested part lines | Output lines | Distinct refs | Warnings | Bytes |
+|---|---|---|---|---|---|
+| run 1 | 331 | 11,085 | 8,805 | | 9,546,275 |
+| run 2, before replay | 141 | 6,959 | 6,949 | | 6,057,525 |
+| run 3, with replay | 348 | 11,116 | 8,805 | 0 | 9,931,665 |
+
+Run 3's refs are run 1's 8,805, every one a file in `outputs/`: `mixed-bundle.zip`'s 14, which run
+2 lacked, among them. Of its nested part lines, 212 are seen and 136 failed, the failures those of
+the inputs dispatched again. Its 17 nested part lines beyond run 1's are subtrees run 1 itself left
+out: run 1, recorded before replay too, gave no lines to the parts inside content it saw
+twice in one run, such as the bundle inside `zip-in-zip.zip` and `mixed-bundle.tar.zst`, which run 3
+copies. Outcomes, reasons of the inputs' own lines, and times aside, its lines hold every one of run
+1's but 12: the lines of inputs dispatched again whose error names that run's working directory or
+whose part the index now sees, and the encrypted inputs' own lines, which the index's seen event
+gives no error.
 
 ## What the runs show
 
