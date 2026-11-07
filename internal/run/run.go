@@ -72,10 +72,12 @@ func command(lookup *graph.Node[stages.Lookup]) *cli.Command {
 }
 
 // input is one input to dispatch: its path, and the path argument it came from, the path itself
-// for a file argument.
+// for a file argument, each as given and cleaned, and each absolute, as the record writes them.
 type input struct {
-	path string
-	arg  string
+	path    string
+	arg     string
+	absPath string
+	absArg  string
 }
 
 // collect returns the inputs paths name, in order, each once: a regular file as given, and every
@@ -86,12 +88,22 @@ type input struct {
 func collect(paths []string) ([]input, error) {
 	var inputs []input
 	seen := map[string]bool{}
-	add := func(path, arg string) {
+	add := func(path, arg string) error {
 		path = filepath.Clean(path)
-		if !seen[path] {
-			seen[path] = true
-			inputs = append(inputs, input{path: path, arg: filepath.Clean(arg)})
+		if seen[path] {
+			return nil
 		}
+		seen[path] = true
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		absArg, err := filepath.Abs(arg)
+		if err != nil {
+			return err
+		}
+		inputs = append(inputs, input{path: path, arg: filepath.Clean(arg), absPath: absPath, absArg: absArg})
+		return nil
 	}
 	for _, arg := range paths {
 		info, err := os.Lstat(arg)
@@ -100,14 +112,16 @@ func collect(paths []string) ([]input, error) {
 		}
 		switch {
 		case info.Mode().IsRegular():
-			add(arg, arg)
+			if err := add(arg, arg); err != nil {
+				return nil, err
+			}
 		case info.IsDir():
 			err := filepath.WalkDir(arg, func(p string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
 				if d.Type().IsRegular() {
-					add(p, arg)
+					return add(p, arg)
 				}
 				return nil
 			})

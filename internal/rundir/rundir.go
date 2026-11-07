@@ -59,19 +59,6 @@ func (d *Dir) Root() string { return d.root }
 // Index returns the run directory's file index, which every run over it shares.
 func (d *Dir) Index() dispatch.Index { return d.index }
 
-// Rel returns p relative to the run directory, with slashes, as the record writes every path.
-func (d *Dir) Rel(p string) (string, error) {
-	abs, err := filepath.Abs(p)
-	if err != nil {
-		return "", err
-	}
-	rel, err := filepath.Rel(d.root, abs)
-	if err != nil {
-		return "", err
-	}
-	return filepath.ToSlash(rel), nil
-}
-
 // Store stores o, the nth output, counting from 1, that the stage id prepared for part, and
 // returns its Ref: outputs/<part sha256>/<stage>/<n><ext>, relative to the run directory. The
 // content is o's file, copied, or its inline Value. An output already stored there, as an

@@ -133,25 +133,12 @@ func TestQuarantine_BesideFlags(t *testing.T) {
 	}
 }
 
-func TestRel(t *testing.T) {
-	d := open(t)
-	for in, want := range map[string]string{
-		filepath.Join(d.Root(), "runs", "x"):             "runs/x",
-		filepath.Join(filepath.Dir(d.Root()), "in", "a"): "../in/a",
-		d.Root(): ".",
-	} {
-		if got, err := d.Rel(in); err != nil || got != want {
-			t.Errorf("Rel(%q) = %q, %v; want %q", in, got, err, want)
-		}
-	}
-}
-
 // A run writes its manifest as it begins, without an end, and again as it ends; its record
 // holds a line per Write.
 func TestRun_ManifestAndRecord(t *testing.T) {
 	d := open(t)
 	start := time.Date(2026, 11, 7, 12, 0, 0, 0, time.UTC)
-	r, err := d.Begin(schema.Manifest{Workers: 3, Inputs: []string{"../in"}}, start)
+	r, err := d.Begin(schema.Manifest{Workers: 3, Inputs: []string{"/in"}}, start)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +157,7 @@ func TestRun_ManifestAndRecord(t *testing.T) {
 		t.Errorf("begun manifest = %+v", m)
 	}
 
-	if err := r.Write(schema.Event{Event: schema.ErrorEvent, Input: "../in/a", Error: "<boom>"}); err != nil {
+	if err := r.Write(schema.Event{Event: schema.ErrorEvent, Input: "/in/a", Error: "<boom>"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.End(start.Add(time.Second), nil); err != nil {
@@ -180,7 +167,7 @@ func TestRun_ManifestAndRecord(t *testing.T) {
 	if m := manifest(); time.Time(m.End) != start.Add(time.Second) || m.Workers != 3 || m.Error != "" {
 		t.Errorf("ended manifest = %+v", m)
 	}
-	if got := readRef(t, d, r.Record()); got != `{"event":"error","input":"../in/a","error":"<boom>"}`+"\n" {
+	if got := readRef(t, d, r.Record()); got != `{"event":"error","input":"/in/a","error":"<boom>"}`+"\n" {
 		t.Errorf("record = %q", got)
 	}
 	r2, err := d.Begin(schema.Manifest{}, start)

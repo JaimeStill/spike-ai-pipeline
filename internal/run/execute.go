@@ -7,6 +7,7 @@ import (
 	"io"
 	"iter"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -52,11 +53,11 @@ func execute(ctx context.Context, w io.Writer, set stages.Set, out string, args 
 
 	m := schema.Manifest{Workers: workers, Tools: toolsOf(set), Stages: stagesOf(set)}
 	for _, arg := range args {
-		rel, err := dir.Rel(arg)
+		abs, err := filepath.Abs(arg)
 		if err != nil {
 			return err
 		}
-		m.Inputs = append(m.Inputs, rel)
+		m.Inputs = append(m.Inputs, abs)
 	}
 	run, err := dir.Begin(m, time.Now())
 	if err != nil {
@@ -142,13 +143,9 @@ func (r *recorder) output(path string, ev dispatch.Event) error {
 		}
 		o.Ref, o.Value = ref, nil
 	}
-	in, err := r.dir.Rel(path)
-	if err != nil {
-		return err
-	}
 	part := schema.PartOf(ev.Part)
 	return r.run.Write(schema.Event{
-		Event: schema.OutputEvent, Input: in, Part: &part, Stage: stageOf(ev.Stage),
+		Event: schema.OutputEvent, Input: r.inputs[path].absPath, Part: &part, Stage: stageOf(ev.Stage),
 		Output: &schema.Output{
 			Kind: string(o.Kind), Name: o.Name, MediaType: o.MediaType, Meta: o.Meta, Ref: o.Ref,
 		},
@@ -161,13 +158,9 @@ func (r *recorder) output(path string, ev dispatch.Event) error {
 // time, and is its terminal line.
 func (r *recorder) part(path string, ev dispatch.Event) error {
 	delete(r.counts, ev.Part.SHA256+"\x00"+ev.Stage.String())
-	in, err := r.dir.Rel(path)
-	if err != nil {
-		return err
-	}
 	part := schema.PartOf(ev.Part)
 	rec := schema.Event{
-		Event: schema.PartEvent, Input: in, Part: &part, Stage: stageOf(ev.Stage),
+		Event: schema.PartEvent, Input: r.inputs[path].absPath, Part: &part, Stage: stageOf(ev.Stage),
 		Outcome: string(ev.Outcome), Recorded: string(ev.Recorded), Reason: ev.Reason,
 		Outputs: &ev.Outputs, Children: &ev.Children,
 	}
@@ -207,12 +200,8 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 // inputError records stop, the error that stopped the dispatch of the input at path before its
 // own event, as its record line and its terminal line.
 func (r *recorder) inputError(path string, stop error) error {
-	in, err := r.dir.Rel(path)
-	if err != nil {
-		return err
-	}
 	span := r.span(path)
-	rec := schema.Event{Event: schema.ErrorEvent, Input: in, File: r.file(path), Error: stop.Error(), Time: &span}
+	rec := schema.Event{Event: schema.ErrorEvent, Input: r.inputs[path].absPath, File: r.file(path), Error: stop.Error(), Time: &span}
 	if err := r.run.Write(rec); err != nil {
 		return err
 	}
@@ -220,17 +209,15 @@ func (r *recorder) inputError(path string, stop error) error {
 	return r.line(fmt.Sprintf("%s  -  %s: %v  %s\n", path, errorOutcome, stop, r.took(span)))
 }
 
-// file returns the metadata of the input at path, its argument relative to the run directory,
-// or nil when it can't be read.
+// file returns the metadata of the input at path, its argument absolute, or nil when it can't be
+// read.
 func (r *recorder) file(path string) *schema.File {
 	in := r.inputs[path]
 	f, err := schema.FileOf(path, in.arg, schema.Statx)
 	if err != nil {
 		return nil
 	}
-	if f.Arg, err = r.dir.Rel(in.arg); err != nil {
-		return nil
-	}
+	f.Arg = in.absArg
 	return &f
 }
 

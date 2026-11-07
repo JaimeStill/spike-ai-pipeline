@@ -17,8 +17,10 @@
 // A run over a directory an earlier run made reuses its index and its store: content the index
 // has recorded is seen, and its outputs' Refs, which processing's index recorded as the caller
 // set them, name the copies the earlier run stored. Each run has its own id, a version 7 UUID,
-// and its own manifest and record. Every path the record and the manifest write is relative to
-// the run directory, with slashes; a tool's path is the host's.
+// and its own manifest and record. Every path to a file docproc writes, an output's Ref, a
+// quarantined part's file and flags, and a run's record, is relative to the run directory, with
+// slashes, so the directory can be moved whole; an input's path and its argument, which docproc
+// only reads, are absolute, and a tool's path is the host's.
 //
 // Every file is written whole: to a temporary name in its directory, synced, and renamed. An
 // output or a quarantined file already there is kept as it is, so content prepared again, as
@@ -26,9 +28,8 @@
 //
 // The package exports:
 //
-//   - [Dir], made by [Open], with its [Dir.Root], its [Dir.Index], [Dir.Rel], which makes a path
-//     relative to it, [Dir.Store], which stores an output and returns its Ref, and
-//     [Dir.Quarantine], which keeps a quarantined part's file
+//   - [Dir], made by [Open], with its [Dir.Root], its [Dir.Index], [Dir.Store], which stores an
+//     output and returns its Ref, and [Dir.Quarantine], which keeps a quarantined part's file
 //   - [Run], begun by [Dir.Begin], with its [Run.ID], [Run.Record], [Run.Write], which appends a
 //     record line, and [Run.End], which closes the record and writes the manifest's end
 package rundir

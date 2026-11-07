@@ -40,8 +40,8 @@ func sevenZip(t *testing.T) func(string) (string, error) {
 }
 
 // inputs copies the committed inputs named into a directory "in" beside a run directory "out",
-// both in a fresh temporary directory, each file mode 0644, so every path the record writes,
-// relative to "out", is the same on every run. It returns in and out.
+// both in a fresh temporary directory, each file mode 0644. It returns in and out, each
+// absolute.
 func inputs(t *testing.T, names ...string) (in, out string) {
 	t.Helper()
 	root := t.TempDir()
@@ -144,7 +144,8 @@ var (
 // archive whose entry climbs out of it, and an input that can't be read, which make one line of
 // every kind: an output prepared, a nested part's own event, an input's own event with its file,
 // a quarantined input with its kept file, and an input's error. Its times are normalized, its
-// created times removed, and the inputs' directory, which an error names, written <in>.
+// created times removed, and the inputs' directory, absolute in every "input" and "arg" and named
+// by an error, written <in>, so the golden is the same on every machine.
 func TestRun_RecordGolden(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Skip("root reads a file of mode 0000, so no input fails")
@@ -182,16 +183,16 @@ func TestRun_RecordGolden(t *testing.T) {
 	}
 }
 
-// The manifest names the schema, the run, its times, its workers, its inputs relative to the run
-// directory, and every tool and stage, wired, missing with its reason, or excluded.
+// The manifest names the schema, the run, its times, its workers, its inputs as absolute paths,
+// and every tool and stage, wired, missing with its reason, or excluded.
 func TestRun_Manifest(t *testing.T) {
 	in, out := inputs(t, "hello.txt")
 
 	runOnce(t, apptest.NoTools, process.ExitOK, in, "--out", out, "--workers", "1", "--exclude", "vision")
 
 	m := runs(t, out)[0].manifest
-	if m.Schema != "1" || m.Workers != 1 || !slices.Equal(m.Inputs, []string{"../in"}) {
-		t.Errorf("manifest schema %q, workers %d, inputs %q; want 1, 1, [../in]", m.Schema, m.Workers, m.Inputs)
+	if m.Schema != "1" || m.Workers != 1 || !slices.Equal(m.Inputs, []string{in}) {
+		t.Errorf("manifest schema %q, workers %d, inputs %q; want 1, 1, [%s]", m.Schema, m.Workers, m.Inputs, in)
 	}
 	if m.Start.IsZero() || m.End.IsZero() || m.End.String() < m.Start.String() || m.Error != "" {
 		t.Errorf("manifest start %v, end %v, error %q; want an end after the start, no error", m.Start, m.End, m.Error)
@@ -214,6 +215,32 @@ func TestRun_Manifest(t *testing.T) {
 	}
 	if s := byRoute["text"]; s.State != "wired" || s.Stage == nil || s.Stage.Name != "text" {
 		t.Errorf("text = %+v, want wired, its stage named", s)
+	}
+}
+
+// An input's path and its argument are recorded absolute and cleaned, however they were given,
+// while its path under the argument stays relative to it, and every path to a file the run
+// wrote stays relative to the run directory.
+func TestRun_InputPathsAbsolute(t *testing.T) {
+	in, out := inputs(t, "hello.txt")
+	t.Chdir(filepath.Dir(in))
+
+	runOnce(t, apptest.NoTools, process.ExitOK, "./in/", "--out", "out", "--workers", "1")
+
+	r := runs(t, out)[0]
+	if !slices.Equal(r.manifest.Inputs, []string{in}) {
+		t.Errorf("manifest inputs %q, want [%s]", r.manifest.Inputs, in)
+	}
+	for _, ev := range r.events(t) {
+		if ev.Input != filepath.Join(in, "hello.txt") {
+			t.Errorf("input %q, want %s", ev.Input, filepath.Join(in, "hello.txt"))
+		}
+		if ev.File != nil && (ev.File.Arg != in || ev.File.Path != "hello.txt") {
+			t.Errorf("file arg %q, path %q; want %s, hello.txt", ev.File.Arg, ev.File.Path, in)
+		}
+		if ev.Output != nil && filepath.IsAbs(ev.Output.Ref) {
+			t.Errorf("output ref %q is absolute", ev.Output.Ref)
+		}
 	}
 }
 

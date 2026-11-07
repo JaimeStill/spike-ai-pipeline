@@ -13,8 +13,7 @@ import (
 // File is an input's file metadata, as the filesystem holds it:
 //
 //   - "name": its file name
-//   - "arg": the path argument it came from, a file or a directory, relative to the run
-//     directory
+//   - "arg": the path argument it came from, a file or a directory, absolute, cleaned
 //   - "path": its path relative to that argument, with slashes; "." when the argument is the
 //     file itself, so joining "arg" and "path" always names the file
 //   - "size": its size in bytes
@@ -46,7 +45,7 @@ type Stat struct {
 type Stater func(path string) (Stat, error)
 
 // FileOf returns the metadata of the file at path, which came from the path argument arg, read
-// through stat. It doesn't touch "arg": the caller makes it relative to the run directory.
+// through stat. It doesn't touch "arg": the caller makes it absolute.
 func FileOf(path, arg string, stat Stater) (File, error) {
 	st, err := stat(path)
 	if err != nil {

@@ -18,7 +18,7 @@ const (
 // part found in it before its own, and different inputs' lines interleave. Its fields:
 //
 //   - "event": the line's kind, "output", "part", or "error"
-//   - "input": the input the line belongs to, its path relative to the run directory
+//   - "input": the input the line belongs to, its absolute path, cleaned
 //   - "part": the [Part] the line is about; absent from an "error" line
 //   - "file": the input's [File]; present on an input's "part" line, and on an "error" line
 //     when the file could still be read
@@ -112,7 +112,7 @@ type Span struct {
 //   - "start": when the run started, a [Time]
 //   - "end": when it ended, a [Time]; absent while it runs, or when it never ended
 //   - "workers": how many inputs were dispatched at once
-//   - "inputs": the path arguments, files and directories, each relative to the run directory
+//   - "inputs": the path arguments, files and directories, each absolute, cleaned
 //   - "record": the run's record, relative to the run directory
 //   - "tools": each [Tool] the run tried to build
 //   - "stages": each route's [StageState], in the stage table's order

@@ -20,8 +20,11 @@
 // A run directory holds, for each run, a [Manifest], runs/<run>/manifest.json, and a record,
 // runs/<run>/record.jsonl, one [Event] per line: an "output" line for each [Output], a "part"
 // line for each part's own event, and an "error" line for an input whose dispatch stopped. Every
-// path either writes is relative to the run directory, with slashes, but for a [Tool]'s, the
-// host's.
+// path to a file docproc writes, an output's Ref, a [Quarantine]'s file and flags, and the
+// manifest's record, is relative to the run directory, with slashes, so the run directory can be
+// moved whole. An input's path and its argument, which docproc only reads, are absolute and
+// cleaned, the manifest's inputs among them; a [File]'s "path" is relative to its "arg"; and a
+// [Tool]'s path is the host's.
 //
 // The package exports:
 //
