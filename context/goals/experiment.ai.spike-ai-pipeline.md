@@ -1867,6 +1867,11 @@ with the architect before slice 4 publishes, merges, and tags mail.
   charset-normalizer (6/11, Python), file (can't name code pages), chardetng (library only).
 - formats (r2 q12): golang.org/x/text v0.43.0. Rejected: iconv (names vary by libc).
   (r2 q13): lossy U+FFFD with a warning. Rejected: failing the part.
+- formats (build, the architect): the suite-runner CLI is the next task, before the spike returns
+  to `planned`: raw document processing over an input set, to test and present the processing
+  layer, with no inference, which stays outside the processing library's boundary; an optional
+  inference layer may come after as its own task. Rejected: returning to `planned` at this sync
+  with the CLI deferred until the spike is staged again.
 
 ## Pending edits
 
@@ -2106,10 +2111,13 @@ with the architect before slice 4 publishes, merges, and tags mail.
   mboxcl's Content-Length is ignored and an mboxo body line that was ">From " loses its ">"."
 - coordinator · roadmap, experiment.ai.spike-ai-pipeline: add a task after `formats` and before
   the capstone, for a CLI in spike-ai-pipeline that runs the full document-processing suite over
-  an input set (such as `~/docs`) and routes each file to its processor. It comes once every
-  processor task has shipped, so it has the whole suite to route to (the architect, 2026-11-04,
-  during mail-mime). Its name, scope, and whether it scores against truth are settled by
-  `marathon plan`.
+  an input set (such as `~/docs`) and routes each file to its processor, so the processing layer
+  can be tested thoroughly and presented. It is pure document processing, with no inference, the
+  processing library's own boundary; an optional inference layer may follow as a later task. It
+  runs next: the spike stays active for it rather than returning to `planned`, and
+  spike-scanned-documents waits for gb10-2 until it ships (the architect, 2026-11-04 during
+  mail-mime, and 2026-11-06 during formats). Its name, its scope, and whether it scores against
+  truth are settled by `marathon plan`.
 - coordinator · roadmap, the `email-mime` task: `repos` gains `"spike-ai-pipeline"`, for evidence
   16's sentence. In its summary, "by extension .eml or type message/rfc822 plus mail's header-shape
   check, an exception to the signature rule" reads "by extension .eml or type message/rfc822 or
