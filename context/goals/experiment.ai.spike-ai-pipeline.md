@@ -146,7 +146,7 @@ Door          two-way: code on a branch, no tag, pins and
 
 ## Progress
 
-slices 5/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23) · standards — · spec — · editor —
+slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires; 3 schema metadata 754fac4; 4 run directory f759b36; input paths absolute 274dd0c; 5 HTML report 2dcca23; 6 docs and schema contract c5c89b4; 7 finding 18e3c0a: run 1 1614.67 s, re-run 142.21 s with 545 of 592 seen) · standards — · spec — · editor —
 
 ## Decisions
 
@@ -2370,3 +2370,12 @@ slices 5/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mo
   repository is a test's.
 - roadmap note · spike-ai-pipeline-client (its next task): its CI trails jdx/mise-action
   v5.2.4 -> v5.2.7 and taiki-e/create-gh-release-action v1.11.0 -> v1.12.0.
+- roadmap note · spike-ai-pipeline-processing (its next task): a PDF whose form read fails
+  (qpdf refuses a field whose value is an indirect reference, as in ~/docs' cfr-2024-title32-vol1.pdf)
+  fails the whole document part after its pages render, so the index never records it and every
+  docproc re-run renders its 1,823 pages again (docproc finding). A failed form read could be a
+  warning beside the pages.
+- roadmap note · spike-ai-pipeline-processing (its next task): the audio stage's windows each run
+  an ffmpeg that decodes the source from its start, so a 4.4 h audiobook took 1,614 s in docproc's
+  ~/docs run while every other input finished in 332 s (docproc finding). Seeking per window, or
+  one decode streamed into windows, would bound it.
