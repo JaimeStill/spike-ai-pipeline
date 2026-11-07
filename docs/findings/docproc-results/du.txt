@@ -1,0 +1,11 @@
+# du -sb and du -sh of the run directory, after run 1 and after run 2
+# after run 1
+run 1881238985 1.8G
+run/outputs 1864852858 1.8G
+run/index 2170928 9.1M
+run/runs 14215199 14M
+# after run 2
+run 1890866958 1.8G
+run/outputs 1864852858 1.8G
+run/index 2170928 9.1M
+run/runs 23843172 23M

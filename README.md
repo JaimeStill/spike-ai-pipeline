@@ -143,6 +143,8 @@ stage comes to `no processor yet` again. The directory is schema `"1"`, the cont
 the record, the path rules, and the store's naming are in
 [docs/docproc-schema.md](docs/docproc-schema.md).
 
+[The docproc finding](docs/findings/docproc.md) records docproc over ~/docs and its re-run.
+
 ## gb10-2
 
 gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,
