@@ -103,6 +103,90 @@ func TestNew_IsCold(t *testing.T) {
 	apptest.Halt(a)
 }
 
+func TestRun_UnknownCommand(t *testing.T) {
+	t.Setenv(shutdownTimeout, "not-a-duration")
+	a, stdout, stderr, built := newApp(t)
+
+	code := a.Run(context.Background(), []string{"bogus"})
+
+	if code != process.ExitUsage {
+		t.Errorf("code = %d, want %d", code, process.ExitUsage)
+	}
+	if want := `docproc: unknown command "bogus"`; !strings.HasPrefix(stderr.String(), want) {
+		t.Errorf("stderr = %q, want it to start with %q", stderr, want)
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("stdout = %q, want empty", stdout)
+	}
+	if log := built.Log(); len(log) != 0 {
+		t.Errorf("nodes built = %q, want none", log)
+	}
+}
+
+// A run whose Build fails, here on an unreadable configuration or a halted one, exits 1 with
+// the failure reported once on stderr, labelled with its node, before any tool is looked up or
+// anything is written to --out.
+func TestRun_BuildFailureStopsRun(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		halt bool
+		want string
+	}{
+		{"invalid shutdown timeout", false, "docproc run: lifecycle config: DOCPROC_SHUTDOWN_TIMEOUT"},
+		{"halted", true, "docproc run: lifecycle config: " + apptest.ErrHalted.Error()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(shutdownTimeout, "not-a-duration")
+			a, stdout, stderr, _ := newApp(t)
+			var looked apptest.Recorder
+			apptest.Tools(a, func(program string) (string, error) {
+				looked.Record(program)
+				return apptest.NoTools(program)
+			})
+			if tc.halt {
+				apptest.Halt(a)
+			}
+			out := filepath.Join(t.TempDir(), "out")
+
+			code := a.Run(context.Background(), []string{"run", hello, "--out", out})
+
+			if code != process.ExitFailure {
+				t.Errorf("code = %d, want %d; stderr = %q", code, process.ExitFailure, stderr)
+			}
+			if !strings.HasPrefix(stderr.String(), tc.want) || strings.Count(stderr.String(), "\n") != 1 {
+				t.Errorf("stderr = %q, want one line starting with %q", stderr, tc.want)
+			}
+			if stdout.Len() != 0 {
+				t.Errorf("stdout = %q, want empty", stdout)
+			}
+			if log := looked.Log(); len(log) != 0 {
+				t.Errorf("tools looked up = %q, want none", log)
+			}
+			if _, err := os.Stat(out); !os.IsNotExist(err) {
+				t.Errorf("--out stat = %v, want it never made", err)
+			}
+		})
+	}
+}
+
+// Halt touches only a Build, so a run that builds nothing is unaffected.
+func TestRun_HaltLeavesVersion(t *testing.T) {
+	a, stdout, stderr, built := newApp(t)
+	apptest.Halt(a)
+
+	code := a.Run(context.Background(), []string{"version"})
+
+	if code != process.ExitOK {
+		t.Errorf("code = %d, want %d; stderr = %q", code, process.ExitOK, stderr)
+	}
+	if stdout.String() != "(devel)\n" {
+		t.Errorf("stdout = %q, want %q", stdout, "(devel)\n")
+	}
+	if log := built.Log(); len(log) != 0 {
+		t.Errorf("nodes built = %q, want none", log)
+	}
+}
+
 // Every usage error of run exits 2 before anything is built: no tool is looked up, and no
 // configuration is read.
 func TestRun_UsageErrors(t *testing.T) {

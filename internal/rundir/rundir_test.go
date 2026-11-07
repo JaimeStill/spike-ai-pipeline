@@ -164,7 +164,7 @@ func TestRun_ManifestAndRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if m := manifest(); time.Time(m.End) != start.Add(time.Second) || m.Workers != 3 || m.Error != "" {
+	if m := manifest(); !time.Time(m.End).Equal(start.Add(time.Second)) || m.Workers != 3 || m.Error != "" {
 		t.Errorf("ended manifest = %+v", m)
 	}
 	if got := readRef(t, d, r.Record()); got != `{"event":"error","input":"/in/a","error":"<boom>"}`+"\n" {

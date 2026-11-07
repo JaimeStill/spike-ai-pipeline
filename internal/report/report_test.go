@@ -97,7 +97,7 @@ func TestRender_Golden(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got != string(want) {
-		t.Errorf("report differs from %s; run go test -update to see how", golden)
+		t.Errorf("report differs from %s; go test ./internal/report -update rewrites it, and git diff shows how", golden)
 	}
 }
 
