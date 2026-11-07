@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -30,10 +31,11 @@ func (t Time) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON reads t from a JSON string in RFC 3339, with any number of fraction digits.
 func (t *Time) UnmarshalJSON(b []byte) error {
-	if len(b) < 2 || b[0] != '"' || b[len(b)-1] != '"' {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
 		return fmt.Errorf("schema: time %s is not a JSON string", b)
 	}
-	parsed, err := time.Parse(time.RFC3339Nano, string(b[1:len(b)-1]))
+	parsed, err := time.Parse(time.RFC3339Nano, s)
 	if err != nil {
 		return fmt.Errorf("schema: %w", err)
 	}
