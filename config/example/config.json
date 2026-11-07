@@ -1,0 +1,28 @@
+{
+  "endpoints": {
+    "gb10-2": {
+      "base_url": "http://gb10-2:8080/v1",
+      "format": "completions",
+      "query": {"autoload": "false"}
+    }
+  },
+  "embeddings": {
+    "endpoint": "gb10-2",
+    "model": "mrutkows/granite-embedding-english-r2-GGUF:BF16",
+    "batch": 16,
+    "chunk_size": 2000,
+    "concurrency": 4
+  },
+  "vision": {
+    "endpoint": "gb10-2",
+    "model": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0",
+    "prompt": "Transcribe the text in this picture. If it has no text, describe it in one sentence.",
+    "max_tokens": 2048,
+    "concurrency": 4
+  },
+  "transcription": {
+    "endpoint": "gb10-2",
+    "model": "ggml-org/gemma-4-E4B-it-GGUF:Q8_0",
+    "concurrency": 4
+  }
+}

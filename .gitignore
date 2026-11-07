@@ -12,3 +12,7 @@ coverage.out
 
 # Logs a command in the docs writes at the root.
 *.log
+
+# docinfer secrets: a configuration directory's secrets.json and its overlays stay local.
+config/*/secrets.json
+config/*/secrets.*.json
