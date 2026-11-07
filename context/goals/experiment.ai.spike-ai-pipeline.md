@@ -26,191 +26,122 @@
 18. [x] audio
 19. [x] streams
 20. [x] formats
+21. [ ] docproc
+22. [ ] docinfer
 
-## Task brief · experiment.ai.spike-ai-pipeline · formats
+## Task brief · experiment.ai.spike-ai-pipeline · docproc
 
 ```
-Problem       Processing reports "no processor yet" for multi-page
-              TIFF beyond its first page, HEIC, WebP, AVIF, RTF,
-              text, and every archive but a ZIP's stored and deflate
-              entries. It renders a PDF without knowing whether it
-              needs a password, and it drops form values and embedded
-              files. Evidence 6, Skype for Business conversation
-              history in a PST, has no fixture and no records. Real
-              share drives hold all of these. processing's Gotenberg
-              image trails 9.1.0, and mail trails smallvec v1.16.5
-              and mise-action v5.2.7.
+Problem       Processing's stages are wired together only inside
+              its tests: no wiring outside them runs the whole
+              suite over a real input set, so the layer can't be
+              exercised end to end or presented, and the later
+              inference CLI (docinfer) has no stable input to
+              read. The root requires no layer and pins no system
+              tool.
 
 Behaviors
-  1. Upgrades: processing's LibreOffice runs in
-     gotenberg/gotenberg 9.1.0-libreoffice by digest. A golden sum
-     is re-recorded only after its renders are compared, with the
-     reason in the testdata README (the exception accepted in
-     audio). mail takes smallvec v1.16.5 and mise-action v5.2.7.
-     Each repository's currency exits 0. The root's currency reports
-     only llama.cpp, held at b12098.
-  2. Conversation fixture: mail's generator writes a PST whose
-     Conversation History folder holds IPM.Note.Microsoft.Conversation
-     and IPM.Note.Microsoft.Missed items: text chats with HTML
-     transcript bodies, participants, times and topics, beside an
-     IPM.Note for contrast. Hand truth covers every field. mail's
-     tests read the store, and each item's class, sender,
-     recipients, times, HTML body and Markdown equal the truth.
-     Regenerating it reports any drift. The CLI is unchanged. mail
-     v0.3.1 is released with both archives and SHA256SUMS before
-     processing copies the fixture.
-  3. Conversation records: the email package reads each Conversation
-     or Missed item as one conversation record: its participants
-     (sender and recipients), start and end times, topic, whether it
-     was missed, the transcript as mail's Markdown, and the HTML as
-     stored. Every other class reads as today. Dispatch's email
-     stage yields the conversation record, then its Markdown. Over
-     the copied fixture every record equals the hand truth. No turn
-     is parsed from the HTML.
-  4. tar and gzip: the archive stage reads tar through the standard
-     library. Each regular file is written under its SHA-256 and
-     found as a part, named by its stored name, "tar entry <name>".
-     The stored name is never a path. A directory is no part, and
-     the bomb rule is enforced on the bytes written, as for ZIP. A
-     gzip stream yields one decompressed part, named by its header's
-     name else the stream's stem, and routed again, so a .tar.gz is
-     a gzip part holding a tar part. inspect reads a tar's headers
-     as it reads a ZIP's central directory. A traversing or absolute
-     name, a symbolic or hard link, or a device quarantines the tar
-     with its evidence.
-  5. 7-Zip: an adapter over 7-Zip's 7zz, minimum 24.01, pinned by
-     mise from its GitHub release with its digest checked, has its
-     version checked at construction. 7zz writes only to its stdout,
-     never to a path. Through it:
-       - a 7z archive's files are found as parts, "7z entry <name>";
-       - a zstd stream yields one decompressed part, routed again;
-       - a ZIP entry whose method archive/zip doesn't read, such as
-         Deflate64, LZMA, xz, zstd, PPMd or implode, is read entry
-         by entry under the zip stage's rules, unchanged. bzip2
-         entries are read through compress/bzip2;
-       - a cabinet not named .onepkg has its files found as parts.
-     Before anything is extracted, 7-Zip's listing is checked
-     against the rules in behavior 4 and quarantines the archive. An
-     encrypted 7z entry, or encrypted headers, makes the archive
-     Encrypted after its readable entries. The bomb rule is enforced
-     on the bytes read from 7zz. With no 7-Zip, these kinds report
-     no processor yet, and ZIP's stored and deflate entries are
-     unaffected.
-  6. TIFF pages: a standalone TIFF yields one PNG per page, in page
-     order, each output's Meta naming its page and the page count.
-     A TIFF an office document embeds still converts its first image
-     only. Output is lossless, and a page converted twice is the
-     same bytes.
-  7. HEIC, WebP and AVIF: each converts to PNG through magick: a
-     HEIC's primary image, and the first frame of an animated WebP
-     or AVIF, with stored orientation applied. The Converter checks
-     magick's HEIC, WebP and AVIF readers at construction, and a
-     kind whose reader is missing reports no processor yet.
-  8. Text: route.Text's parts get a text stage that yields one UTF-8
-     text output. The encoding is decided by a byte order mark
-     (UTF-8, UTF-16 or UTF-32), else by valid UTF-8, else windows-
-     1252 as a fallback with a warning, decoded through
-     golang.org/x/text. Meta names the encoding, "windows-1252
-     (fallback)" for the last. Bytes the chosen encoding can't
-     decode become U+FFFD, with a warning in Meta. No encoding is
-     detected.
-  9. RTF: the office stage converts an RTF through LibreOffice to
-     docx, then office, yielding Markdown and media as for a legacy
-     document, and ConvertedFrom names "rtf". Without LibreOffice it
-     reports no processor yet. ODF, WordPerfect and .xlsb still
-     report no processor yet.
- 10. PDF encryption: before rendering, the document stage asks qpdf
-     --requires-password. A PDF that needs a password ends Encrypted,
-     with nothing rendered. A PDF restricted only by permissions
-     renders as today. inspect's /Encrypt flag is unchanged. With no
-     qpdf, behavior is today's.
- 11. PDF forms: a PDF with an AcroForm yields a forms record before
-     its pages, from qpdf's JSON: each field's full name, type and
-     value, with a checkbox's and a choice's state. A PDF without one
-     yields none. An XFA form is flagged only, as today, and its
-     pages render as Ghostscript draws them.
- 12. PDF attachments: each embedded file, from the name tree and
-     from file-attachment annotations, is saved through pdfdetach
-     to a path the stage chooses, never the stored name. It is named
-     by its SHA-256 and found as a part, "attachment <name>", then
-     inspected and routed again. Media behind a Screen or Rendition
-     annotation isn't extracted.
- 13. Fixtures: committed with source, license and SHA-256:
-       - commons-compress (Apache-2.0): lorem-ipsum-deflate64.zip,
-         bzip2-zip.zip, lorem-ipsum-implode.zip, test-method-xz.zip
-         and bla.deflate64.7z;
-       - libarchive's tests (BSD-2): LZMA, PPMd and zstd zips;
-       - generated: small tar, tar.gz, tar.zst, 7z and cabinet
-         archives with traversal, link and bomb cases, the cabinet
-         a .onepkg fixture under another name;
-       - generated: an AcroForm with several filled fields.
-     The integration tier also reads ~/docs's mixed bundle in four
-     forms, its TIFF, HEIC, WebP and AVIF samples, its encodings
-     with their truth, and its encrypted, form and attachment PDFs.
- 14. Finding: for each new route, the outcome over the fixtures and
-     ~/docs, against truth where truth exists. It records the
-     encodings fixture's results, including where the windows-1252
-     fallback is wrong (UTF-16 without a byte order mark, and the
-     legacy CJK, Cyrillic and Arabic files), as the text limit. It
-     records the conversation records against the fixture's hand
-     truth, with their limits: a generated fixture, and records per
-     item, not turns. The root's evidence 6 links it.
- 15. Evidence 6: the root's evidence 6 gains the finding's link and
-     one sentence on what was proven and its limits.
+  1. Pins: the root's mise pins office 0.1.0, mail 0.3.1,
+     onenote 0.1.0 and 7zz 26.06 from their GitHub releases,
+     digests checked. The root requires processing v0.9.0,
+     go-cli-sdk v0.2.0, go-core v0.10.0 and golang.org/x/sys,
+     each at its latest. Its currency reports only llama.cpp,
+     held at b12098, and its check passes.
+  2. docproc's stages: at start, docproc builds every tool and
+     checks its version against processing's minimum. It wires
+     a stage for each of the ten routes: document with qpdf
+     and pdfdetach, office with LibreOffice in its pinned
+     image and magick, picture, vision, email, onenote,
+     archive with 7zz, audio, video and text. It prints a
+     table of stages, tools and versions. A missing or
+     too-old tool leaves out the stages that need it, each
+     listed with its reason, and their routes report no
+     processor yet. --exclude <route> leaves a route's stage
+     out, listed as excluded. An unknown route is a usage
+     error (exit 2).
+  3. docproc run <path>... --out <dir>: each path is a file or
+     a directory walked for regular files, and no symbolic
+     link is followed. The inputs go through processing's
+     pool with runtime.NumCPU() workers by default. --workers
+     above NumCPU, or below 1, is a usage error (cli.Usagef,
+     exit 2). As each input's last event arrives, the
+     terminal prints one line: its path, route, outcome,
+     outputs, children and time. A closing summary counts
+     inputs by route and outcome. A part that fails is
+     counted, not fatal. An error that stops the whole
+     dispatch exits 1.
+  4. Metadata: each input's record carries its file name,
+     path, size, mode and modified time. Where the filesystem
+     records a birth time, statx's created time is included;
+     otherwise the field is absent. Its content type is
+     processing's signature kind and route, plus
+     net/http.DetectContentType's MIME and the stored MIME
+     where one exists. A nested part carries processing
+     Part's name, stored MIME, size, SHA-256, kind, route,
+     parent, depth and where, with no filesystem times.
+  5. Run directory, schema "1": a run manifest (schema, run
+     id from uuid.NewV7, start and end, stages, tools and
+     versions, excluded and missing stages, workers, the
+     input paths), and a JSON Lines record of every event:
+     part fields, outcome, reason, error, stage identity, each
+     output's kind, name, media type, Meta and Ref, and each
+     input's time. Outputs are stored once, by the part's
+     SHA-256 and the stage identity, so a Seen output's Ref
+     names the copy already stored. A quarantined part's file
+     is kept beside its flags. Every path in the record is
+     relative to the run directory.
+  6. Re-run: docproc over an existing run directory reuses its
+     file index and output store under a new run id with its
+     own record. Run again over unchanged inputs, it prepares
+     nothing: every input is Seen, and every output's Ref
+     names the first run's copy.
+  7. docproc report: a static HTML page from html/template,
+     rendered from the run's record. Its header lists the
+     stages, tools, and missing and excluded routes. Each
+     input shows its part tree with route, outcome, flags,
+     quarantine evidence and time. Images show inline, and
+     text and Markdown are linked, by relative paths. The
+     same record always renders the same page.
+  8. Docs: the README documents docproc, its host
+     prerequisites, and the run directory's schema "1"
+     contract, which docinfer will read. context/README.md's
+     capability map names docproc.
+  9. Finding: docs/findings/docproc.md, in the root's findings
+     format (docs/findings/host.md), records docproc over
+     ~/docs: inputs and parts by route and outcome, time,
+     disk, workers, tools and versions, missing stages, and a
+     re-run that prepares nothing.
 
-Test seams    dispatch's Stage per route: archive, picture, text,
-              office, document and email, through the unit tier on
-              fakes and the integration tier on the real tools; the
-              email Reader's records over the copied fixture; mail's
-              CLI over its generated store
+Test seams    docproc's run command through the App's apptest
+              fixtures over small committed inputs and a run
+              directory; the record's shape pinned by a test
 
 Slices
-  1. Upgrade mail: smallvec v1.16.5, mise-action v5.2.7, currency
-     exits 0, check passes.
-  2. Upgrade processing: Gotenberg 9.1.0-libreoffice by digest,
-     goldens compared and re-recorded under the exception, currency
-     exits 0.
-  3. Conversation fixture in mail: the generator's Conversation
-     History folder, hand truth, mail's tests over it.
-  4. Release mail v0.3.1: CHANGELOG, tag, both archives and
-     SHA256SUMS.
-  5. tar and gzip: inspect's tar header checks and the archive
-     stage's tar and gzip readers, with the generated tar fixtures.
-  6. 7-Zip: the adapter and mise pin; 7z, zstd, ZIP's other methods
-     and cabinets, with the commons-compress, libarchive and
-     generated fixtures.
-  7. Pictures: standalone TIFF pages; HEIC, WebP and AVIF through
-     magick's readers.
-  8. Text: the text stage's decoding order, fallback and warnings
-     over the encodings fixture.
-  9. RTF through LibreOffice into office.
- 10. PDFs: qpdf's password check and forms record; pdfdetach's
-     attachments as parts.
- 11. Conversation records: copy mail v0.3.1's fixtures, the email
-     package's records and the dispatch email stage's output.
- 12. Finding: the outcomes per route and the conversation records
-     against truth, with their limits.
- 13. Release processing v0.9.0: CHANGELOG, tag.
- 14. Evidence 6: the root's sentence and the finding's link.
+  1. Pins and requirements: the four mise pins and the
+     module requirements; currency reports only the held
+     llama.cpp.
+  2. docproc's composition root: cmd/docproc and
+     internal/app, tools version-checked, all ten stages
+     wired, the stage table, --exclude, --workers.
+  3. Metadata and schema "1": file metadata with statx, the
+     content types, nested parts' fields.
+  4. Run directory and record: the output store by content,
+     the JSON Lines record, the manifest, the reused index,
+     terminal lines and summary.
+  5. docproc's HTML report.
+  6. README, the schema "1" contract, context/README.md.
+  7. Finding: docproc over ~/docs, with its re-run.
 
-Out of scope  ODF, WordPerfect, .xlsb and ODG (still no processor
-              yet); legacy OLE2 macro detection; web content (HTML,
-              MHTML, WARC, EPUB); encoding detection (uchardet);
-              parsing XFA; media behind Screen or Rendition
-              annotations; turns parsed from transcript HTML; the
-              Voice classes and Teams; RAR, ISO and bare xz or
-              bzip2 streams (unrouted); any mail CLI change; PDF
-              names inside compressed object streams; inference in
-              processing; llama.cpp past b12098 (held); the
-              suite-runner task (a pending edit)
+Out of scope  inference of any kind (docinfer is the next task);
+              any change to processing or the CLIs it runs;
+              scoring against truth; checkpointing a mail store
+              mid-way; document-embedded properties; a tag or
+              binary release; CI for the root; llama.cpp past
+              b12098 (held)
 
-Door          one-way for the mail v0.3.1 and processing v0.9.0
-              tags, since a pushed tag reaches consumers. The rest
-              is two-way: code on branches, the image and 7-Zip pins
-              revert by digest, and the root's evidence edit is
-              text.
-Release       spike-ai-pipeline-mail v0.3.1
-              spike-ai-pipeline-processing v0.9.0
+Door          two-way: code on a branch, no tag, pins and
+              requirements revert, and the contract and finding
+              are text
 ```
 
 ## Decisions
@@ -1912,6 +1843,83 @@ Release       spike-ai-pipeline-mail v0.3.1
   suite-runner CLI task is added by `marathon plan` and planned in the same session, and the
   goal's pending edits land in the sync after the CLI ships. Rejected: syncing now with the goal
   kept active (a sync follows a goal's last task).
+- formats (ship): main went red after the formats merge on a race in the test-only vision
+  harness (document/vision_test.go, from 4fd1bd4): the producer's select could take work.Done over
+  a ready queue and the stream yield nothing. Fixed forward in processing PR #11 (formats-fix)
+  before v0.9.0 was tagged at 4402f7c.
+- docproc (plan r1 q1, r2 q1): the processing CLI is `docproc` (cmd/docproc). Rejected: `suite`
+  (too generic).
+- docproc (r1 q2): both CLIs live in the root under cmd/<name> plus internal/app. Rejected: a new
+  repository, which would change the goal's repos.
+- docproc (r1 q3): go-cli-sdk v0.2.0 with go-core, the Go Elemental CLI standard. Rejected: the
+  flag package alone.
+- docproc (r1 q4): the root wires processing v0.9.0's stages, and processing is untouched.
+  Rejected: a composition root in processing (a v0.10.0 release).
+- docproc (r1 q5, r2 q2): a missing or too-old host tool leaves its stage out, listed at start and
+  in the report; the root's mise pins office 0.1.0, mail 0.3.1, onenote 0.1.0 and 7zz from their
+  releases by digest, and gs, magick, qpdf, pdfdetach, ffmpeg/ffprobe and docker are host
+  prerequisites, version-checked at start. Rejected: failing at start.
+- docproc (r1 q6): audio and video are included, and --exclude leaves a route out.
+- docproc (r1 q7): outputs are stored once by content in a run directory. Rejected: a tree that
+  mirrors the inputs.
+- docproc (r1 q8): a JSON Lines record of every event and a static HTML report (html/template).
+  Rejected: a Markdown summary.
+- docproc (r1 q9): a re-run reuses the run directory's file index. Rejected: checkpointing mail
+  stores with --after and a saved Threader.
+- docproc (r1 q10, r2 q3): workers default to runtime.NumCPU() and can be overridden; above
+  NumCPU is a usage error (cli.Usagef, exit 2). Rejected: a default of 4; a panic.
+- docproc (r1 q11): no scoring against truth; processing's findings tiers score.
+- docproc (r1 q12): no tag. Rejected: a root v0.1.0 with a binary release.
+- docproc (r2 q4): the run directory is a versioned contract, schema "1", documented in the root's
+  README, for docinfer to read.
+- docproc (r2 q5, the architect): an inference CLI is built too: raw files -> docproc -> run
+  directory -> inference CLI -> model client, configured for any workstation a colleague has,
+  never tied to gb10-2 or its models.
+- docinfer (r3 q1): a second binary, `docinfer` (cmd/docinfer). Rejected: a `docproc infer`
+  command.
+- docinfer (r3 q2): go-core's layered JSON config, secrets.json for tokens, env overrides under
+  DOCINFER, in a directory a flag names; no default endpoint; an example config for set A on
+  gb10-2. Rejected: flags and env alone.
+- docinfer (r3 q3): named endpoints (base URL, format, token), each capability naming an endpoint
+  and a model. Rejected: one endpoint for every capability.
+- docinfer (r3 q4): embeddings are required; an unset vision or transcription is skipped and
+  listed.
+- docinfer (r3 q5): at start, it GETs each endpoint's /models and refuses an unlisted model; an
+  endpoint with no /models gets a warning.
+- docinfer (r3 q6): vision on every image output (pages, pictures, frames), the tier's
+  transcribe-or-describe prompt by default, overridable.
+- docinfer (r3 q7): no structured extraction; that's the capstone's.
+- docinfer (r3, the architect): proving embeddings for the files' contents is a main point:
+  embeddings are in scope, not optional.
+- docinfer (r3 q8, r4 q4): it embeds text, Markdown, vision text, joined transcripts and one
+  metadata text per input, not JSON records; the metadata fields ride on every chunk record.
+- docinfer (r3 q9): a structure-aware chunker in the root (headings, paragraphs, sentences, a hard
+  cut) under a configurable character bound, default 2,000, standard library only; an input the
+  endpoint rejects is recorded, not fatal. Rejected: one vector per output (overruns 8192-token
+  slots); llama.cpp's /tokenize (one engine only).
+- docinfer (r3 q10): no overlap between chunks; each chunk records its byte span.
+- docinfer (r3 q11): one JSON line per chunk, with the chunk text. Rejected: spans only.
+- docinfer (r3 q12): vectors as base64 little-endian float32. Rejected: JSON number arrays, a
+  binary sidecar.
+- docinfer (r3 q13): its own directory, schema "1", naming the docproc run it read. Rejected:
+  writing inside the run directory.
+- docinfer (r3 q14): a re-run skips held results, keyed by content SHA-256, capability, model, and
+  prompt or chunk settings.
+- docinfer (r3 q15, r4 q5): in-flight requests are limited per capability, default 4, since
+  engines (llama.cpp, vLLM, Ollama) queue past their slots. Rejected: a default of 1.
+- docinfer (r3 q16): an httptest fake server in the hermetic check, and an integration tier on the
+  config DOCINFER_CONFIG names, skipped when unset.
+- docinfer (r3 q17): an HTML report of each output beside its vision text or transcript and its
+  chunk count.
+- docproc (r4 q1, q2): file metadata: name, path, size, mode, modified time, statx's created time
+  where the filesystem records one (golang.org/x/sys/unix), processing's kind and route,
+  net/http.DetectContentType's MIME and the stored MIME. Rejected: modified time only.
+- docproc (r4 q3): nested parts carry processing Part's fields, with no filesystem times;
+  processing is unchanged.
+- docproc (r4 q6): document-embedded properties (PDF Info, OOXML core) are out.
+- docproc (r5): two tasks, `docproc` then `docinfer`; the sync follows docinfer. Rejected: one
+  task (two applications from nothing, too large for a session).
+- docproc (plan): run ids use Go 1.27's uuid.NewV7; standard library first throughout.
 
 ## Pending edits
 
@@ -2340,3 +2348,21 @@ Release       spike-ai-pipeline-mail v0.3.1
 - roadmap note · spike-ai-pipeline-processing (backlog): inspect exports no options check, so
   dispatch's bombRule validates its options through `inspect.CheckListing(route.Zstd, 0, nil,
   opts)`. An exported check would replace the indirect call.
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline's capstone (the architect, docproc r4
+  q6): plan compositional metadata structures that extend docproc's base file metadata per format
+  (PDF, office, mail, OneNote, media), and decide where authoritative metadata capture lives: the
+  web layer, the processing layer, or elsewhere. docproc's schema "1" metadata and docinfer's
+  chunk records are the input the capstone's pgvector load reads.
+- coordinator · context/ai-strategy.md, the spike's bullets: one for the root's CLIs: "`docproc`
+  runs processing's whole suite over an input set into a versioned run directory, with no
+  inference; `docinfer` sends its outputs through the client to any configured workstation:
+  vision, transcription joined by audio.Join, and chunked embeddings of every text and of each
+  input's metadata."
+- coordinator · roadmap, the spike's summary: "and the root, which holds gb10-2's host scripts
+  and, once its gates clear, the capstone" reads "and the root, which holds gb10-2's host scripts,
+  the docproc and docinfer CLIs, and, once its gates clear, the capstone".
+- roadmap note · spike-ai-pipeline-processing (its next task): its README's adapter convention
+  could name the root's docproc as the shipped composition root, since every wiring in the
+  repository is a test's.
+- roadmap note · spike-ai-pipeline-client (its next task): its CI trails jdx/mise-action
+  v5.2.4 -> v5.2.7 and taiki-e/create-gh-release-action v1.11.0 -> v1.12.0.
