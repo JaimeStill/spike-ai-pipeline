@@ -114,6 +114,25 @@ func TestReport_Errors(t *testing.T) {
 	if !strings.Contains(stderr, "holds no run") {
 		t.Errorf("stderr = %q, want no run", stderr)
 	}
-	report(t, process.ExitFailure, empty, "--run", "nope")
+	_, stderr = report(t, process.ExitFailure, empty, "--run", "nope")
+	if !strings.Contains(stderr, "no such file or directory") {
+		t.Errorf("stderr = %q, want the run's manifest missing", stderr)
+	}
 	report(t, process.ExitUsage)
+}
+
+// A --run that is a path rather than one run's id is a usage error, even one that resolves to a
+// real run, as ../runs/<id> does.
+func TestReport_RunIDOutsideRuns(t *testing.T) {
+	in, out := inputs(t, "hello.txt")
+	runOnce(t, apptest.NoTools, process.ExitOK, in, "--out", out, "--workers", "1")
+	id := runs(t, out)[0].manifest.Run
+	for _, bad := range []string{"../runs/" + id, "..", "."} {
+		t.Run(bad, func(t *testing.T) {
+			_, stderr := report(t, process.ExitUsage, out, "--run", bad)
+			if !strings.Contains(stderr, "is no run id") {
+				t.Errorf("stderr = %q, want the id refused", stderr)
+			}
+		})
+	}
 }

@@ -3,6 +3,7 @@ package report
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/standards-lab/go-cli-sdk"
 )
@@ -21,6 +22,14 @@ func command() *cli.Command {
 		Summary:  "Render a run's HTML report again, from its manifest and record",
 		Synopsis: "<run-dir>",
 		Args:     cli.ExactArgs(1),
+		// A run id names one directory under runs/, so an id that would reach outside it, a
+		// path or a dot entry, is refused before anything is read or written.
+		Validate: func(*cli.Invocation) error {
+			if id != "" && (id != filepath.Base(id) || id == "." || id == "..") {
+				return cli.Usagef("--run %q is no run id", id)
+			}
+			return nil
+		},
 		Run: func(_ context.Context, inv *cli.Invocation) error {
 			rel, err := Write(inv.Args[0], id)
 			if err != nil {
