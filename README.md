@@ -105,25 +105,40 @@ route's stage out (`document`, `office`, `vision-converted`, `vision`, `nested`,
 `docproc report` renders a run's HTML report again from its manifest and record, the latest run's
 by default, and prints its path. `docproc run` writes the same page as each run ends.
 
-Exit codes: 0 when the run completes, even with failed parts or inputs; 1 when an error stops the
-whole dispatch (the context ending, or the run directory or terminal refusing a write), once the
-manifest names it, or when a path can't be read, or, for `report`, when the run directory has no
-such run; 2 on a usage error, such as no path, no `--out`, `--workers` outside 1 to the CPU count,
-or an unknown `--exclude` route, before any tool is looked up.
+docproc exits with one of three codes:
+
+- **0** when the run completes, even with failed parts or inputs.
+- **1** when an error stops the whole dispatch (the context ending, or the run directory or
+  terminal refusing a write), once the manifest names it; when a path can't be read; or, for
+  `report`, when the run directory has no such run.
+- **2** on a usage error, before any tool is looked up: no path, no `--out`, `--workers` outside 1
+  to the CPU count, an unknown `--exclude` route, or a `report --run` that is a path rather than a
+  run id.
 
 ### Terminal output
 
 docproc first prints two tables: each tool with its version, its minimum, and where it was found,
 and each route with its stage, its state (`wired`, `missing`, or `excluded`), and its tools'
-versions or its reason. Then, as each input's last event arrives, one line:
+versions or its reason. A record in the run directory that can't be read prints
+`warning: a record replays nothing: <error>` and is skipped. Then, as each input's last event
+arrives, docproc prints one line for it:
 
 ```
-<path>  <route>  <outcome>[: <error>]  outputs <n>  children <n>  <time>
+<path>  <route>  <outcome>[: <error>]  outputs <n>  children <n>[  warnings <n>]  <time>
 ```
 
-An input whose dispatch an error stopped prints `<path>  -  error: <error>  <time>`. A closing
-summary counts the inputs by route and outcome, in the stage table's route order, then names the
-run's id, its record, and its report.
+`warnings <n>` counts the seen parts in the input whose children no record in the run directory
+holds, so docproc copied none of their lines
+([replayed subtrees](docs/docproc-schema.md#seen-content-and-replayed-subtrees)). An input whose
+dispatch an error stopped prints `<path>  -  error: <error>  <time>`.
+
+The terminal prints an error as one line: the error's first line, trimmed, with each character
+that isn't printable replaced by U+FFFD, and cut at 400 characters (runes), ending in `…` when
+anything is cut. The record's `error` field holds the whole error.
+
+A closing summary lists the inputs by route and outcome, in the stage table's route order, and
+their total. When any seen part had children no record holds, a `warnings <n>` line counts them.
+The last lines name the run's id and record, and its report once written.
 
 ### The run directory
 
@@ -141,11 +156,25 @@ an earlier run prepared is seen, not prepared again, and its outputs' refs name 
 stored. A seen part's subtree, which processing doesn't dispatch again, is copied into the new
 record from the earliest record that holds it, each line marked seen, so every run's record is
 whole on its own. Content that failed, or holds a part that failed or was limited, is prepared
-again, and a part with no stage comes to `no processor yet` again. The directory is schema `"1"`, the contract docinfer reads: every field of the manifest and
-the record, the path rules, and the store's naming are in
-[docs/docproc-schema.md](docs/docproc-schema.md).
+again, and a part with no stage comes to `no processor yet` again. The directory is schema `"1"`,
+the contract docinfer reads: every field of the manifest and the record, the path rules, and the
+store's naming are in [docs/docproc-schema.md](docs/docproc-schema.md).
 
 [The docproc finding](docs/findings/docproc.md) records docproc over ~/docs and its re-run.
+
+### Updating the golden files
+
+Two tests compare docproc's output with a golden file, and `-update` makes each rewrite its file
+instead; no other package takes the flag. The `internal/report` package's test renders the
+`internal/app` package's record golden, so a regenerated record golden needs the report golden
+regenerated after it:
+
+```sh
+go test ./internal/app -update      # internal/app/testdata/record.golden.jsonl
+go test ./internal/report -update   # internal/report/testdata/report.golden.html
+```
+
+`git diff` then shows what changed.
 
 ## gb10-2
 

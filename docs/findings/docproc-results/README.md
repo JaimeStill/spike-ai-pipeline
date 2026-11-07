@@ -9,14 +9,15 @@ all of `~/docs`, both writing to the same run directory:
   on 2026-11-07, the re-run, over the run directory run 1 left.
 
 **Note, 2026-11-07:** run 2 was recorded before docproc copied a seen part's subtree into its
-record, so `counts-2.md`'s nested counts reflect only the inputs dispatched again, not the parts
+record, so `counts-2.md`'s nested counts cover only the inputs dispatched again, not the parts
 inside the seen ones. The finding's addendum measures a third run, with replay, over the same run
 directory; its files are not committed here.
 
 Both used a binary built at the root's commit `5b1badf` (`5b1badf21dcfc8994999f63fd3097ac89518927d`)
 on branch `docproc`, `docproc version` `v0.0.0-20261107152626-5b1badf21dcf`, SHA-256
-`7846c2e3591bcb4de6212f5e32fc7035088283246e30082d401a4110d45f4950`. The slices after it change
-documentation only.
+`7846c2e3591bcb4de6212f5e32fc7035088283246e30082d401a4110d45f4950`. Slices 6 and 7, after it,
+change documentation only; the reviews after them changed how the terminal prints an error
+(`run-1.txt`, below) and added subtree replay (the note above).
 
 The host is the laptop: Intel Core Ultra 9 185H, 22 logical CPUs, 30 GiB (33,058,963,456 bytes);
 Linux 7.2.15 x86_64 (Omarchy); go 1.27.3; docker 29.9.2. `~/docs` is on btrfs; the run directory

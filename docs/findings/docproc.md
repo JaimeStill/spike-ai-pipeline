@@ -123,9 +123,10 @@ Paths are under `/home/jaime/docs/`. Two inputs came to `prepared` with a failed
 refused by office as "not a docx, xlsx, or pptx package", and
 `pdf/edge/signed/digitally-signed-3d-portfolio.pdf`, whose embedded `Design of Landing Gear.pdf`
 failed on its form, as the CFR volume did: qpdf found a field's value an indirect reference,
-neither a string nor a name. `counts-1.md` lists each line with its reason's first line, as
-docproc's terminal now prints it; `run-1.txt`, the terminal log from before that reduction, and
-the record hold each whole, such as `no-document-catalog.pdf`'s qpdf and pdfdetach errors.
+neither a string nor a name. `counts-1.md` lists each of these lines with its reason reduced to
+one line, as docproc's terminal now prints it. `run-1.txt`, the terminal log from before that
+reduction, and the record hold each reason whole, such as `no-document-catalog.pdf`'s qpdf and
+pdfdetach errors.
 
 ### Inspection flags
 
@@ -234,11 +235,11 @@ The run directory grew by 9,627,973 bytes, the re-run's manifest, record (6,057,
 
 ## Addendum: the re-run with subtree replay
 
-Recorded 2026-11-07, after the finding, to show the replay; it doesn't change the numbers above.
-**docproc ~/docs 3**, run `01a1b6d1-df4a-7a7d-b7bb-69e784458ac9`, 16:22:49 to 16:25:08 UTC (138.80 s
-by its manifest), the same command over the same run directory, after runs 1 and 2, with a binary
-built from the code of `10d8e7c`, the commit that added subtree replay. Exit 0, stderr empty. Its
-inputs' outcomes are run 2's, row for row.
+A third run, recorded 2026-11-07 after the finding, shows the replay; it doesn't change the numbers
+above. **docproc ~/docs 3**, run `01a1b6d1-df4a-7a7d-b7bb-69e784458ac9`, ran the same command over
+the same run directory after runs 1 and 2, from 16:22:49 to 16:25:08 UTC (138.80 s by its
+manifest), with a binary built from `10d8e7c`, the commit that added subtree replay. It exited 0
+with stderr empty, and its inputs' outcomes match run 2's row for row. Its files aren't committed.
 
 | Record | Nested part lines | Output lines | Distinct refs | Warnings | Bytes |
 |---|---|---|---|---|---|
@@ -246,15 +247,17 @@ inputs' outcomes are run 2's, row for row.
 | run 2, before replay | 141 | 6,959 | 6,949 | | 6,057,525 |
 | run 3, with replay | 348 | 11,116 | 8,805 | 0 | 9,931,665 |
 
-Run 3's refs are run 1's 8,805, every one a file in `outputs/`: `mixed-bundle.zip`'s 14, which run
-2 lacked, among them. Of its nested part lines, 212 are seen and 136 failed, the failures those of
+Run 3's refs are run 1's 8,805, every one a file in `outputs/`, including `mixed-bundle.zip`'s 14,
+which run 2 lacked. Of its nested part lines, 212 are seen and 136 failed, the failures those of
 the inputs dispatched again. Its 17 nested part lines beyond run 1's are subtrees run 1 itself left
-out: run 1, recorded before replay too, gave no lines to the parts inside content it saw
-twice in one run, such as the bundle inside `zip-in-zip.zip` and `mixed-bundle.tar.zst`, which run 3
-copies. Outcomes, reasons of the inputs' own lines, and times aside, its lines hold every one of run
-1's but 12: the lines of inputs dispatched again whose error names that run's working directory or
-whose part the index now sees, and the encrypted inputs' own lines, which the index's seen event
-gives no error.
+out: run 1, also recorded before replay, gave no lines to the parts inside content it saw twice in
+one run, such as the bundle inside `zip-in-zip.zip` and `mixed-bundle.tar.zst`, and run 3 copies
+them.
+
+Setting aside outcomes, times, and the reasons on the inputs' own lines, run 3's record holds every
+line of run 1's but 12. Those 12 are the lines of inputs dispatched again whose error names run 1's
+working directory or whose part the index now sees, and the encrypted inputs' own lines, to which
+the index's seen event gives no error.
 
 ## What the runs show
 
@@ -265,10 +268,9 @@ gives no error.
   the last 21 min 22 s of run 1, behind one audiobook whose windows each decode it from the start.
 - Behavior 6's "every input is Seen" holds for 545 of the 592 inputs, not all of them: the other 47
   are the 41 with no route, which the index never records, and the 6 that failed or hold a part
-  that failed. A
-  re-run retries every failure, and a failure inside a large input costs that input's whole work
-  again: the CFR volume's 1,823 page outputs are rendered on every run, because its form fails
-  after them.
+  that failed. A re-run retries every failure, and a failure inside a large input costs that
+  input's whole work again: the CFR volume's 1,823 page outputs are rendered on every run, because
+  its form fails after them.
 
 ## Limits
 
