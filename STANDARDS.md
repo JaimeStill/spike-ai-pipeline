@@ -10,6 +10,8 @@ The architecture pages that apply, in the architecture repository:
 - `principles/rolling-currency.md`
 - `principles/service-tiers.md`
 - `standards/go-elemental/principles/topology-and-naming.md`
+- `standards/go-elemental/principles/cli-applications.md`, for docproc
+- `standards/go-elemental/principles/domain-files.md`, for docproc's command packages
 - `standards/go-elemental/principles/tests-and-docs.md`
 
 ## Hosts and models
