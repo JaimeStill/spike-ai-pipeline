@@ -115,11 +115,12 @@ stage by stage in real time?
 
 ## Gates
 
-The capstone waits for the host, client, and processing tasks, the last of them a planned CLI that
-runs the processing suite over an input set, and for two answers: experiment.hosting's
+The capstone waits for the host, client, and processing tasks, the last of them two CLIs:
+docproc, which runs the processing suite over an input set, and docinfer, planned, which runs
+inference over docproc's run directory. It also waits for two answers: experiment.hosting's
 spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
-spike-html-apps have answered, and neither experiment's intake is a gate. Once the CLI ships, the
-spike returns to `planned` until the answers arrive.
+spike-html-apps have answered, and neither experiment's intake is a gate. Once docinfer ships,
+after docproc, the spike returns to `planned` until the answers arrive.
 
 ## Capability map
 
@@ -132,5 +133,8 @@ spike returns to `planned` until the answers arrive.
   sourced anywhere but `host/llama-preset/`, as after the scripts moved from `engines/`, with
   `host/engines llama update`. `mise run integration` probes every capability (`probe/`), and
   `docs/findings/host.md` records the probe runs.
+- **docproc**: the processing CLI, `cmd/docproc`, which runs processing's stages over an input
+  set into a run directory, schema "1", with an HTML report per run (`README.md`, "docproc";
+  `docs/docproc-schema.md`). It runs no inference.
 - **consumers**: the check that builds on the layers at their released tags.
 - **capstone**: the backend and web UI, once the gates clear.
