@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
-- **Task:** none
-- **Branch:** none
+- **State:** building
+- **Task:** docproc
+- **Branch:** docproc
 
 ## Tasks
 
@@ -143,6 +143,10 @@ Door          two-way: code on a branch, no tag, pins and
               requirements revert, and the contract and finding
               are text
 ```
+
+## Progress
+
+slices 0/7 committed · standards — · spec — · editor —
 
 ## Decisions
 
