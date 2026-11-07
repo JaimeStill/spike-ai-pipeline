@@ -267,7 +267,8 @@ func TestRun_BuildFailureStopsRun(t *testing.T) {
 
 // With every model loaded, run lists the endpoint once, with its query and the secrets file's
 // token, shows each capability loaded, and reads the latest run's every output, the failed
-// part's and the seen part's among them. It writes nothing to --out yet.
+// part's and the seen part's among them; then it embeds, each request with the query and token
+// too. Vision and transcription, configured, are skipped, the terminal saying so.
 func TestRun_ReadsLatestRun(t *testing.T) {
 	clean(t)
 	e := docinfertest.Serve(t, docinfertest.Fake{Models: setA})
@@ -288,19 +289,25 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 	wantLine(t, got, row("embeddings", "fake", embeddingModel, "loaded"))
 	wantLine(t, got, row("vision", "fake", visionModel, "loaded"))
 	wantLine(t, got, row("transcription", "fake", audioModel, "loaded"))
-	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 10: text 3, markdown 1, image 1, record 2, audio 3"))
+	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 11: text 4, markdown 1, image 1, record 2, audio 3"))
+	wantLine(t, got, regexp.QuoteMeta("vision: configured; docinfer doesn't run it yet; skipped"))
+	wantLine(t, got, regexp.QuoteMeta("transcription: configured; docinfer doesn't run it yet; skipped"))
+	wantLine(t, got, `embeddings: texts 5, metadata 8, chunks \d+: held 0, embedded \d+, rejected 0; requests 1`)
 	if strings.Contains(got, "warning") {
 		t.Errorf("stdout warns, want no warning:\n%s", got)
 	}
-	want := []docinfertest.Request{{Method: "GET", Path: "/v1/models", Query: "autoload=false", Authorization: "Bearer secret-token"}}
-	if reqs := e.Requests(); !slices.Equal(reqs, want) {
-		t.Errorf("requests = %v, want %v", reqs, want)
+	reqs := e.Requests()
+	want := docinfertest.Request{Method: "GET", Path: "/v1/models", Query: "autoload=false", Authorization: "Bearer secret-token"}
+	if len(reqs) == 0 || reqs[0] != want {
+		t.Fatalf("requests = %v, want the listing first, %v", reqs, want)
+	}
+	for _, r := range reqs[1:] {
+		if want := (docinfertest.Request{Method: "POST", Path: "/v1/embeddings", Query: "autoload=false", Authorization: "Bearer secret-token"}); r != want {
+			t.Errorf("request %v, want %v", r, want)
+		}
 	}
 	if want := []string{"http client", "lifecycle config"}; !slices.Equal(slices.Sorted(slices.Values(built.Log())), want) {
 		t.Errorf("nodes built = %q, want %q", built.Log(), want)
-	}
-	if _, err := os.Stat(out); !os.IsNotExist(err) {
-		t.Errorf("--out stat = %v, want it never made", err)
 	}
 }
 

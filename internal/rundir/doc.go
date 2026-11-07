@@ -37,4 +37,6 @@
 //     them, [ValidID], whether an id can name one run, [Load], which reads a run's manifest and
 //     record, [ReadManifest] and [ReadRecord], which read each apart, so a reader can check the
 //     schema first, and [WriteRunFile], which writes a file beside them, such as its report
+//   - [WriteFile], which writes any file whole, through a temporary name renamed into place, as
+//     every file here is written; docinfer writes its own directory's files with it too
 package rundir

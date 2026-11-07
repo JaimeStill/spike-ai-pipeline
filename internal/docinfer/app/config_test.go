@@ -130,8 +130,13 @@ func TestRun_ConfigLayers(t *testing.T) {
 	wantLine(t, stdout, row("embeddings", "fake", "overlay-embed", "loaded"))
 	wantLine(t, stdout, row("vision", "fake", "env-vision", "loaded"))
 	wantLine(t, stdout, row("transcription", "fake", audioModel, "loaded"))
-	if reqs := e.Requests(); len(reqs) != 1 || reqs[0].Authorization != "Bearer overlay-token" {
-		t.Errorf("requests = %v, want one, with the secrets overlay's token", reqs)
+	if reqs := listings(e.Requests()); len(reqs) != 1 || reqs[0].Authorization != "Bearer overlay-token" {
+		t.Errorf("listings = %v, want one, with the secrets overlay's token", reqs)
+	}
+	for _, r := range e.Requests() {
+		if r.Authorization != "Bearer overlay-token" {
+			t.Errorf("request %v, want the secrets overlay's token", r)
+		}
 	}
 
 	// The overrides alone set the vision capability a configuration leaves unset.

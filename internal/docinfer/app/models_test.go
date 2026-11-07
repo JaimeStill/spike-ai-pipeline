@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -11,6 +13,18 @@ import (
 
 	docinfertest "github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/apptest"
 )
+
+// listings returns the requests of reqs that are /models listings, leaving out the run's
+// embeddings.
+func listings(reqs []docinfertest.Request) []docinfertest.Request {
+	var out []docinfertest.Request
+	for _, r := range reqs {
+		if r.Path == "/v1/models" {
+			out = append(out, r)
+		}
+	}
+	return out
+}
 
 // A model its endpoint's listing doesn't name stops the run with exit 1, once the table shows
 // which, before the docproc run's outputs are counted.
@@ -52,10 +66,20 @@ func TestRun_NoListing(t *testing.T) {
 	wantLine(t, stdout, `docproc run .*`)
 }
 
-// A listing that isn't the OpenAI shape is no listing, as a 404 is.
+// A listing that isn't the OpenAI shape is no listing, as a 404 is. The endpoint's other
+// routes are a fake's, so the run's embeddings are answered.
 func TestRun_ListingNotJSON(t *testing.T) {
 	clean(t)
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	fake, err := url.Parse(docinfertest.Serve(t, docinfertest.Fake{}).URL())
+	if err != nil {
+		t.Fatal(err)
+	}
+	proxy := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: fake.Scheme, Host: fake.Host})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/models" {
+			proxy.ServeHTTP(w, r)
+			return
+		}
 		_, _ = w.Write([]byte("<html>models</html>"))
 	}))
 	t.Cleanup(srv.Close)
@@ -107,7 +131,7 @@ func TestRun_SkippedAndEndpointsListedOnce(t *testing.T) {
 	wantLine(t, stdout, row("vision", "-", "-", "skipped"))
 	wantLine(t, stdout, row("transcription", "-", "-", "skipped"))
 	want := []docinfertest.Request{{Method: "GET", Path: "/v1/models"}}
-	if reqs := embed.Requests(); len(reqs) != 1 || reqs[0] != want[0] {
+	if reqs := listings(embed.Requests()); len(reqs) != 1 || reqs[0] != want[0] {
 		t.Errorf("embed requests = %v, want %v, with no query and no token", reqs, want)
 	}
 	if reqs := unused.Requests(); len(reqs) != 0 {
@@ -117,7 +141,7 @@ func TestRun_SkippedAndEndpointsListedOnce(t *testing.T) {
 	// Two capabilities on one endpoint list it once.
 	cfg = configDir(t, map[string]string{"config.json": fullConfig(embed.URL())})
 	run(t, process.ExitOK, "run", docproc, "--config", cfg, "--out", t.TempDir())
-	if reqs := embed.Requests(); len(reqs) != 2 {
+	if reqs := listings(embed.Requests()); len(reqs) != 2 {
 		t.Errorf("embed requests = %v, want one more, for three capabilities", reqs)
 	}
 }

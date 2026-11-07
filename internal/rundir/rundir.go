@@ -74,7 +74,7 @@ func (d *Dir) Store(part dispatch.Part, id dispatch.Identity, n int, o dispatch.
 	if o.Path != "" {
 		return ref, copyFile(dst, o.Path)
 	}
-	return ref, writeFile(dst, func(w io.Writer) error {
+	return ref, WriteFile(dst, func(w io.Writer) error {
 		_, err := w.Write(o.Value)
 		return err
 	})
@@ -96,7 +96,7 @@ func (d *Dir) Quarantine(part dispatch.Part) (schema.Quarantine, error) {
 	if flags == nil {
 		flags = []schema.Flag{}
 	}
-	err := writeFile(filepath.Join(d.root, filepath.FromSlash(q.Flags)), func(w io.Writer) error {
+	err := WriteFile(filepath.Join(d.root, filepath.FromSlash(q.Flags)), func(w io.Writer) error {
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		return enc.Encode(flags)
@@ -165,7 +165,7 @@ func (r *Run) End(end time.Time, stopped error) error {
 // writeManifest writes the run's manifest whole, to a temporary name and renamed over the one
 // written before.
 func (r *Run) writeManifest() error {
-	return writeFile(filepath.Join(r.dir, "manifest.json"), func(w io.Writer) error {
+	return WriteFile(filepath.Join(r.dir, "manifest.json"), func(w io.Writer) error {
 		enc := json.NewEncoder(w)
 		enc.SetIndent("", "  ")
 		enc.SetEscapeHTML(false)
@@ -263,7 +263,7 @@ func ReadRecord(root string, m schema.Manifest) ([]schema.Event, error) {
 // root, whole, through write, and returns its path relative to root, runs/<run id>/<name>.
 func WriteRunFile(root, id, name string, write func(io.Writer) error) (string, error) {
 	rel := path.Join(runsDir, id, name)
-	return rel, writeFile(filepath.Join(root, filepath.FromSlash(rel)), write)
+	return rel, WriteFile(filepath.Join(root, filepath.FromSlash(rel)), write)
 }
 
 // stageDir returns the output store's directory name for the stage id: its name and the first
@@ -316,23 +316,23 @@ func exists(p string) bool {
 	return err == nil
 }
 
-// copyFile copies src to dst, as writeFile writes it.
+// copyFile copies src to dst, as WriteFile writes it.
 func copyFile(dst, src string) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer func() { _ = in.Close() }() // read only: a close error loses nothing
-	return writeFile(dst, func(w io.Writer) error {
+	return WriteFile(dst, func(w io.Writer) error {
 		_, err := io.Copy(w, in)
 		return err
 	})
 }
 
-// writeFile writes dst whole through write, to a temporary file in dst's directory, made when it
+// WriteFile writes dst whole through write, to a temporary file in dst's directory, made when it
 // doesn't exist, synced and renamed into place, replacing any dst, so a reader sees all of dst
 // or none of it.
-func writeFile(dst string, write func(io.Writer) error) (err error) {
+func WriteFile(dst string, write func(io.Writer) error) (err error) {
 	dir := filepath.Dir(dst)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err

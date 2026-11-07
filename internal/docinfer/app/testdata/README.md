@@ -8,8 +8,10 @@ digest is made up, but every `ref` names a file under `outputs/`.
 
 - Run `019a5e2a-1b3c-7d4e-8f00-000000000001`, the first: `hello.txt`, prepared by the text stage,
   one text output.
-- Run `019a5e2a-1b3c-7d4e-8f00-000000000002`, the latest, over `/srv/inputs`, ten outputs:
+- Run `019a5e2a-1b3c-7d4e-8f00-000000000002`, the latest, over `/srv/inputs`, eleven outputs:
   - `hello.txt`, seen, its output line seen, naming the first run's copy: text;
+  - `copy/hello.txt`, the same content as `hello.txt` under a second input, seen likewise, naming
+    the same copy: text;
   - `report.pdf`, prepared by the document stage: page 1's text and its image, a copy of
     `probe/testdata/shapes.png`;
   - `notes.docx`, prepared by the office stage: Markdown and a record;
@@ -18,4 +20,6 @@ digest is made up, but every `ref` names a file under `outputs/`.
     window's meta giving its span, cut, samples, and seams, as processing's audio stage does;
   - `blob.bin`, unrouted: no processor yet, no outputs;
   - `broken.pdf`, failed on its second page after its first page's text was prepared: one text
-    output on a failed part.
+    output on a failed part;
+  - `locked.bin`, an error line: its dispatch stopped before its own part line, though its file
+    metadata could still be read.

@@ -1,0 +1,366 @@
+package outdir
+
+import (
+	"bufio"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"math"
+	"os"
+	"path"
+	"path/filepath"
+
+	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+)
+
+// Version is the schema of docinfer's directory: its layout, manifest, chunk lines, and held
+// results.
+const Version = "1"
+
+// The directory's subdirectories.
+const (
+	resultsDir = "results"
+	runsDir    = "runs"
+)
+
+// Dir is docinfer's directory, the one --out names: its held results and its runs.
+type Dir struct {
+	root string
+}
+
+// Open opens docinfer's directory at root, making it when it doesn't exist.
+func Open(root string) (*Dir, error) {
+	abs, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(abs, 0o755); err != nil {
+		return nil, err
+	}
+	return &Dir{root: abs}, nil
+}
+
+// Root returns the directory's absolute path.
+func (d *Dir) Root() string { return d.root }
+
+// Key returns the key a result is held under: the lowercase hex SHA-256 of the capability, the
+// model, the settings that change the result, such as a prompt or the chunk settings, and the
+// SHA-256 of the content the result is of, each length-prefixed so no two tuples share a key.
+func Key(capability, model, settings, content string) string {
+	h := sha256.New()
+	for _, s := range []string{capability, model, settings, content} {
+		_, _ = fmt.Fprintf(h, "%d:%s\n", len(s), s) // a hash.Hash never fails a write
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// heldPath returns the held result key of capability's file, relative to the directory:
+// results/<capability>/<first two hex digits>/<key>.json.
+func heldPath(capability, key string) string {
+	return path.Join(resultsDir, capability, key[:2], key+".json")
+}
+
+// Held reads the result key of capability into v, and reports whether one is held. A held file
+// that can't be decoded is an error, not a miss.
+func (d *Dir) Held(capability, key string, v any) (bool, error) {
+	p := filepath.Join(d.root, filepath.FromSlash(heldPath(capability, key)))
+	b, err := os.ReadFile(p)
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal(b, v); err != nil {
+		return false, fmt.Errorf("%s: %w", p, err)
+	}
+	return true, nil
+}
+
+// Hold writes v as the result key of capability, whole, replacing any held before, and returns
+// its path relative to the directory.
+func (d *Dir) Hold(capability, key string, v any) (string, error) {
+	rel := heldPath(capability, key)
+	return rel, rundir.WriteFile(filepath.Join(d.root, filepath.FromSlash(rel)), func(w io.Writer) error {
+		return encoder(w).Encode(v)
+	})
+}
+
+// RunPath returns the file name of run id's directory, relative to the directory:
+// runs/<id>/<name>.
+func RunPath(id, name string) string { return path.Join(runsDir, id, name) }
+
+// WriteManifest writes m as its run's manifest, runs/<run id>/manifest.json, whole, replacing the
+// one written before.
+func (d *Dir) WriteManifest(m Manifest) error {
+	_, err := rundir.WriteRunFile(d.root, m.Run, "manifest.json", func(w io.Writer) error {
+		enc := encoder(w)
+		enc.SetIndent("", "  ")
+		return enc.Encode(m)
+	})
+	return err
+}
+
+// WriteChunks writes lines as run id's chunk record, runs/<id>/chunks.jsonl, one JSON object a
+// line, whole, and returns its path relative to the directory.
+func (d *Dir) WriteChunks(id string, lines []Line) (string, error) {
+	return rundir.WriteRunFile(d.root, id, "chunks.jsonl", func(w io.Writer) error {
+		buf := bufio.NewWriter(w)
+		enc := encoder(buf)
+		for _, l := range lines {
+			if err := enc.Encode(l); err != nil {
+				return err
+			}
+		}
+		return buf.Flush()
+	})
+}
+
+// encoder returns a JSON encoder to w that leaves <, >, and & as they are.
+func encoder(w io.Writer) *json.Encoder {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	return enc
+}
+
+// ReadChunks reads run id's chunk record.
+func (d *Dir) ReadChunks(id string) ([]Line, error) {
+	f, err := os.Open(filepath.Join(d.root, filepath.FromSlash(RunPath(id, "chunks.jsonl"))))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }() // read only: a close error loses nothing
+	var lines []Line
+	dec := json.NewDecoder(f)
+	for {
+		var l Line
+		if err := dec.Decode(&l); errors.Is(err, io.EOF) {
+			return lines, nil
+		} else if err != nil {
+			return nil, fmt.Errorf("chunks.jsonl: line %d: %w", len(lines)+1, err)
+		}
+		lines = append(lines, l)
+	}
+}
+
+// ReadManifest reads run id's manifest.
+func (d *Dir) ReadManifest(id string) (Manifest, error) {
+	var m Manifest
+	b, err := os.ReadFile(filepath.Join(d.root, filepath.FromSlash(RunPath(id, "manifest.json"))))
+	if err != nil {
+		return m, err
+	}
+	return m, json.Unmarshal(b, &m)
+}
+
+// EncodeVector returns v as standard base64 of its little-endian float32s, as the embeddings
+// endpoint sends it.
+func EncodeVector(v []float32) string {
+	b := make([]byte, 4*len(v))
+	for i, f := range v {
+		binary.LittleEndian.PutUint32(b[4*i:], math.Float32bits(f))
+	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// DecodeVector decodes a vector [EncodeVector] encoded.
+func DecodeVector(s string) ([]float32, error) {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	if len(b)%4 != 0 {
+		return nil, fmt.Errorf("vector of %d bytes isn't whole float32s", len(b))
+	}
+	v := make([]float32, len(b)/4)
+	for i := range v {
+		v[i] = math.Float32frombits(binary.LittleEndian.Uint32(b[4*i:]))
+	}
+	return v, nil
+}
+
+// Manifest is one docinfer run's manifest, runs/<run id>/manifest.json, written as the run
+// starts and again, whole, as it ends.
+type Manifest struct {
+	// Schema is [Version].
+	Schema string `json:"schema"`
+	// Run is the run's id, a version 7 UUID.
+	Run   string      `json:"run"`
+	Start schema.Time `json:"start"`
+	// End is absent while the run runs, or when it never ended.
+	End schema.Time `json:"end,omitzero"`
+	// Docproc is the docproc run read.
+	Docproc Docproc `json:"docproc"`
+	// Capabilities are the capabilities the run ran, in the order it ran them.
+	Capabilities []Capability `json:"capabilities"`
+	// Skipped are the capabilities it didn't run, and why.
+	Skipped []Skipped `json:"skipped,omitempty"`
+	// Space is the embedding space of the run's vectors; absent until the run ends.
+	Space *Space `json:"embedding_space,omitempty"`
+	// Chunks is the run's chunk record, relative to the directory: runs/<run id>/chunks.jsonl.
+	// Absent until it is written.
+	Chunks string `json:"chunks,omitzero"`
+	Counts Counts `json:"counts"`
+	// Error is what stopped the run. Absent when nothing did.
+	Error string `json:"error,omitzero"`
+}
+
+// Docproc names the docproc run a docinfer run read: its run directory, absolute, and its id.
+type Docproc struct {
+	Dir string `json:"dir"`
+	Run string `json:"run"`
+}
+
+// Capability is one capability a run ran: its endpoint, by name and base URL, its model, and
+// its settings, by their configuration names.
+type Capability struct {
+	Name     string         `json:"name"`
+	Endpoint string         `json:"endpoint"`
+	BaseURL  string         `json:"base_url"`
+	Model    string         `json:"model"`
+	Settings map[string]any `json:"settings"`
+}
+
+// Skipped is a capability a run didn't run, and why.
+type Skipped struct {
+	Name   string `json:"name"`
+	Reason string `json:"reason"`
+}
+
+// UnitTolerance is how far a vector's Euclidean norm may be from 1 for [Space.Unit] to count it
+// unit length: |norm - 1| <= UnitTolerance.
+const UnitTolerance = 1e-3
+
+// Space is the embedding space of a run's vectors: the endpoint and model that made them, their
+// dimensions, whether every one is unit length within Tolerance, the least and greatest norm,
+// and the chunk settings the texts were cut with. The vectors are stored as the endpoint
+// returned them, never normalized.
+type Space struct {
+	Endpoint   string `json:"endpoint"`
+	Model      string `json:"model"`
+	Dimensions int    `json:"dimensions"`
+	// Vectors counts the distinct vectors measured.
+	Vectors   int     `json:"vectors"`
+	Unit      bool    `json:"unit_length"`
+	Tolerance float64 `json:"tolerance"`
+	MinNorm   float64 `json:"min_norm"`
+	MaxNorm   float64 `json:"max_norm"`
+	// ChunkSize is the bound each chunk was cut to, in characters.
+	ChunkSize int `json:"chunk_size"`
+	// Chunker is the chunker's version, chunk.Version.
+	Chunker string `json:"chunker"`
+}
+
+// Counts is what a run read, cut, and sent.
+type Counts struct {
+	// Outputs counts the docproc run's output lines.
+	Outputs int `json:"outputs"`
+	// Texts counts the text and Markdown output lines embedded, one per line.
+	Texts int `json:"texts"`
+	// Metadata counts the metadata texts, one per input with file metadata.
+	Metadata int `json:"metadata"`
+	// Chunks counts the distinct chunks, by content.
+	Chunks int `json:"chunks"`
+	// Lines counts the chunk record's lines, one per chunk per place it occurs.
+	Lines int `json:"lines"`
+	// Held counts the distinct chunks whose result an earlier run held.
+	Held int `json:"held"`
+	// Embedded counts the distinct chunks this run embedded.
+	Embedded int `json:"embedded"`
+	// Rejected counts the distinct chunks the endpoint rejected, this run or held.
+	Rejected int `json:"rejected"`
+	// Requests counts the embeddings requests this run sent.
+	Requests int `json:"requests"`
+}
+
+// Line is one line of a run's chunk record: one chunk, in one place it occurs. The same chunk
+// under two inputs, or under two parts or output lines of one, is two lines, its vector the same.
+type Line struct {
+	// Text is the chunk's text, the source text's [Span.Start, Span.End) bytes.
+	Text string `json:"text"`
+	// Index counts the source text's chunks from 0.
+	Index  int    `json:"index"`
+	Span   Span   `json:"span"`
+	Source Source `json:"source"`
+	// Input is the input's absolute path, as docproc records it.
+	Input string `json:"input"`
+	// File is the input's file metadata, as docproc records it. Absent when it has none.
+	File *schema.File `json:"file,omitempty"`
+	// ContentType is the input's content type, as docproc records it. Absent for an input with
+	// no part line, one whose dispatch stopped with an error.
+	ContentType *schema.ContentType `json:"content_type,omitempty"`
+	// Part is the part the source belongs to. Absent for an input with no part line.
+	Part *Part `json:"part,omitempty"`
+	// Output is the docproc output the source is, or, for a vision or transcript text, the one
+	// it was made from. Absent for a metadata text.
+	Output *Output `json:"output,omitempty"`
+	// Vector is the chunk's embedding, standard base64 of little-endian float32s, as the
+	// endpoint returned it. Absent when the endpoint rejected the chunk.
+	Vector string `json:"vector,omitzero"`
+	// Error is why the endpoint rejected the chunk. Absent when it didn't.
+	Error string `json:"error,omitzero"`
+}
+
+// Span is a chunk's byte span in its source text, [Start, End).
+type Span struct {
+	Start int `json:"start"`
+	End   int `json:"end"`
+}
+
+// The kinds of a chunk's source text.
+const (
+	// SourceOutput is a docproc text or Markdown output, its stored file.
+	SourceOutput = "output"
+	// SourceMetadata is an input's metadata text, made from its file metadata and content type.
+	SourceMetadata = "metadata"
+)
+
+// Source is the text a chunk was cut from: its kind, the stored file it is, and its SHA-256.
+type Source struct {
+	Kind string `json:"kind"`
+	// Ref is a docproc output's stored file, relative to the docproc run directory. Absent for a
+	// text docproc didn't store.
+	Ref string `json:"ref,omitzero"`
+	// File is a text docinfer stored, relative to its directory. Absent for one it didn't.
+	File string `json:"file,omitzero"`
+	// SHA256 is the lowercase hex SHA-256 of the whole source text.
+	SHA256 string `json:"sha256"`
+}
+
+// Part is the part a chunk's source belongs to, in docproc's record's names, and the outcome its
+// part line gives it.
+type Part struct {
+	SHA256  string `json:"sha256"`
+	Name    string `json:"name"`
+	Kind    string `json:"kind,omitzero"`
+	Route   string `json:"route,omitzero"`
+	Where   string `json:"where,omitzero"`
+	Depth   int    `json:"depth"`
+	Outcome string `json:"outcome,omitzero"`
+}
+
+// Output is a docproc output, in its record's names.
+type Output struct {
+	Kind string            `json:"kind"`
+	Name string            `json:"name,omitzero"`
+	Ref  string            `json:"ref"`
+	Meta map[string]string `json:"meta,omitempty"`
+}
+
+// Embedding is a held embeddings result: what it is keyed by, and the chunk's vector, or why the
+// endpoint rejected it.
+type Embedding struct {
+	Model    string `json:"model"`
+	Settings string `json:"settings"`
+	// Content is the lowercase hex SHA-256 of the chunk's text.
+	Content    string `json:"content"`
+	Vector     string `json:"vector,omitzero"`
+	Dimensions int    `json:"dimensions,omitzero"`
+	Error      string `json:"error,omitzero"`
+}
