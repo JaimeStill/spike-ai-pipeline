@@ -146,7 +146,7 @@ Door          two-way: code on a branch, no tag, pins and
 
 ## Progress
 
-slices 0/7 committed · standards — · spec — · editor —
+slices 2/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mod requires) · standards — · spec — · editor —
 
 ## Decisions
 
