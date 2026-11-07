@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** formats
-- **Branch:** formats
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -25,7 +25,7 @@
 17. [x] gb10-2-align
 18. [x] audio
 19. [x] streams
-20. [ ] formats
+20. [x] formats
 
 ## Task brief · experiment.ai.spike-ai-pipeline · formats
 
@@ -212,13 +212,6 @@ Door          one-way for the mail v0.3.1 and processing v0.9.0
 Release       spike-ai-pipeline-mail v0.3.1
               spike-ai-pipeline-processing v0.9.0
 ```
-
-## Progress
-
-slices 13/14 committed (1 mail upgrade, with uuid v1.29.1 released after the plan; 2 Gotenberg 9.1.0, no golden changed; 3 conversations.pst, unrelated outputs kept at v0.3.0 bytes; 5 tar and gzip, 8f5001a; 6 7-Zip 26.05, ArchiveStage, 8f7f0c2; 7 TIFF pages, HEIC/WebP/AVIF, 07443e1; 8 text stage, 342b170; 9 RTF, 260dd17; 10 PDFs, 5263d1e; 4 mail v0.3.1 released: PR #4 merged at 9cbbdd3, tagged, release workflow green with both archives and SHA256SUMS, approved at the slice-4 checkpoint; mail is done for this task; 11 conversation records, 9d59024; 12 formats finding, d50f5a4 b5acc4b; 14 evidence 6 in the root; 13, processing's v0.9.0 CHANGELOG heading, comes after the reviews so their entries land under it) · standards done (processing 0df8aa2 8c1a5cb 62eb08b a6b71fd; root none; mail e71998b d52a306) · spec done (one gap, evidence 6 as one sentence, closed) · editor done (processing 015c6ad, root c91949b); slice 13 8b0c371; brief ready
-
-mail v0.3.1 (slice 4) is tagged mid-build so processing can copy its fixture: BUILD checkpoints
-with the architect before slice 4 publishes, merges, and tags mail.
 
 ## Decisions
 
@@ -1914,6 +1907,11 @@ with the architect before slice 4 publishes, merges, and tags mail.
   way.
 - formats (build): slice 13, processing's v0.9.0 CHANGELOG heading, runs after the reviews, so
   their entries land under it.
+- formats (accept): the architect accepted the session brief; mail v0.3.1 was released at the
+  slice-4 checkpoint and processing v0.9.0 is tagged at SHIP. No sync at this SHIP: the
+  suite-runner CLI task is added by `marathon plan` and planned in the same session, and the
+  goal's pending edits land in the sync after the CLI ships. Rejected: syncing now with the goal
+  kept active (a sync follows a goal's last task).
 
 ## Pending edits
 
