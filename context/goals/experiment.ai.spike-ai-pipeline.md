@@ -204,7 +204,7 @@ Door          two-way: code on a branch, no tag, the
 
 ## Progress
 
-slices 2/7 committed · standards — · spec — · editor —
+slices 3/7 committed · standards — · spec — · editor —
 
 ## Decisions
 
