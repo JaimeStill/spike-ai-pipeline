@@ -2,7 +2,7 @@
 //
 //	<out>/
 //	  results/<capability>/<xx>/<key>.json   each held result, keyed by Key
-//	  texts/<xx>/<sha256>.txt                each text docinfer stored, such as a vision text
+//	  texts/<xx>/<sha256>.txt                each text docinfer stored, such as a vision text or a transcript
 //	  runs/<run id>/manifest.json            each run's manifest
 //	  runs/<run id>/chunks.jsonl             its chunk record, a line per chunk per occurrence
 //
@@ -18,8 +18,8 @@
 //
 // A run's [Manifest] is written as the run starts and again, whole, as it ends: its id, a
 // version 7 UUID, its times, the docproc run it read, each capability it ran, with its endpoint,
-// model, and settings, the capabilities it skipped, the embedding [Space], its [Counts], and what
-// stopped it, if anything. Its chunk record holds a [Line] per chunk per place the chunk's text
+// model, and settings, the capabilities it skipped, the embedding [Space], each [Transcript] it
+// joined, with its [Seam]s, its [Counts], and what stopped it, if anything. Its chunk record holds a [Line] per chunk per place the chunk's text
 // occurs: the chunk's text and byte [Span] in its [Source], the input's file metadata and content
 // type, the [Part] and [Output] it belongs to, and its vector, base64 of little-endian float32s
 // as the endpoint returned it, never normalized, or why the endpoint rejected it.
@@ -31,11 +31,12 @@
 //     text, [Dir.WriteManifest] and [Dir.WriteChunks], which write a run's
 //     files, and [Dir.ReadManifest] and [Dir.ReadChunks], which read them
 //   - [Key], a held result's key, and [RunPath], a run's file's path in the directory
-//   - [Manifest], with its [Docproc], [Capability], [Skipped], [Space], and [Counts], with its
-//     [VisionCounts]
+//   - [Manifest], with its [Docproc], [Capability], [Skipped], [Space], [Transcript], with its
+//     [Seam]s, and [Counts], with its [VisionCounts] and [TranscriptionCounts]
 //   - [Line], with its [Span], [Source], of kind [SourceOutput], [SourceMetadata], or
-//     [SourceVision], [Part], and [Output]
-//   - [Embedding], a held embeddings result, and [Vision], a held vision result
+//     [SourceVision], or [SourceTranscript], [Part], and [Output]
+//   - [Embedding], a held embeddings result, [Vision], a held vision result, and
+//     [Transcription], a held transcription result
 //   - [EncodeVector] and [DecodeVector], a vector's base64 form, and [UnitTolerance], within
 //     which a vector's norm counts as unit length
 //   - [Version], the directory's schema

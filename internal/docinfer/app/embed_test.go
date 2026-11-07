@@ -115,17 +115,16 @@ func TestRun_Embeds(t *testing.T) {
 		m.Docproc != (outdir.Docproc{Dir: abs, Run: latestRun}) || m.Chunks != "runs/"+m.Run+"/chunks.jsonl" {
 		t.Errorf("manifest = %+v, want schema 1, its times, the docproc run %s, and its chunks", m, abs)
 	}
-	if len(m.Capabilities) != 2 || m.Capabilities[0].Name != "vision" {
-		t.Fatalf("capabilities = %+v, want vision, then embeddings", m.Capabilities)
+	if len(m.Capabilities) != 3 || m.Capabilities[0].Name != "vision" || m.Capabilities[1].Name != "transcription" {
+		t.Fatalf("capabilities = %+v, want vision, transcription, then embeddings", m.Capabilities)
 	}
-	c := m.Capabilities[1]
+	c := m.Capabilities[2]
 	if c.Name != "embeddings" || c.Endpoint != "fake" || c.BaseURL != e.URL() || c.Model != embeddingModel ||
 		fmt.Sprint(c.Settings) != "map[batch:16 chunk_size:2000 concurrency:4]" {
 		t.Errorf("capability = %+v, want embeddings on fake with its defaults", c)
 	}
-	wantSkipped := []outdir.Skipped{{Name: "transcription", Reason: "configured; docinfer doesn't run it yet"}}
-	if !slices.Equal(m.Skipped, wantSkipped) {
-		t.Errorf("skipped = %+v, want %+v", m.Skipped, wantSkipped)
+	if len(m.Skipped) != 0 {
+		t.Errorf("skipped = %+v, want none", m.Skipped)
 	}
 
 	// Every line's vector is the endpoint's, not normalized, and its text its source's span.
@@ -224,13 +223,15 @@ func TestRun_Embeds(t *testing.T) {
 		t.Errorf("locked.bin metadata = %+v, want its file's alone", locked)
 	}
 
-	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 14,
+	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 15,
 		Embedded: m.Counts.Chunks, Requests: 1, Images: 1,
-		Vision: &outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1}}
+		Vision:        &outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1},
+		Windows:       3,
+		Transcription: &outdir.TranscriptionCounts{Distinct: 3, Transcribed: 3, Requests: 3, Transcripts: 1, SeamsUnmatched: 2}}
 	if !reflect.DeepEqual(m.Counts, wantCounts) || m.Counts.Chunks != len(all) {
 		t.Errorf("counts = %+v, want %+v, its chunks the %d sent", m.Counts, wantCounts, len(all))
 	}
-	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 14: .*chunks\.jsonl`)
+	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 15: .*chunks\.jsonl`)
 }
 
 // A second run over the same docproc run and configuration sends no request but the listing, and

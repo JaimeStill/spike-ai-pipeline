@@ -268,8 +268,7 @@ func TestRun_BuildFailureStopsRun(t *testing.T) {
 // With every model loaded, run lists the endpoint once, with its query and the secrets file's
 // token, shows each capability loaded, and reads the latest run's every output, the failed
 // part's and the seen part's among them; then it embeds, each request with the query and token
-// too, and so is the vision request. Transcription, configured, is skipped, the terminal saying
-// so.
+// too, and so are the vision and transcription requests.
 func TestRun_ReadsLatestRun(t *testing.T) {
 	clean(t)
 	e := docinfertest.Serve(t, docinfertest.Fake{Models: setA})
@@ -292,7 +291,7 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 	wantLine(t, got, row("transcription", "fake", audioModel, "loaded"))
 	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 11: text 4, markdown 1, image 1, record 2, audio 3"))
 	wantLine(t, got, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 0, refused 0; requests 1"))
-	wantLine(t, got, regexp.QuoteMeta("transcription: configured; docinfer doesn't run it yet; skipped"))
+	wantLine(t, got, regexp.QuoteMeta("transcription: windows 3, distinct 3: held 0, transcribed 3, failed 0; requests 3; transcripts 1: seams matched 0, unmatched 2"))
 	wantLine(t, got, `embeddings: texts 5, metadata 8, chunks \d+: held 0, embedded \d+, rejected 0; requests 1`)
 	if strings.Contains(got, "warning") {
 		t.Errorf("stdout warns, want no warning:\n%s", got)
@@ -304,11 +303,11 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 	}
 	for _, r := range reqs[1:] {
 		want := docinfertest.Request{Method: "POST", Path: "/v1/embeddings", Query: "autoload=false", Authorization: "Bearer secret-token"}
-		if r.Path == "/v1/chat/completions" {
+		if r.Path == "/v1/chat/completions" || r.Path == "/v1/audio/transcriptions" {
 			want.Path = r.Path
 		}
 		if r != want {
-			t.Errorf("request %v, want %v or the vision request's", r, want)
+			t.Errorf("request %v, want %v or the vision or transcription request's", r, want)
 		}
 	}
 	if want := []string{"http client", "lifecycle config"}; !slices.Equal(slices.Sorted(slices.Values(built.Log())), want) {

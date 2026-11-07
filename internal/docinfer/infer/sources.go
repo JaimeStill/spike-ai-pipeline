@@ -19,6 +19,10 @@ var textKinds = map[string]bool{"text": true, "markdown": true}
 // imageKind is the output kind whose stored file is an image, which vision makes a text of.
 const imageKind = "image"
 
+// audioKind is the output kind whose stored file is an audio window, which transcription makes a
+// text of, joined with its part's other windows.
+const audioKind = "audio"
+
 // occurrence is one place a text docinfer embeds occurs in the docproc run: the input, part, and
 // output line it belongs to, and its source text. Each of the text's chunks is one chunk line per
 // occurrence, so the same text under two inputs is two sets of lines. A capability that makes
@@ -28,6 +32,11 @@ const imageKind = "image"
 //
 // An image output's occurrence is one awaiting its text: image is its stored file's path and
 // mediaType its media type, as docproc records it, and its text and source are vision's to set.
+//
+// An audio window's occurrence is one awaiting its part's transcript: audio is its stored file's
+// path; window its index in its plan, and count the plan's windows, 0 when the window's meta
+// doesn't say, as a video's doesn't; and group the part and stage whose windows are joined into
+// one transcript. Transcription replaces a group's window occurrences with one of the transcript.
 type occurrence struct {
 	input       string
 	file        *schema.File
@@ -38,6 +47,17 @@ type occurrence struct {
 	text        string
 	image       string
 	mediaType   string
+	audio       string
+	window      int
+	count       int
+	group       windowGroup
+}
+
+// windowGroup identifies the windows joined into one transcript: those of one part, cut by one
+// stage.
+type windowGroup struct {
+	part  partKey
+	stage schema.Stage
 }
 
 // inputInfo is what an input's own lines say of it: its file metadata and content type, from its
@@ -70,8 +90,10 @@ func partOf(p *schema.Part, outcome string) *outdir.Part {
 // occurrences returns the occurrences of every text docinfer embeds in run, in its record's
 // order: each text or Markdown output line, whatever its part's outcome, its file read from the
 // run directory; each image output line, whatever its part's outcome, awaiting its vision text;
-// and, at each input's own part line or error line, its metadata text, when the line carries
-// file metadata. An output's stored text file that can't be read is an error.
+// each audio output line, an audio window, whatever its part's outcome, awaiting its part's
+// transcript; and, at each input's own part line or error line, its metadata text, when the line carries
+// file metadata. An output's stored text file that can't be read is an error, as is an audio
+// window whose meta gives no index.
 func occurrences(run *source.Run) ([]occurrence, error) {
 	// An input's own lines, and each part's outcome, come after its output lines; read them
 	// first.
@@ -100,7 +122,7 @@ func occurrences(run *source.Run) ([]occurrence, error) {
 		}
 		switch ev.Event {
 		case schema.OutputEvent:
-			if ev.Output == nil || (!textKinds[ev.Output.Kind] && ev.Output.Kind != imageKind) {
+			if ev.Output == nil || (!textKinds[ev.Output.Kind] && ev.Output.Kind != imageKind && ev.Output.Kind != audioKind) {
 				continue
 			}
 			o := ev.Output
@@ -114,6 +136,14 @@ func occurrences(run *source.Run) ([]occurrence, error) {
 			}
 			if o.Kind == imageKind {
 				occ.image, occ.mediaType = run.Path(*o), o.MediaType
+				occs = append(occs, occ)
+				continue
+			}
+			if o.Kind == audioKind {
+				if err := windowOf(&occ, ev); err != nil {
+					return nil, fmt.Errorf("output %s of %s: %w", o.Ref, ev.Input, err)
+				}
+				occ.audio = run.Path(*o)
 				occs = append(occs, occ)
 				continue
 			}
@@ -140,6 +170,32 @@ func occurrences(run *source.Run) ([]occurrence, error) {
 		}
 	}
 	return occs, nil
+}
+
+// windowOf sets occ's window, count, and group from ev, an audio window's output line: its index
+// and its plan's count from its meta, "window" and "count", as processing's audio and video
+// stages record them, the count absent from a video's; and its part and stage.
+func windowOf(occ *occurrence, ev schema.Event) error {
+	meta := ev.Output.Meta
+	i, err := strconv.Atoi(meta["window"])
+	if err != nil || i < 0 {
+		return fmt.Errorf("audio window's meta gives window %q, no index", meta["window"])
+	}
+	occ.window = i
+	if c, ok := meta["count"]; ok {
+		if occ.count, err = strconv.Atoi(c); err != nil || occ.count <= i {
+			return fmt.Errorf("audio window %d's meta gives count %q, no count of windows holding it", i, c)
+		}
+	}
+	if ev.Part != nil {
+		occ.group.part = keyOf(ev.Input, ev.Part)
+	} else {
+		occ.group.part = partKey{input: ev.Input}
+	}
+	if ev.Stage != nil {
+		occ.group.stage = *ev.Stage
+	}
+	return nil
 }
 
 // metadataText returns an input's metadata text: its file metadata and content type, as docproc

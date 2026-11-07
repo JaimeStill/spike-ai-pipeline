@@ -18,19 +18,31 @@
 // kept; an image the endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
 // Unconfigured, vision skips the images, counting them.
 //
+// When transcription is configured, it sends each distinct audio window of the docproc run, every
+// audio output line's stored file, an audio part's or a video's, whatever its part came to, once,
+// by internal/docinfer/transcribe, to the OpenAI-compatible transcription route with the prompt
+// and language, each when set, unless an earlier run holds its result, keyed by the window's
+// content, the model, and the prompt and language; each transcript is stored whole in --out and
+// its result held as it completes. A window the endpoint refuses is recorded, not fatal, and held
+// when the refusal is a 4xx. Each part's windows, by stage, are then joined in plan order, the
+// index each window's meta gives, by processing's audio.Join: a refused window, or one the plan
+// counts but the record lacks, joins as an empty transcript. The joined transcript is stored in
+// --out and recorded in the manifest with each seam's merge, matched or not. Unconfigured,
+// transcription skips the windows, counting them.
+//
 // It then embeds every text of the docproc run: each text and Markdown output line's stored file,
 // whatever its part came to, never a record, an image, or an audio window directly, each image
-// output line's vision text, and one metadata text per input with file metadata, its file fields
+// output line's vision text, each part's joined transcript, its lines carrying the part's first
+// window as their output, and one metadata text per input with file metadata, its file fields
 // and content type as readable lines, an input whose dispatch stopped with an error among them.
 // Each distinct text is cut by internal/docinfer/chunk to the configured bound, and each distinct
 // chunk is embedded once, by internal/docinfer/embed, unless an earlier run holds its result,
 // keyed by its content, the model, the bound, and the chunker's version; each result is held as
-// it completes, so a run stopped part way resumes from what it stored. The vision results are
-// held apart from the chunk settings, so a changed bound cuts and embeds again and sends no image.
+// it completes, so a run stopped part way resumes from what it stored. The vision and
+// transcription results are held apart from the chunk settings, so a changed bound cuts and
+// embeds again and sends no image and no window.
 // The run writes a chunk line per chunk per occurrence, the same content under two inputs two
-// lines, one vector, and its manifest, with the embedding space. Transcription, when configured,
-// is skipped for now, the terminal and the manifest saying so; its texts will be occurrences cut
-// and embedded like any other.
+// lines, one vector, and its manifest, with the embedding space.
 //
 // The package exports:
 //

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -71,6 +72,39 @@ type Fake struct {
 	// OnVision, when set, is called with each vision request's context and its number, counting
 	// from 1, before the request is answered, as OnEmbed is.
 	OnVision func(ctx context.Context, n int)
+	// Transcribe, when set, answers each transcription request; nil answers each with
+	// [TranscriptText] of its file.
+	Transcribe func(TranscriptionRequest) TranscriptionReply
+	// OnTranscribe, when set, is called with each transcription request's context and its
+	// number, counting from 1, before the request is answered, as OnEmbed is.
+	OnTranscribe func(ctx context.Context, n int)
+}
+
+// TranscriptionRequest is one transcription request an [Endpoint] received, a multipart form:
+// its model, prompt, language, and response format fields, each "" when absent, and its file
+// part's name and bytes.
+type TranscriptionRequest struct {
+	Model          string
+	Prompt         string
+	Language       string
+	ResponseFormat string
+	FileName       string
+	File           []byte
+}
+
+// TranscriptionReply is how a [Fake] answers a transcription request: with Text, or, when Status
+// is set, with that status and an OpenAI-style error body.
+type TranscriptionReply struct {
+	Text   string
+	Status int
+}
+
+// TranscriptText is the transcript a [Fake] gives a file by default: the start of its SHA-256
+// after one word, so a test can tell one window's transcript from another's, and no two
+// windows' transcripts align at a seam.
+func TranscriptText(file []byte) string {
+	sum := sha256.Sum256(file)
+	return fmt.Sprintf("window %x", sum[:6])
 }
 
 // VisionRequest is one vision request an [Endpoint] received, in any of the three formats: the
@@ -144,6 +178,7 @@ type Endpoint struct {
 	requests   []Request
 	embeddings []Embedding
 	visions    []VisionRequest
+	transcribe []TranscriptionRequest
 }
 
 // Serve starts an Endpoint answering as fake says, closed when t ends.
@@ -156,6 +191,7 @@ func Serve(t testing.TB, fake Fake) *Endpoint {
 	mux.HandleFunc("POST /v1/chat/completions", e.vision("completions"))
 	mux.HandleFunc("POST /v1/messages", e.vision("messages"))
 	mux.HandleFunc("POST /v1/responses", e.vision("responses"))
+	mux.HandleFunc("POST /v1/audio/transcriptions", e.transcription)
 	e.server = httptest.NewServer(e.record(mux))
 	t.Cleanup(e.server.Close)
 	return e
@@ -184,6 +220,14 @@ func (e *Endpoint) Visions() []VisionRequest {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return slices.Clone(e.visions)
+}
+
+// Transcriptions returns a copy of the transcription requests e has received, in the order each
+// arrived.
+func (e *Endpoint) Transcriptions() []TranscriptionRequest {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return slices.Clone(e.transcribe)
 }
 
 // record records each request before next answers it.
@@ -448,4 +492,60 @@ func visionBody(format, model string, reply VisionReply) any {
 		}},
 		"usage": map[string]int{"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
 	}
+}
+
+// transcription answers a transcription request as the OpenAI-compatible endpoint does under
+// response_format json, the only one the client asks for: {"text", "usage"}. It decodes the
+// multipart form, records it, and answers as the Fake's Transcribe says. A form it can't decode,
+// or one with no model or no file, is a 400.
+func (e *Endpoint) transcription(w http.ResponseWriter, r *http.Request) {
+	req, err := decodeTranscription(r)
+	if err != nil {
+		apiError(w, http.StatusBadRequest, "bad transcription request: "+err.Error())
+		return
+	}
+	e.mu.Lock()
+	e.transcribe = append(e.transcribe, req)
+	n := len(e.transcribe)
+	e.mu.Unlock()
+	if e.fake.OnTranscribe != nil {
+		e.fake.OnTranscribe(r.Context(), n)
+	}
+	reply := TranscriptionReply{Text: TranscriptText(req.File)}
+	if e.fake.Transcribe != nil {
+		reply = e.fake.Transcribe(req)
+	}
+	if reply.Status != 0 {
+		apiError(w, reply.Status, "window refused")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{ // a test's client gone loses nothing
+		"text":  reply.Text,
+		"usage": map[string]any{"type": "tokens", "input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+	})
+}
+
+// decodeTranscription decodes r's multipart form as the client sends it.
+func decodeTranscription(r *http.Request) (TranscriptionRequest, error) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return TranscriptionRequest{}, err
+	}
+	req := TranscriptionRequest{
+		Model: r.FormValue("model"), Prompt: r.FormValue("prompt"), Language: r.FormValue("language"),
+		ResponseFormat: r.FormValue("response_format"),
+	}
+	f, h, err := r.FormFile("file")
+	if err != nil {
+		return req, err
+	}
+	defer func() { _ = f.Close() }() // read only: a close error loses nothing
+	if req.File, err = io.ReadAll(f); err != nil {
+		return req, err
+	}
+	req.FileName = h.Filename
+	if req.Model == "" {
+		return req, errors.New("want a model")
+	}
+	return req, nil
 }

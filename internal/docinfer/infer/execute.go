@@ -33,15 +33,14 @@ type job struct {
 // embeddings is the capability's name, in the manifest and the held results' paths.
 const embeddings = "embeddings"
 
-// notYet is why a capability the configuration sets is skipped: this docinfer doesn't run it.
-const notYet = "configured; docinfer doesn't run it yet"
-
 // execute runs j's inference, writing its terminal lines to w. It begins a run in j.out under a
 // new id, a version 7 UUID, writing its manifest, then makes a text of every image of the docproc
-// run by vision (visionTexts), when it is configured, embeds every text of the run, vision's
-// among them (embedTexts), and writes the run's chunk record and its manifest again, with its
-// end, its embedding space, and its counts. The images are all sent before any text is embedded,
-// so the embeddings are sent in one pass, as the embedder takes them. A run that stops writes its
+// run by vision (visionTexts), when it is configured, and a transcript of every part's audio
+// windows by transcription (transcriptionTexts), when it is configured, embeds every text of the
+// run, vision's and the transcripts among them (embedTexts), and writes the run's chunk record
+// and its manifest again, with its end, its embedding space, its transcripts, and its counts.
+// Vision and transcription run one after the other, and both before any text is embedded, so the
+// embeddings are sent in one pass, as the embedder takes them. A run that stops writes its
 // manifest with its end and the error that stopped it, and no chunk record; the results it stored
 // are held for the next run.
 func execute(ctx context.Context, w io.Writer, j job) error {
@@ -67,27 +66,31 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	} else {
 		m.Skipped = append(m.Skipped, outdir.Skipped{Name: visionName, Reason: "not configured"})
 	}
+	if t := j.cfg.Transcription; t != nil {
+		m.Capabilities = append(m.Capabilities, outdir.Capability{
+			Name: transcriptionName, Endpoint: t.Endpoint, BaseURL: j.cfg.Endpoints[t.Endpoint].BaseURL, Model: t.Model,
+			Settings: map[string]any{"prompt": t.Prompt, "language": t.Language, "concurrency": *t.Concurrency},
+		})
+	} else {
+		m.Skipped = append(m.Skipped, outdir.Skipped{Name: transcriptionName, Reason: "not configured"})
+	}
 	m.Capabilities = append(m.Capabilities, outdir.Capability{
 		Name: embeddings, Endpoint: emb.Endpoint, BaseURL: j.cfg.Endpoints[emb.Endpoint].BaseURL, Model: emb.Model,
 		Settings: map[string]any{"batch": *emb.Batch, "chunk_size": *emb.ChunkSize, "concurrency": *emb.Concurrency},
 	})
-	reason := "not configured"
-	if j.cfg.Transcription != nil {
-		reason = notYet
-		if _, err := fmt.Fprintf(w, "transcription: %s; skipped\n", notYet); err != nil {
-			return err
-		}
-	}
-	m.Skipped = append(m.Skipped, outdir.Skipped{Name: "transcription", Reason: reason})
 	if err := dir.WriteManifest(m); err != nil {
 		return err
 	}
 	m.Counts.Outputs = len(j.run.Outputs)
 	var lines []outdir.Line
-	var warnings, rejected []string
+	var warnings, failed, rejected []string
 	occs, err := occurrences(j.run)
 	if err == nil {
 		occs, warnings, err = visionTexts(ctx, j, dir, &m, occs)
+	}
+	if err == nil {
+		occs, failed, err = transcriptionTexts(ctx, j, dir, &m, occs)
+		warnings = append(warnings, failed...)
 	}
 	if err == nil {
 		lines, rejected, err = embedTexts(ctx, j, dir, &m, occs)
@@ -121,6 +124,16 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	if err != nil {
 		return err
 	}
+	if tc := c.Transcription; tc != nil {
+		_, err = fmt.Fprintf(w, "transcription: windows %d, distinct %d: held %d, transcribed %d, failed %d; requests %d; "+
+			"transcripts %d: seams matched %d, unmatched %d\n",
+			c.Windows, tc.Distinct, tc.Held, tc.Transcribed, tc.Failed, tc.Requests, tc.Transcripts, tc.SeamsMatched, tc.SeamsUnmatched)
+	} else {
+		_, err = fmt.Fprintf(w, "transcription: not configured; windows %d skipped\n", c.Windows)
+	}
+	if err != nil {
+		return err
+	}
 	_, err = fmt.Fprintf(w, "embeddings: texts %d, metadata %d, chunks %d: held %d, embedded %d, rejected %d; requests %d\n"+
 		"docinfer run %s: lines %d: %s\n",
 		c.Texts, c.Metadata, c.Chunks, c.Held, c.Embedded, c.Rejected, c.Requests,
@@ -135,7 +148,7 @@ func sum(s string) string {
 }
 
 // embedTexts cuts and embeds every text of occs, the occurrences of j's docproc run's texts,
-// vision's among them, filling m's counts and embedding space, and returns the chunk lines, one per chunk per occurrence, in the record's order and
+// vision's and the transcripts among them, filling m's counts and embedding space, and returns the chunk lines, one per chunk per occurrence, in the record's order and
 // each text's, and a description of each chunk the endpoint rejected.
 //
 // Each distinct text is cut once, and each distinct chunk is embedded once: a chunk an earlier
@@ -243,14 +256,16 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 	return lines, rejected, nil
 }
 
-// describe names o's source for the terminal: its output's ref, its input's metadata, or the
-// vision text of its image output's ref.
+// describe names o's source for the terminal: its output's ref, its input's metadata, the
+// vision text of its image output's ref, or the transcript of its input's windows.
 func describe(o occurrence) string {
 	switch o.source.Kind {
 	case outdir.SourceMetadata:
 		return "the metadata of " + o.input
 	case outdir.SourceVision:
 		return "the vision text of " + o.output.Ref
+	case outdir.SourceTranscript:
+		return "the transcript of " + o.input
 	}
 	return o.source.Ref
 }

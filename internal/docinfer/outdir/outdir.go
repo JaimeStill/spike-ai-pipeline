@@ -238,7 +238,10 @@ type Manifest struct {
 	// Chunks is the run's chunk record, relative to the directory: runs/<run id>/chunks.jsonl.
 	// Absent until it is written.
 	Chunks string `json:"chunks,omitzero"`
-	Counts Counts `json:"counts"`
+	// Transcripts are the transcripts the run joined, one per part and stage with audio windows,
+	// in the record's order. Absent when transcription was skipped, or until the run joins them.
+	Transcripts []Transcript `json:"transcripts,omitempty"`
+	Counts      Counts       `json:"counts"`
 	// Error is what stopped the run. Absent when nothing did.
 	Error string `json:"error,omitzero"`
 }
@@ -313,6 +316,70 @@ type Counts struct {
 	Images int `json:"images"`
 	// Vision counts what vision did with the images. Absent when it was skipped.
 	Vision *VisionCounts `json:"vision,omitempty"`
+	// Windows counts the docproc run's audio window output lines, an audio part's or a video's,
+	// whether transcription ran or was skipped.
+	Windows int `json:"windows"`
+	// Transcription counts what transcription did with the windows. Absent when it was skipped.
+	Transcription *TranscriptionCounts `json:"transcription,omitempty"`
+}
+
+// TranscriptionCounts is what a run's transcription did: the windows it saw, by content, what
+// became of each, and the transcripts it joined of them.
+type TranscriptionCounts struct {
+	// Distinct counts the distinct windows, by content; a window under two output lines is sent
+	// once.
+	Distinct int `json:"distinct"`
+	// Held counts the distinct windows whose result an earlier run held.
+	Held int `json:"held"`
+	// Transcribed counts the distinct windows this run sent and the model transcribed.
+	Transcribed int `json:"transcribed"`
+	// Failed counts the distinct windows the endpoint refused, this run or held; each joins its
+	// transcript as an empty one.
+	Failed int `json:"failed"`
+	// Requests counts the transcription requests this run sent.
+	Requests int `json:"requests"`
+	// Transcripts counts the joined transcripts embedded, one per part and stage with windows;
+	// an empty transcript is one, cut to no chunk.
+	Transcripts int `json:"transcripts"`
+	// SeamsMatched counts the seams, in every transcript, whose windows' words aligned, so they
+	// were spliced; SeamsUnmatched those whose windows were concatenated whole.
+	SeamsMatched   int `json:"seams_matched"`
+	SeamsUnmatched int `json:"seams_unmatched"`
+}
+
+// Transcript is one transcript a run joined: the part and stage whose windows it is of, the
+// windows in plan order, the stored joined text, and how each seam between neighbouring windows
+// was merged.
+type Transcript struct {
+	// Input is the input's absolute path, as docproc records it.
+	Input string `json:"input"`
+	Part  *Part  `json:"part,omitempty"`
+	// Stage is the name of the stage that cut the windows, such as "audio" or "video".
+	Stage string `json:"stage,omitzero"`
+	// Windows are the windows' stored files, relative to the docproc run directory, in plan
+	// order; a window the plan has but the record doesn't, one its stage failed to cut, is "".
+	Windows []string `json:"windows"`
+	// Failed are the plan indexes of the windows that joined as empty: refused, or absent.
+	Failed []int `json:"failed,omitempty"`
+	// File is the joined text's path, relative to docinfer's directory, and SHA256 its SHA-256.
+	File   string `json:"file"`
+	SHA256 string `json:"sha256"`
+	// Seams are the seams between the windows, one fewer than the windows: Seams[i] is window
+	// i's with window i+1.
+	Seams []Seam `json:"seams"`
+}
+
+// Seam is how one seam of a transcript was merged, as processing's audio.Join reports it.
+type Seam struct {
+	// Matched is whether the windows' words aligned on at least 2 words, so they were spliced;
+	// an unmatched seam's windows are concatenated whole.
+	Matched bool `json:"matched"`
+	// Matches is how many words the alignment matched, and Overlap how many it overlapped; both
+	// 0 for an unmatched seam.
+	Matches int `json:"matches"`
+	Overlap int `json:"overlap"`
+	// Position is the index, in the transcript's words, of the first word the later window gave.
+	Position int `json:"position"`
 }
 
 // VisionCounts is what a run's vision did: the images it saw, by content, and what became of
@@ -355,8 +422,9 @@ type Line struct {
 	ContentType *schema.ContentType `json:"content_type,omitempty"`
 	// Part is the part the source belongs to. Absent for an input with no part line.
 	Part *Part `json:"part,omitempty"`
-	// Output is the docproc output the source is, or, for a vision or transcript text, the one
-	// it was made from. Absent for a metadata text.
+	// Output is the docproc output the source is, or, for a vision text, the image it was made
+	// from, or, for a transcript, the first window, in plan order, of those it was joined from,
+	// which names the part's stage directory. Absent for a metadata text.
 	Output *Output `json:"output,omitempty"`
 	// Vector is the chunk's embedding, standard base64 of little-endian float32s, as the
 	// endpoint returned it. Absent when the endpoint rejected the chunk.
@@ -379,6 +447,9 @@ const (
 	SourceMetadata = "metadata"
 	// SourceVision is a vision model's text of a docproc image output, stored by docinfer.
 	SourceVision = "vision"
+	// SourceTranscript is the joined transcript of a part's docproc audio windows, stored by
+	// docinfer.
+	SourceTranscript = "transcript"
 )
 
 // Source is the text a chunk was cut from: its kind, the stored file it is, and its SHA-256.
@@ -445,5 +516,21 @@ type Vision struct {
 	// "max_output_tokens". Absent when it finished.
 	Incomplete string `json:"incomplete,omitzero"`
 	// Error is why the endpoint refused the image. Absent when it didn't.
+	Error string `json:"error,omitzero"`
+}
+
+// Transcription is a held transcription result: what it is keyed by, and the window's
+// transcript, a file docinfer stored, or why the endpoint refused the window.
+type Transcription struct {
+	Model    string `json:"model"`
+	Settings string `json:"settings"`
+	// Content is the lowercase hex SHA-256 of the window's bytes.
+	Content string `json:"content"`
+	// Text is the stored transcript's path, relative to the directory, and TextSHA256 its
+	// SHA-256. Both absent when the endpoint refused the window; an empty transcript, a silent
+	// window's, is a file too.
+	Text       string `json:"text,omitzero"`
+	TextSHA256 string `json:"text_sha256,omitzero"`
+	// Error is why the endpoint refused the window. Absent when it didn't.
 	Error string `json:"error,omitzero"`
 }
