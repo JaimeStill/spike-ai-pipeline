@@ -225,7 +225,7 @@ func (r *recorder) part(path string, ev dispatch.Event) error {
 	}
 	r.tally[tallyKey{routeName(ev.Part.Route), string(ev.Outcome)}]++
 	return r.line(fmt.Sprintf("%s  %s  %s  outputs %d  children %d%s  %s\n",
-		path, ev.Part.Route, outcome, ev.Outputs, ev.Children, warned, r.took(span)))
+		path, routeName(ev.Part.Route), outcome, ev.Outputs, ev.Children, warned, r.took(span)))
 }
 
 // inputError records stop, the error that stopped the dispatch of the input at path before its
