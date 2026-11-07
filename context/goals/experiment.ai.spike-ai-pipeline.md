@@ -1924,6 +1924,12 @@ slices 7/7 committed (1 pins 53195ef; 2 composition root f8e7a5f, with the go.mo
 - docproc (r5): two tasks, `docproc` then `docinfer`; the sync follows docinfer. Rejected: one
   task (two applications from nothing, too large for a session).
 - docproc (plan): run ids use Go 1.27's uuid.NewV7; standard library first throughout.
+- docproc (build, escalation, the architect): a re-run's record copies a seen part's subtree
+  (its nested part and output lines) from the earliest run record that holds it, marked seen, so
+  every run's record is complete on its own; a seen part found in no earlier record is recorded
+  with a warning. Rejected: stating the limit and having readers union every run record.
+- docproc (build, spec review): a failed input's terminal line shows its error reduced to one
+  printable line; the record keeps the full error.
 
 ## Pending edits
 
