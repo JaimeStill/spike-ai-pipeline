@@ -1,0 +1,2 @@
+Hello from docproc.
+A small committed input for the run command's tests.
