@@ -1,0 +1,5 @@
+CAPABILITY     ENDPOINT  MODEL                                            STATE
+embeddings     gb10-2    mrutkows/granite-embedding-english-r2-GGUF:BF16  loaded
+vision         gb10-2    google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0     loaded
+transcription  gb10-2    ggml-org/gemma-4-E4B-it-GGUF:Q8_0                loaded
+docproc run 01a1b82d-54aa-73a2-81db-67577e9cb5da: outputs 11116: text 3522, markdown 737, image 4701, record 897, audio 1259

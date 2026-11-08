@@ -406,6 +406,9 @@ again by the next run. The directory is schema `"1"`, the contract the capstone 
 the path rules, the held results' keys, and how a chunk joins back to docproc's run are in
 [docs/docinfer-schema.md](docs/docinfer-schema.md).
 
+[The docinfer finding](docs/findings/docinfer.md) records docinfer over ~/docs through set A on
+gb10-2 and its re-run, the sample run before it, and what vision adds over a text layer.
+
 ### The integration tier
 
 `mise run integration` runs docinfer end to end, against the committed docproc run

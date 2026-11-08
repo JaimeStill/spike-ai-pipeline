@@ -1,0 +1,11 @@
+Transcribe the text : stop out 33 | This is a small, low-resolution image containing a table of data with several columns and rows, though the text is too s
+Transcribe all the t: stop out 11 | I did not find any text in the image.
+
+Transcribe the text : stop out 914 | Office of the Secretary of Defense § 3.3  (b) Programs in which commercial or non-developmental items can satisfy the mi
+Transcribe all the t: stop out 918 | Office of the Secretary of Defense                                                                              § 3.3  (
+
+Transcribe the text : stop out 664 | This is an image of a page from the Code of Federal Regulations (32 CFR Ch. I), specifically page 26 of the 7-1-24 editi
+Transcribe all the t: stop out 911 | **§ 21.500** **32 CFR Ch. I (7-1–24 Edition)**  in accordance with applicable laws, Executive orders, regulations, and D
+
+
+[exited with code 0]

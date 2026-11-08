@@ -1,0 +1,27 @@
+results 2086
+fields {'model': 2086, 'settings': 2086, 'content': 2086, 'text': 2086, 'text_sha256': 2086, 'incomplete': 596}
+incomplete 596 Counter({'max_output_tokens': 596})
+refused 0
+distinct texts 1515 most shared:
+  454 ''
+  17 'EXPEDITION 60\nLive In-flight Interview with NASA\nAstronauts Nick Hague and Andrew Morgan\n\n10:00AM ET\nSeptember 5, 2019\nN'
+  12 'NASA'
+  12 'NASA\nJEANETTE EPPS'
+  6 'A group of people are gathered around a large oval table in a meeting room.'
+  6 'A group of people are sitting around a large oval table in a meeting room.'
+  5 'NASA\nJEANETTE EPP'
+  5 'ESA'
+chars min/med/p95/max 0 91.0 2271 5621
+empty 454
+lines repeated >=10x: 0
+  8 texts/b6/b6139c60dbb96257ac3965165400fe74f6455d282c3da55756810153a8d52e37.txt
+  7 texts/4b/4ba9e198b5ea4fe136ae2124aacb71c70eba28b2921d23da7df3bf8434d4498d.txt
+  6 texts/7c/7c31cad9c622d36df12da27985f626d4382a536fab50d24b6822e3432eda3c82.txt
+  6 texts/56/56a2b88f99e3989b48ab25faa2e517b75ec5220276fbc7d9361c45d667546c43.txt
+  5 texts/f0/f06bff12eae65c11fa12a4b3f028abd8d16c732ef57eb11e933719e434262076.txt
+mostly non-Latin 6 ['texts/5f/5f836fc5643789a66f62a154a55908fc991e5fee7945fb23f8853ae02cc81b86.txt', 'texts/a1/a15f775afb37bd33e304815bfacc77b8643b1d89247a74c8e745de11c036a410.txt', 'texts/ac/acc12721b6f927074ea3c36beb1932d979dfd236bd533fedf834ba2a8f50b8ec.txt']
+descriptions (no text) 147
+   The image shows a professional workspace with multiple computer stations, desks, and chairs.
+   The image features a red circle, a blue square, and a green triangle on a white background.
+   The image consists of a series of horizontal black lines and streaks on a white background, resembling digital noise or static.
+   The image contains the following text:  **Buttons (on the right):** * Toggle Model Tree * Clear Fields  **Bottom Left Signature Box:** * GlobalCorp * 

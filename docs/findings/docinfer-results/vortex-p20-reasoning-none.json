@@ -1,0 +1,37 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "**Mode 2 Controls**\n\nMode 2, arguably the most common stick mode, is common in the USA, and is a natural fit to helis, and multirotors.\n\nA Mode 2 transmitter is easily identified with the un-sprung (i.e. doesn’t return to center) throttle control on the left stick.\n\nFor this mode, the multi-rotor controls are typically as follows:\n\n*   **Left Stick:**\n    *   **Up/Down:** Throttle\n    *   **Left/R…[cut at 400 of 1168 chars]",
+        "reasoning_content": null
+      }
+    }
+  ],
+  "created": 1794108250,
+  "model": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0",
+  "system_fingerprint": "b12098-149f5641b",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 333,
+    "prompt_tokens": 997,
+    "total_tokens": 1330,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    }
+  },
+  "id": "chatcmpl-xxpvoMcQOFcWBHDZyzc2XPhTZiyfva5o",
+  "timings": {
+    "cache_n": 0,
+    "prompt_n": 997,
+    "prompt_ms": 2138.608,
+    "prompt_per_token_ms": 2.145043129388165,
+    "prompt_per_second": 466.191092523735,
+    "predicted_n": 333,
+    "predicted_ms": 11321.696,
+    "predicted_per_token_ms": 34.101493975903615,
+    "predicted_per_second": 29.324228454818076
+  }
+}

@@ -141,7 +141,8 @@ after docproc, the spike returns to `planned` until the answers arrive.
   to embeddings, chunked along its structure, through the client and a layered configuration
   (`config/example` serves set A on gb10-2). It writes its own directory, schema "1", with held
   results, a chunk record of vectors per run, and an HTML report per run (`README.md`,
-  "docinfer"; `docs/docinfer-schema.md`), the capstone's input.
+  "docinfer"; `docs/docinfer-schema.md`), the capstone's input. Its finding,
+  `docs/findings/docinfer.md`, records it over ~/docs through set A on gb10-2.
 - **consumers**: the check that builds on the layers at their released tags.
 - **capstone**: the backend and web UI, once the gates clear. It moves to a non-experimental
   repository of its own, which a `marathon plan` session sets up, and reads docinfer's directory.

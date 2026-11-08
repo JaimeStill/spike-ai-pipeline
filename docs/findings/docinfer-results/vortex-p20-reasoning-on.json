@@ -1,0 +1,37 @@
+{
+  "choices": [
+    {
+      "finish_reason": "length",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "reasoning_content": "I need to transcribe all the text from the provided image.\n\n**Image Analysis:**\nThe image is a page from a manual, likely for a remote-controlled (RC) helicopter or multi-rotor called \"VORTEX 150 Mini\" by \"IMMERSION RC\".\nIt explains different control modes for a transmitter.\n\n**Text Segmentation and Transcription:**\n\n*   **Section: Mode 2 Controls**\n    *   \"Mode 2 Controls\" (Heading)\n    *   \"Mod…[cut at 400 of 7575 chars]"
+      }
+    }
+  ],
+  "created": 1794108210,
+  "model": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0",
+  "system_fingerprint": "b12098-149f5641b",
+  "object": "chat.completion",
+  "usage": {
+    "completion_tokens": 2048,
+    "prompt_tokens": 1000,
+    "total_tokens": 3048,
+    "prompt_tokens_details": {
+      "cached_tokens": 7
+    }
+  },
+  "id": "chatcmpl-LmZyfKVps2SN3tYfaOBFx8a5FWmYe7uj",
+  "timings": {
+    "cache_n": 7,
+    "prompt_n": 993,
+    "prompt_ms": 2133.901,
+    "prompt_per_token_ms": 2.1489436052366564,
+    "prompt_per_second": 465.3449246239634,
+    "predicted_n": 2048,
+    "predicted_ms": 62854.895,
+    "predicted_per_token_ms": 30.705859794821688,
+    "predicted_per_second": 32.56707373387546
+  }
+}
