@@ -2107,6 +2107,10 @@ slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap cl
   image again.
 - docinfer (build): gb10-2's clone was switched to the `docinfer` branch to serve the preset; the
   session switches it back to `main` at ship.
+- docinfer (redirect, the architect): both CLIs follow one layout: docproc's packages moved under
+  internal/docproc/ (app, apptest, report, run, rundir, schema, stages), as docinfer's sit under
+  internal/docinfer/; docinfer imports docproc's contract packages, rundir and schema, from there.
+  No behavior change.
 
 ## Pending edits
 
