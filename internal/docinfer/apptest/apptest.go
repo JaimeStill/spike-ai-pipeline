@@ -110,7 +110,10 @@ func TranscriptText(file []byte) string {
 // VisionRequest is one vision request an [Endpoint] received, in any of the three formats: the
 // format, by its route's name in docinfer's configuration, "completions", "messages", or
 // "responses"; the model; the text part's prompt; the image's media type and bytes, decoded from
-// its data URL or base64 source; and the cap on the reply's output tokens.
+// its data URL or base64 source; the cap on the reply's output tokens; and the reasoning effort,
+// as the format carries it: Chat Completions' reasoning_effort, Open Responses' reasoning.effort,
+// or Messages' thinking, "none" for thinking disabled and output_config.effort for adaptive,
+// empty when the request sends none.
 type VisionRequest struct {
 	Format    string
 	Model     string
@@ -118,6 +121,7 @@ type VisionRequest struct {
 	MediaType string
 	Image     []byte
 	MaxTokens int
+	Reasoning string
 }
 
 // VisionReply is how a [Fake] answers a vision request: with Text, cut at the output cap when
@@ -399,7 +403,17 @@ func decodeVision(format string, r *http.Request) (VisionRequest, error) {
 		MaxCompletionTokens int    `json:"max_completion_tokens"`
 		MaxTokens           int    `json:"max_tokens"`
 		MaxOutputTokens     int    `json:"max_output_tokens"`
-		Messages            []struct {
+		ReasoningEffort     string `json:"reasoning_effort"`
+		Reasoning           struct {
+			Effort string `json:"effort"`
+		} `json:"reasoning"`
+		Thinking struct {
+			Type string `json:"type"`
+		} `json:"thinking"`
+		OutputConfig struct {
+			Effort string `json:"effort"`
+		} `json:"output_config"`
+		Messages []struct {
 			Role    string `json:"role"`
 			Content []part `json:"content"`
 		} `json:"messages"`
@@ -417,16 +431,24 @@ func decodeVision(format string, r *http.Request) (VisionRequest, error) {
 	switch format {
 	case "completions":
 		req.MaxTokens = body.MaxCompletionTokens
+		req.Reasoning = body.ReasoningEffort
 		if len(body.Messages) == 1 && body.Messages[0].Role == "user" {
 			parts = body.Messages[0].Content
 		}
 	case "messages":
 		req.MaxTokens = body.MaxTokens
+		switch body.Thinking.Type {
+		case "disabled":
+			req.Reasoning = "none"
+		case "adaptive":
+			req.Reasoning = body.OutputConfig.Effort
+		}
 		if len(body.Messages) == 1 && body.Messages[0].Role == "user" {
 			parts = body.Messages[0].Content
 		}
 	case "responses":
 		req.MaxTokens = body.MaxOutputTokens
+		req.Reasoning = body.Reasoning.Effort
 		if len(body.Input) == 1 && body.Input[0].Type == "message" && body.Input[0].Role == "user" {
 			parts = body.Input[0].Content
 		}

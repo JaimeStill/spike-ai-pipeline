@@ -96,7 +96,7 @@ A **capability**:
 | `endpoint` | string | The endpoint's name in the configuration. |
 | `base_url` | string | The endpoint's API root. |
 | `model` | string | The model the requests named. |
-| `settings` | object | The capability's settings, by their configuration names: vision's `prompt` (string), `max_tokens`, and `concurrency`; transcription's `prompt` and `language` (strings, empty when unset) and `concurrency`; embeddings' `batch`, `chunk_size`, and `concurrency`. The counts are integers. |
+| `settings` | object | The capability's settings, by their configuration names: vision's `prompt` and `reasoning` (strings), `max_tokens`, and `concurrency`; transcription's `prompt` and `language` (strings, empty when unset) and `concurrency`; embeddings' `batch`, `chunk_size`, and `concurrency`. The counts are integers. |
 
 A **skipped**:
 
@@ -181,6 +181,7 @@ The **vision counts**:
 | `held` | integer | The distinct images whose result an earlier run held. |
 | `described` | integer | The distinct images this run sent and the model answered. |
 | `incomplete` | integer | The distinct images whose text the model stopped before finishing, such as at the output cap, in this run or held; the text is kept and embedded. |
+| `empty` | integer | The incomplete images whose text is empty: the model stopped before it gave any, such as a reasoning model that spent the output cap reasoning. |
 | `refused` | integer | The distinct images the endpoint refused, in this run or held. |
 | `requests` | integer | The vision requests this run sent. |
 | `texts` | integer | The vision texts embedded, one per image output line whose image has a text; an empty text is one, and cuts to no chunk. |
@@ -330,10 +331,10 @@ hex SHA-256 of the content the result is of. The settings are those that change 
 | Capability | Content | Settings |
 |---|---|---|
 | `embeddings` | the chunk's text | `chunk_size=<n> chunker=<version>` |
-| `vision` | the image file's bytes | `max_tokens=<n>`, a newline, `prompt=<prompt>` |
+| `vision` | the image file's bytes | `max_tokens=<n>`, a newline, `reasoning=<effort>`, a newline, `prompt=<prompt>` |
 | `transcription` | the window file's bytes | `language=<language>`, a newline, `prompt=<prompt>`, each value a Go-quoted string |
 
-So a changed model, prompt, cap, or language sends that capability's requests again, and a changed
+So a changed model, prompt, cap, reasoning effort, or language sends that capability's requests again, and a changed
 `chunk_size` cuts and embeds every text again while sending no image and no window: vision and
 transcription are held apart from the chunk settings. Endpoint, format, batch, and concurrency are
 not part of any key.

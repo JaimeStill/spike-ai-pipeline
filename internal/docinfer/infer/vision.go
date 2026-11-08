@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/JaimeStill/spike-ai-pipeline-client/protocol"
+
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/vision"
@@ -19,16 +21,19 @@ import (
 const visionName = "vision"
 
 // visionSettings returns the settings a vision result is held under: those that change it, the
-// cap on the reply and the prompt. The cap comes first, a number, so the prompt, whatever it
-// holds, can't make two settings one.
+// cap on the reply, the reasoning effort, and the prompt. The cap, a number, and the effort, one
+// of the client's names, come first, so the prompt, whatever it holds, can't make two settings
+// one.
 func visionSettings(v *config.Vision) string {
-	return fmt.Sprintf("max_tokens=%d\nprompt=%s", *v.MaxTokens, v.Prompt)
+	return fmt.Sprintf("max_tokens=%d\nreasoning=%s\nprompt=%s", *v.MaxTokens, v.Reasoning, v.Prompt)
 }
 
 // visionTexts makes the vision text of each image occurrence in occs, counting the images in m,
 // and returns occs with each image occurrence that has a text given it, as a source of kind
 // vision naming the stored text, and every other image occurrence dropped, recorded in m's
-// failures, and a warning for each image the endpoint refused or the model left incomplete. With
+// failures, and a warning for each image the endpoint refused or the model left incomplete, one
+// left incomplete with no text at all, such as a reasoning model that spent the cap reasoning,
+// warned of and counted as empty. With
 // vision unset, every image occurrence is dropped, counted, and skipped.
 //
 // Each distinct image, by its bytes' SHA-256, is sent once: an image an earlier run held a
@@ -109,7 +114,8 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 		if err != nil {
 			return nil, nil, err
 		}
-		d := vision.Describer{Client: cl, Model: v.Model, Prompt: v.Prompt, MaxTokens: *v.MaxTokens, Concurrency: *v.Concurrency}
+		d := vision.Describer{Client: cl, Model: v.Model, Prompt: v.Prompt, MaxTokens: *v.MaxTokens,
+			Reasoning: protocol.ReasoningEffort(v.Reasoning), Concurrency: *v.Concurrency}
 		vc.Requests, err = d.Run(ctx, pending, func(i int, r vision.Result) error {
 			s := pendingSums[i]
 			held := &outdir.Vision{Model: v.Model, Settings: settings, Content: s}
@@ -148,13 +154,18 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 			warnings = append(warnings, fmt.Sprintf("warning: vision: refused image %s: %s", img.ref, r.Error))
 			continue
 		}
-		if r.Incomplete != "" {
-			vc.Incomplete++
-			warnings = append(warnings, fmt.Sprintf("warning: vision: incomplete text of image %s: %s", img.ref, r.Incomplete))
-		}
 		text, err := dir.ReadText(r.Text, r.TextSHA256)
 		if err != nil {
 			return nil, nil, fmt.Errorf("vision: text of image %s: %w", img.ref, err)
+		}
+		if r.Incomplete != "" {
+			vc.Incomplete++
+			what := "incomplete text"
+			if text == "" {
+				vc.Empty++
+				what = "empty incomplete text"
+			}
+			warnings = append(warnings, fmt.Sprintf("warning: vision: %s of image %s: %s", what, img.ref, r.Incomplete))
 		}
 		texts[s] = text
 	}

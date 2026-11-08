@@ -47,8 +47,9 @@ func TestLoad_Example(t *testing.T) {
 	if *cfg.Embeddings.Batch != config.DefaultBatch || *cfg.Embeddings.ChunkSize != config.DefaultChunkSize {
 		t.Errorf("embeddings batch, chunk_size = %d, %d, want the defaults", *cfg.Embeddings.Batch, *cfg.Embeddings.ChunkSize)
 	}
-	if cfg.Vision.Prompt != config.DefaultVisionPrompt || *cfg.Vision.MaxTokens != config.DefaultVisionMaxTokens {
-		t.Errorf("vision prompt, max_tokens = %q, %d, want the defaults", cfg.Vision.Prompt, *cfg.Vision.MaxTokens)
+	if cfg.Vision.Prompt != config.DefaultVisionPrompt || *cfg.Vision.MaxTokens != config.DefaultVisionMaxTokens ||
+		cfg.Vision.Reasoning != config.DefaultVisionReasoning {
+		t.Errorf("vision prompt, max_tokens, reasoning = %q, %d, %q, want the defaults", cfg.Vision.Prompt, *cfg.Vision.MaxTokens, cfg.Vision.Reasoning)
 	}
 	if cfg.Transcription.Prompt != "" || cfg.Transcription.Language != "" {
 		t.Errorf("transcription prompt, language = %q, %q, want none", cfg.Transcription.Prompt, cfg.Transcription.Language)

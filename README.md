@@ -209,7 +209,7 @@ configuration doesn't declare stops the load.
                "query": {"autoload": "false"}}
   },
   "embeddings":    {"endpoint": "gb10-2", "model": "...", "batch": 16, "chunk_size": 2000, "concurrency": 4},
-  "vision":        {"endpoint": "gb10-2", "model": "...", "prompt": "...", "max_tokens": 2048, "concurrency": 4},
+  "vision":        {"endpoint": "gb10-2", "model": "...", "prompt": "...", "max_tokens": 2048, "reasoning": "none", "concurrency": 4},
   "transcription": {"endpoint": "gb10-2", "model": "...", "prompt": "", "language": "", "concurrency": 4}
 }
 ```
@@ -232,7 +232,7 @@ There is no default endpoint. Each capability names an endpoint and a model ther
 | Capability | Required | Settings and defaults |
 |---|---|---|
 | `embeddings` | yes | `batch`, the chunks one request carries, 16; `chunk_size`, the most characters (runes) in a chunk, 2,000 |
-| `vision` | no | `prompt`, what is asked of each image, by default processing's dispatch tier's, "Transcribe the text in this picture. If it has no text, describe it in one sentence."; `max_tokens`, the reply's cap, 2048 |
+| `vision` | no | `prompt`, what is asked of each image, by default processing's dispatch tier's, "Transcribe the text in this picture. If it has no text, describe it in one sentence."; `max_tokens`, the reply's cap, reasoning included, 2048; `reasoning`, how much the model reasons before it answers, one of the client's efforts, `none`, `low`, `medium`, `high`, or `xhigh`, by default `none`, as processing's dispatch tier asks |
 | `transcription` | no | `prompt` and `language`, empty by default, which sends neither |
 
 A capability the configuration leaves unset is skipped: its outputs are counted, not sent.
@@ -306,8 +306,15 @@ among them, and sends each distinct content once. The capabilities run one after
 whole run:
 
 1. **Vision**: each distinct image, by its bytes, goes as a data URL beside the prompt, its reply
-   capped at `max_tokens`, in the endpoint's format. A reply cut at the cap is recorded incomplete,
-   its text kept and embedded.
+   capped at `max_tokens`, at the `reasoning` effort, in the endpoint's format: Chat Completions
+   sends it as `reasoning_effort`, Open Responses as `reasoning.effort`, and Messages as `thinking`,
+   `disabled` for `none` and `adaptive` with `output_config.effort` for the rest. A reply cut at the
+   cap is recorded incomplete, its text kept and embedded; one cut before it gave any text, as
+   Gemma 4 26B-A4B on gb10-2 does when it reasons over a dense page and spends the whole cap, is
+   counted empty too. With reasoning on, 22% of the first full run's images came back so; with
+   `none`, the model answers at once. llama.cpp b12098 honors `none` in Chat Completions and Open
+   Responses, but its Messages route ignores `thinking` `disabled` (and `reasoning_effort`), so the
+   model reasons anyway: on gb10-2, speak `completions` or `responses` for vision.
 2. **Transcription**: each distinct audio window goes to the transcription route. Each part's
    windows, by stage, are then joined in plan order, by the index each window's meta gives, by
    processing's `audio.Join`; a refused window, or one the plan counts but the record lacks, joins
@@ -355,7 +362,8 @@ chunk was rejected. The capabilities run one after another, so an input's work e
 chunk's embedding, and `<time>` is how long after the run began that was: an input with nothing to
 send ends as the embeddings begin.
 
-Then a `warning:` line for each refused image, incomplete vision text, refused window, and
+Then a `warning:` line for each refused image, incomplete vision text, an empty one saying so,
+refused window, and
 rejected chunk; a line of counts for each capability, `not configured` for one skipped; a closing
 summary of each capability's requests and failures, `CAPABILITY REQUESTS FAILURES`, a skipped one
 saying why; and, last, the run's id, its chunk lines, the chunk record's path, and the report's,
@@ -381,7 +389,7 @@ transcript's seams, each refused output, and the counts, among them the tokens e
 requests took in the run, as the endpoint's replies report them.
 
 Each result is held as its request completes, keyed by the SHA-256 of its content, the
-capability, the model, and the settings that change it: the prompt and cap for vision, the prompt
+capability, the model, and the settings that change it: the prompt, cap, and reasoning effort for vision, the prompt
 and language for transcription, and the chunk bound and the chunker's version for embeddings. A
 run over the same docproc run and configuration sends no request but the listings and writes the
 same chunk lines under a new run id; a changed chunk bound cuts and embeds again and sends no

@@ -79,7 +79,8 @@ func byKind(lines []outdir.Line, kind string) []outdir.Line {
 }
 
 // The image goes to the vision model in the endpoint's format, each of the three, as a data URL
-// of its bytes and media type beside the default prompt, capped at the default 2048 tokens; its
+// of its bytes and media type beside the default prompt, capped at the default 2048 tokens,
+// asking for no reasoning, as each format says it; its
 // text is stored in docinfer's directory, cut and embedded like any text, its line carrying the
 // image output's input, part, and output; and the manifest records the capability and its
 // counts.
@@ -100,16 +101,17 @@ func TestRun_Vision(t *testing.T) {
 			}
 			v := vs[0]
 			if v.Format != format || v.Model != visionModel || v.Prompt != config.DefaultVisionPrompt ||
-				v.MediaType != "image/png" || !bytes.Equal(v.Image, png) || v.MaxTokens != config.DefaultVisionMaxTokens {
-				t.Errorf("vision request = {%s %s %q %s %d bytes, max %d}, want {%s %s %q image/png %d bytes, max %d}",
-					v.Format, v.Model, v.Prompt, v.MediaType, len(v.Image), v.MaxTokens,
+				v.MediaType != "image/png" || !bytes.Equal(v.Image, png) || v.MaxTokens != config.DefaultVisionMaxTokens ||
+				v.Reasoning != "none" {
+				t.Errorf("vision request = {%s %s %q %s %d bytes, max %d, reasoning %q}, want {%s %s %q image/png %d bytes, max %d, reasoning \"none\"}",
+					v.Format, v.Model, v.Prompt, v.MediaType, len(v.Image), v.MaxTokens, v.Reasoning,
 					format, visionModel, config.DefaultVisionPrompt, len(png), config.DefaultVisionMaxTokens)
 			}
 
 			m, lines := result(t, out)
 			c := m.Capabilities[0]
 			if len(m.Capabilities) != 2 || c.Name != "vision" || c.Endpoint != "fake" || c.BaseURL != e.URL() || c.Model != visionModel ||
-				fmt.Sprint(c.Settings) != fmt.Sprintf("map[concurrency:4 max_tokens:2048 prompt:%s]", config.DefaultVisionPrompt) {
+				fmt.Sprint(c.Settings) != fmt.Sprintf("map[concurrency:4 max_tokens:2048 prompt:%s reasoning:none]", config.DefaultVisionPrompt) {
 				t.Errorf("capabilities = %+v, want vision with its defaults, then embeddings", m.Capabilities)
 			}
 			if m.Counts.Images != 1 || m.Counts.Vision == nil ||
@@ -147,7 +149,7 @@ func TestRun_Vision(t *testing.T) {
 			if got := string(readFile(t, filepath.Join(out, filepath.FromSlash(l.Source.File)))); got != text {
 				t.Errorf("stored text = %q, want %q", got, text)
 			}
-			wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 0, refused 0; requests 1"))
+			wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 0 (empty 0), refused 0; requests 1"))
 		})
 	}
 }
@@ -171,6 +173,60 @@ func TestRun_VisionSettings(t *testing.T) {
 	if m.Capabilities[0].Settings["prompt"] != "Describe it again." || m.Capabilities[0].Settings["max_tokens"] != float64(64) {
 		t.Errorf("vision settings = %v, want the new prompt and 64", m.Capabilities[0].Settings)
 	}
+}
+
+// The configured reasoning effort is what is sent, in each format, and a changed effort sends the
+// image again, while the same effort sends nothing.
+func TestRun_VisionReasoning(t *testing.T) {
+	for _, format := range []string{"completions", "messages", "responses"} {
+		t.Run(format, func(t *testing.T) {
+			clean(t)
+			e := docinfertest.Serve(t, docinfertest.Fake{Models: setA})
+			cfg := configDir(t, map[string]string{"config.json": visionConfig(e.URL(), format, `"reasoning": "low"`, "")})
+			out := t.TempDir()
+
+			run(t, process.ExitOK, "run", docproc, "--config", cfg, "--out", out)
+			t.Setenv("DOCINFER_VISION_REASONING", "high")
+			run(t, process.ExitOK, "run", docproc, "--config", cfg, "--out", out)
+			run(t, process.ExitOK, "run", docproc, "--config", cfg, "--out", out)
+
+			vs := e.Visions()
+			if len(vs) != 2 || vs[0].Reasoning != "low" || vs[1].Reasoning != "high" {
+				var got []string
+				for _, v := range vs {
+					got = append(got, v.Reasoning)
+				}
+				t.Errorf("vision requests' reasoning = %q, want [\"low\" \"high\"]: the changed effort sent again, the same one held", got)
+			}
+			m, _ := result(t, out)
+			if m.Capabilities[0].Settings["reasoning"] != "high" {
+				t.Errorf("vision settings = %v, want reasoning high", m.Capabilities[0].Settings)
+			}
+		})
+	}
+}
+
+// A reply cut at the output cap with no text at all, as a reasoning model gives when it spends
+// the cap reasoning, is counted incomplete and empty, and the terminal warns of it as empty.
+func TestRun_VisionIncompleteEmpty(t *testing.T) {
+	clean(t)
+	e := docinfertest.Serve(t, docinfertest.Fake{Models: setA, Vision: func(docinfertest.VisionRequest) docinfertest.VisionReply {
+		return docinfertest.VisionReply{Incomplete: true}
+	}})
+	cfg := configDir(t, map[string]string{"config.json": visionConfig(e.URL(), "completions", "", "")})
+	out := t.TempDir()
+
+	stdout, _ := run(t, process.ExitOK, "run", docproc, "--config", cfg, "--out", out)
+
+	m, lines := result(t, out)
+	if vl := byKind(lines, outdir.SourceVision); len(vl) != 0 {
+		t.Errorf("vision lines = %+v, want none: an empty text is cut to no chunk", vl)
+	}
+	if vc := m.Counts.Vision; vc == nil || *vc != (outdir.VisionCounts{Images: 1, Described: 1, Incomplete: 1, Empty: 1, Requests: 1, Texts: 1}) {
+		t.Errorf("vision counts = %+v, want one incomplete and empty", vc)
+	}
+	wantLine(t, stdout, regexp.QuoteMeta("warning: vision: empty incomplete text of image "+pngRef+": max_output_tokens"))
+	wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 1 (empty 1), refused 0; requests 1"))
 }
 
 // A reply cut at the output cap, as each format reports it, is recorded incomplete, its text kept
@@ -274,7 +330,7 @@ func TestRun_VisionRerunSendsNothing(t *testing.T) {
 	if tk := second.Counts.Tokens; !reflect.DeepEqual(tk, outdir.Tokens{Vision: &outdir.Usage{}}) {
 		t.Errorf("second run's tokens = %+v, want none: it sent no request", tk)
 	}
-	wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 1, described 0, incomplete 0, refused 0; requests 0"))
+	wantLine(t, stdout, regexp.QuoteMeta("vision: images 1, distinct 1: held 1, described 0, incomplete 0 (empty 0), refused 0; requests 0"))
 }
 
 // A changed chunk bound cuts and embeds every text again, the vision text among them, and sends

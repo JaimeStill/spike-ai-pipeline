@@ -13,12 +13,14 @@ import (
 )
 
 // Describer sends images to a vision model: each with Prompt, its reply capped at MaxTokens
-// output tokens, at most Concurrency requests in flight.
+// output tokens, reasoning included, the model asked to reason with Reasoning's effort, at most
+// Concurrency requests in flight. An empty Reasoning leaves the reasoning to the endpoint.
 type Describer struct {
 	Client      *client.Client
 	Model       string
 	Prompt      string
 	MaxTokens   int
+	Reasoning   protocol.ReasoningEffort
 	Concurrency int
 }
 
@@ -103,6 +105,7 @@ func (d Describer) describe(ctx context.Context, img Image) (Result, bool, error
 			protocol.InputText{Text: d.Prompt},
 		}}},
 		MaxOutputTokens: d.MaxTokens,
+		Reasoning:       protocol.ReasoningParam{Effort: d.Reasoning},
 	}
 	resp, err := d.Client.Generate(ctx, req)
 	var rejected *client.APIError

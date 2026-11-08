@@ -18,6 +18,7 @@
     "model": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0",
     "prompt": "Transcribe the text in this picture. If it has no text, describe it in one sentence.",
     "max_tokens": 2048,
+    "reasoning": "none",
     "concurrency": 4
   },
   "transcription": {

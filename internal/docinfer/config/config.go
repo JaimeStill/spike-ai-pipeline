@@ -16,6 +16,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline-client/format/completions"
 	"github.com/JaimeStill/spike-ai-pipeline-client/format/messages"
 	"github.com/JaimeStill/spike-ai-pipeline-client/format/responses"
+	"github.com/JaimeStill/spike-ai-pipeline-client/protocol"
 	"github.com/standards-lab/go-core/config"
 )
 
@@ -30,6 +31,10 @@ const (
 	DefaultVisionPrompt = "Transcribe the text in this picture. If it has no text, describe it in one sentence."
 	// DefaultVisionMaxTokens caps the vision model's reply to one image.
 	DefaultVisionMaxTokens = 2048
+	// DefaultVisionReasoning is the reasoning effort asked of the vision model: none, as
+	// processing's dispatch tier asks, since a reasoning model that reasons over a dense page can
+	// spend the whole cap before it answers and reply with no text.
+	DefaultVisionReasoning = string(protocol.ReasoningEffortNone)
 	// DefaultBatch is how many chunks one embeddings request carries.
 	DefaultBatch = 16
 	// DefaultChunkSize bounds a chunk, in characters.
@@ -47,6 +52,13 @@ const (
 
 // formats are the formats an endpoint may name, in the order an error lists them.
 var formats = []string{Completions, Messages, Responses}
+
+// efforts are the reasoning efforts vision may name, the client's, in the order an error lists
+// them.
+var efforts = []protocol.ReasoningEffort{
+	protocol.ReasoningEffortNone, protocol.ReasoningEffortLow, protocol.ReasoningEffortMedium,
+	protocol.ReasoningEffortHigh, protocol.ReasoningEffortXHigh,
+}
 
 // Config is docinfer's configuration: its named endpoints, and the three capabilities, each an
 // endpoint and a model. Embeddings is required; Vision and Transcription are optional, and a nil
@@ -92,11 +104,16 @@ type Embeddings struct {
 }
 
 // Vision is the vision capability: the model each image is sent to, what it is asked of each
-// ("prompt"), and the cap on its reply ("max_tokens").
+// ("prompt"), the cap on its reply ("max_tokens"), and how much it reasons before it answers
+// ("reasoning"), one of the client's reasoning efforts: "none", "low", "medium", "high", or
+// "xhigh". Each format carries the effort, but llama.cpp b12098's Messages route ignores the
+// thinking disabled that carries none, so the model reasons anyway; Chat Completions' and Open
+// Responses' none it honors.
 type Vision struct {
 	Capability
 	Prompt    string `json:"prompt"`
 	MaxTokens *int   `json:"max_tokens"`
+	Reasoning string `json:"reasoning"`
 }
 
 // Transcription is the transcription capability: the model each audio window is sent to, with
@@ -130,7 +147,7 @@ type EmbeddingsEnv struct {
 // VisionEnv names the vision capability's overrides, DOCINFER_VISION_*.
 type VisionEnv struct {
 	CapabilityEnv
-	Prompt, MaxTokens string
+	Prompt, MaxTokens, Reasoning string
 }
 
 // TranscriptionEnv names the transcription capability's overrides, DOCINFER_TRANSCRIPTION_*.
@@ -219,6 +236,7 @@ func (v *Vision) merge(src *Vision) {
 	v.Capability.merge(&src.Capability)
 	setString(&v.Prompt, src.Prompt)
 	setInt(&v.MaxTokens, src.MaxTokens)
+	setString(&v.Reasoning, src.Reasoning)
 }
 
 func (t *Transcription) merge(src *Transcription) {
@@ -247,7 +265,8 @@ func setInt(dst **int, src *int) {
 // its key. The errors: an override that doesn't parse, no embeddings capability, a capability
 // with no endpoint or model or naming an endpoint "endpoints" doesn't hold, an endpoint whose
 // base URL isn't an absolute http or https URL without a query or fragment or whose format isn't
-// one of the three, two endpoint keys whose overrides share names, and a count below 1.
+// one of the three, two endpoint keys whose overrides share names, a count below 1, and a
+// vision reasoning effort that isn't one of the client's.
 func (c *Config) Finalize(envPrefix string) error {
 	if err := c.readEnv(envPrefix); err != nil {
 		return err
@@ -262,7 +281,7 @@ func (c *Config) readEnv(prefix string) error {
 	c.Env = Env{
 		Endpoints:     map[string]EndpointEnv{},
 		Embeddings:    EmbeddingsEnv{capabilityEnv(prefix, "embeddings"), config.EnvName(prefix, "embeddings", "batch"), config.EnvName(prefix, "embeddings", "chunk_size")},
-		Vision:        VisionEnv{capabilityEnv(prefix, "vision"), config.EnvName(prefix, "vision", "prompt"), config.EnvName(prefix, "vision", "max_tokens")},
+		Vision:        VisionEnv{capabilityEnv(prefix, "vision"), config.EnvName(prefix, "vision", "prompt"), config.EnvName(prefix, "vision", "max_tokens"), config.EnvName(prefix, "vision", "reasoning")},
 		Transcription: TranscriptionEnv{capabilityEnv(prefix, "transcription"), config.EnvName(prefix, "transcription", "prompt"), config.EnvName(prefix, "transcription", "language")},
 	}
 	var errs []error
@@ -298,6 +317,7 @@ func (c *Config) readEnv(prefix string) error {
 	var vis Vision
 	errs = append(errs, vis.readEnv(c.Env.Vision.CapabilityEnv), envInt(&vis.MaxTokens, c.Env.Vision.MaxTokens))
 	envString(&vis.Prompt, c.Env.Vision.Prompt)
+	envString(&vis.Reasoning, c.Env.Vision.Reasoning)
 	if vis != (Vision{}) {
 		c.Vision = cmpNew(c.Vision)
 		c.Vision.merge(&vis)
@@ -352,6 +372,9 @@ func (c *Config) defaults() {
 		if v.Prompt == "" {
 			v.Prompt = DefaultVisionPrompt
 		}
+		if v.Reasoning == "" {
+			v.Reasoning = DefaultVisionReasoning
+		}
 	}
 	if t := c.Transcription; t != nil {
 		defaultInt(&t.Concurrency, DefaultConcurrency)
@@ -382,6 +405,9 @@ func (c *Config) validate() error {
 	if c.Vision != nil {
 		errs = append(errs, c.check("vision", c.Vision.Capability),
 			positive("vision", "max_tokens", *c.Vision.MaxTokens))
+		if !slices.Contains(efforts, protocol.ReasoningEffort(c.Vision.Reasoning)) {
+			errs = append(errs, fmt.Errorf("vision: unknown reasoning %q; want one of %q", c.Vision.Reasoning, efforts))
+		}
 	}
 	if c.Transcription != nil {
 		errs = append(errs, c.check("transcription", c.Transcription.Capability))

@@ -69,7 +69,7 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	if v := j.cfg.Vision; v != nil {
 		m.Capabilities = append(m.Capabilities, outdir.Capability{
 			Name: visionName, Endpoint: v.Endpoint, BaseURL: j.cfg.Endpoints[v.Endpoint].BaseURL, Model: v.Model,
-			Settings: map[string]any{"prompt": v.Prompt, "max_tokens": *v.MaxTokens, "concurrency": *v.Concurrency},
+			Settings: map[string]any{"prompt": v.Prompt, "max_tokens": *v.MaxTokens, "reasoning": v.Reasoning, "concurrency": *v.Concurrency},
 		})
 	} else {
 		m.Skipped = append(m.Skipped, outdir.Skipped{Name: visionName, Reason: "not configured"})
@@ -134,8 +134,8 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	}
 	c := m.Counts
 	if vc := c.Vision; vc != nil {
-		_, err = fmt.Fprintf(w, "vision: images %d, distinct %d: held %d, described %d, incomplete %d, refused %d; requests %d\n",
-			c.Images, vc.Images, vc.Held, vc.Described, vc.Incomplete, vc.Refused, vc.Requests)
+		_, err = fmt.Fprintf(w, "vision: images %d, distinct %d: held %d, described %d, incomplete %d (empty %d), refused %d; requests %d\n",
+			c.Images, vc.Images, vc.Held, vc.Described, vc.Incomplete, vc.Empty, vc.Refused, vc.Requests)
 	} else {
 		_, err = fmt.Fprintf(w, "vision: not configured; images %d skipped\n", c.Images)
 	}

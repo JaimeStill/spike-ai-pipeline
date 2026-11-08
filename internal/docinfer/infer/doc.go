@@ -13,10 +13,10 @@
 // The inference is execute's. It begins a run in --out, internal/docinfer/outdir's directory.
 // When vision is configured, it sends each distinct image of the docproc run, every image output
 // line's stored file, whatever its part came to, once, by internal/docinfer/vision, as a data URL
-// beside the prompt, its reply capped at max_tokens, unless an earlier run holds its result, keyed
-// by the image's content, the model, and the prompt and cap; each text is stored whole in --out
-// and its result held as it completes. A reply cut at the cap is recorded incomplete and its text
-// kept; an image the endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
+// beside the prompt, its reply capped at max_tokens, at the reasoning effort, unless an earlier run
+// holds its result, keyed by the image's content, the model, and the prompt, cap, and effort; each
+// text is stored whole in --out and its result held as it completes. A reply cut at the cap is
+// recorded incomplete and its text kept, and counted empty too when it has none; an image the endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
 // Unconfigured, vision skips the images, counting them.
 //
 // When transcription is configured, it sends each distinct audio window of the docproc run, every

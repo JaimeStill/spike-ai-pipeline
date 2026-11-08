@@ -46,6 +46,17 @@ func TestRun_ConfigErrors(t *testing.T) {
 			want:   []string{"embeddings: batch 0 is below 1", "embeddings: chunk_size -5 is below 1", "vision: max_tokens 0 is below 1", "vision: concurrency 0 is below 1"},
 		},
 		{
+			name:   "unknown reasoning",
+			config: `{"endpoints": {"fake": {"base_url": %[1]q, "format": "completions"}}, "embeddings": {"endpoint": "fake", "model": "e"}, "vision": {"endpoint": "fake", "model": "v", "reasoning": "maximal"}}`,
+			want:   []string{`vision: unknown reasoning "maximal"; want one of ["none" "low" "medium" "high" "xhigh"]`},
+		},
+		{
+			name:   "unknown reasoning override",
+			config: `{"endpoints": {"fake": {"base_url": %[1]q, "format": "completions"}}, "embeddings": {"endpoint": "fake", "model": "e"}, "vision": {"endpoint": "fake", "model": "v"}}`,
+			env:    map[string]string{"DOCINFER_VISION_REASONING": "off"},
+			want:   []string{`vision: unknown reasoning "off"`},
+		},
+		{
 			name:   "base url with a query",
 			config: `{"endpoints": {"fake": {"base_url": %[1]q, "format": "responses"}}, "embeddings": {"endpoint": "fake", "model": "e"}}`,
 			want:   []string{"has a query or fragment; set query instead"},

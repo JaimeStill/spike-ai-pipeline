@@ -451,6 +451,9 @@ type VisionCounts struct {
 	// Incomplete counts the distinct images whose text the model stopped before finishing,
 	// such as at the output cap, this run or held; the text is kept and embedded.
 	Incomplete int `json:"incomplete"`
+	// Empty counts the incomplete images whose text is empty: the model stopped before it gave
+	// any, such as a reasoning model that spent the output cap reasoning.
+	Empty int `json:"empty"`
 	// Refused counts the distinct images the endpoint refused, this run or held.
 	Refused int `json:"refused"`
 	// Requests counts the vision requests this run sent.

@@ -9,7 +9,7 @@
 //	               "query": {"autoload": "false"}}
 //	  },
 //	  "embeddings":    {"endpoint": "gb10-2", "model": "...", "batch": 16, "chunk_size": 2000},
-//	  "vision":        {"endpoint": "gb10-2", "model": "...", "max_tokens": 2048},
+//	  "vision":        {"endpoint": "gb10-2", "model": "...", "max_tokens": 2048, "reasoning": "none"},
 //	  "transcription": {"endpoint": "gb10-2", "model": "..."}
 //	}
 //
@@ -22,8 +22,10 @@
 // "concurrency", 4 by default. Embeddings is required: "batch", the chunks one request carries,
 // 16 by default, and "chunk_size", the most characters in a chunk, 2,000 by default. Vision is
 // optional: "prompt", what is asked of each image, by default "Transcribe the text in this
-// picture. If it has no text, describe it in one sentence.", and "max_tokens", its reply's cap,
-// 2048 by default. Transcription is optional, with an optional "prompt" and "language", empty by
+// picture. If it has no text, describe it in one sentence.", "max_tokens", its reply's cap,
+// 2048 by default, and "reasoning", how much the model reasons before it answers, one of the
+// client's efforts, "none", "low", "medium", "high", or "xhigh", "none" by default, so a
+// reasoning model doesn't spend the cap reasoning. Transcription is optional, with an optional "prompt" and "language", empty by
 // default, which send none. A capability the configuration leaves unset is skipped.
 //
 // Each setting has an override, DOCINFER_ and its path upper-cased: DOCINFER_EMBEDDINGS_MODEL,
@@ -33,8 +35,8 @@
 //
 // Every error comes from [Load], before any request: no embeddings capability, a capability
 // naming an endpoint the configuration doesn't hold, a format that isn't one of the three, a base
-// URL that isn't an absolute http or https URL without a query or fragment, a count below 1, or
-// an override that doesn't parse.
+// URL that isn't an absolute http or https URL without a query or fragment, a count below 1, a vision
+// reasoning effort that isn't one of the client's, or an override that doesn't parse.
 //
 // The package exports:
 //
