@@ -531,15 +531,14 @@ type Source struct {
 	Incomplete string `json:"incomplete,omitzero"`
 }
 
-// Part is the part a chunk's source belongs to, in docproc's record's names, and the outcome its
-// part line gives it.
+// Part is the part a chunk's source belongs to: docproc's part, whole and in its record's names,
+// its own content type, flags, and parent among them, and the outcome its part line gives it.
+// Kind and Route repeat its content type's, where a reader found them before the part was
+// carried whole.
 type Part struct {
-	SHA256  string `json:"sha256"`
-	Name    string `json:"name"`
+	schema.Part
 	Kind    string `json:"kind,omitzero"`
 	Route   string `json:"route,omitzero"`
-	Where   string `json:"where,omitzero"`
-	Depth   int    `json:"depth"`
 	Outcome string `json:"outcome,omitzero"`
 }
 

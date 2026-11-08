@@ -285,7 +285,7 @@ func TestRun_VisionRefused(t *testing.T) {
 			if tk := m.Counts.Tokens.Vision; tk == nil || *tk != (outdir.Usage{}) {
 				t.Errorf("vision tokens = %+v, want none: a refusal carries no usage", tk)
 			}
-			if m.Counts.Texts != 5 || m.Counts.Lines != 13 || m.Error != "" {
+			if m.Counts.Texts != 6 || m.Counts.Lines != 14 || m.Error != "" {
 				t.Errorf("counts = %+v, error %q, want every other text embedded", m.Counts, m.Error)
 			}
 			wantLine(t, stdout, regexp.QuoteMeta(fmt.Sprintf("warning: vision: refused image %s: %d ", pngRef, tc.status))+".*image refused.*")

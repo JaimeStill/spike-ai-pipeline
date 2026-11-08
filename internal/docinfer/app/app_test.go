@@ -289,10 +289,10 @@ func TestRun_ReadsLatestRun(t *testing.T) {
 	wantLine(t, got, row("embeddings", "fake", embeddingModel, "loaded"))
 	wantLine(t, got, row("vision", "fake", visionModel, "loaded"))
 	wantLine(t, got, row("transcription", "fake", audioModel, "loaded"))
-	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 11: text 4, markdown 1, image 1, record 2, audio 3"))
+	wantLine(t, got, regexp.QuoteMeta("docproc run "+latestRun+": outputs 12: text 5, markdown 1, image 1, record 2, audio 3"))
 	wantLine(t, got, regexp.QuoteMeta("vision: images 1, distinct 1: held 0, described 1, incomplete 0 (empty 0), refused 0; requests 1"))
 	wantLine(t, got, regexp.QuoteMeta("transcription: windows 3, distinct 3: held 0, transcribed 3, failed 0; requests 3; transcripts 1: seams matched 0, unmatched 2"))
-	wantLine(t, got, `embeddings: texts 5, metadata 8, chunks \d+: held 0, embedded \d+, rejected 0; requests 1`)
+	wantLine(t, got, `embeddings: texts 6, metadata 8, chunks \d+: held 0, embedded \d+, rejected 0; requests 1`)
 	if strings.Contains(got, "warning") {
 		t.Errorf("stdout warns, want no warning:\n%s", got)
 	}

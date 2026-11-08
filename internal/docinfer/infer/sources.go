@@ -80,12 +80,9 @@ func keyOf(input string, p *schema.Part) partKey {
 	return partKey{input: input, sha256: p.SHA256, parent: p.Parent, where: p.Where, name: p.Name, depth: p.Depth}
 }
 
-// partOf returns p in docinfer's names, with outcome.
+// partOf returns p whole, in docinfer's names, with outcome.
 func partOf(p *schema.Part, outcome string) *outdir.Part {
-	return &outdir.Part{
-		SHA256: p.SHA256, Name: p.Name, Kind: p.ContentType.Kind, Route: p.ContentType.Route,
-		Where: p.Where, Depth: p.Depth, Outcome: outcome,
-	}
+	return &outdir.Part{Part: *p, Kind: p.ContentType.Kind, Route: p.ContentType.Route, Outcome: outcome}
 }
 
 // occurrences returns the occurrences of every text docinfer embeds in run, in its record's

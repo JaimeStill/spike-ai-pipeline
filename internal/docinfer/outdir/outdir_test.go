@@ -35,7 +35,13 @@ func TestLine_JSONShape(t *testing.T) {
 		File:   &schema.File{Name: "a.pdf", Arg: "/srv/in", Path: "a.pdf", Size: 3, Mode: "-rw-r--r--", Modified: modified, Created: modified},
 		ContentType: &schema.ContentType{Kind: "pdf", Route: "document", RouteReason: "pdf signature", Stored: "application/pdf",
 			Detected: "application/pdf"},
-		Part:   &outdir.Part{SHA256: "p0", Name: "a.pdf", Kind: "pdf", Route: "document", Where: "zip entry a.pdf", Depth: 1, Outcome: "prepared"},
+		Part: &outdir.Part{
+			Name: "a.pdf", Size: 5, SHA256: "p0",
+			ContentType: schema.ContentType{Kind: "pdf", Route: "document", RouteReason: "pdf signature", Stored: "application/pdf"},
+			Flags:       []schema.Flag{{Check: "pdf-js", Class: "active", Evidence: "/JS 1"}},
+			Parent:      "q0", Depth: 1, Where: "zip entry a.pdf",
+			Kind: "pdf", Route: "document", Outcome: "prepared",
+		},
 		Output: &outdir.Output{Kind: "image", Name: "page 1", MediaType: "image/png", Ref: "outputs/ab/doc-1/1.png", Meta: map[string]string{"page": "1"}},
 		Vector: "AACAPw==", Error: "400 Bad Request",
 	}
@@ -44,7 +50,10 @@ func TestLine_JSONShape(t *testing.T) {
 		`"input":"/srv/in/a.pdf",` +
 		`"file":{"name":"a.pdf","arg":"/srv/in","path":"a.pdf","size":3,"mode":"-rw-r--r--","modified":"2026-11-07T09:00:00.000000000Z","created":"2026-11-07T09:00:00.000000000Z"},` +
 		`"content_type":{"kind":"pdf","route":"document","route_reason":"pdf signature","stored":"application/pdf","detected":"application/pdf"},` +
-		`"part":{"sha256":"p0","name":"a.pdf","kind":"pdf","route":"document","where":"zip entry a.pdf","depth":1,"outcome":"prepared"},` +
+		`"part":{"name":"a.pdf","size":5,"sha256":"p0",` +
+		`"content_type":{"kind":"pdf","route":"document","route_reason":"pdf signature","stored":"application/pdf"},` +
+		`"flags":[{"check":"pdf-js","class":"active","evidence":"/JS 1"}],"parent":"q0","depth":1,"where":"zip entry a.pdf",` +
+		`"kind":"pdf","route":"document","outcome":"prepared"},` +
 		`"output":{"kind":"image","name":"page 1","media_type":"image/png","ref":"outputs/ab/doc-1/1.png","meta":{"page":"1"}},` +
 		`"vector":"AACAPw==","error":"400 Bad Request"}` + "\n"
 	if got := marshal(t, l); got != want {

@@ -138,7 +138,7 @@ func TestReport_Content(t *testing.T) {
 		// talk.wav: its transcript and its metadata.
 		`<code>` + talkWAV + `</code> <span class="muted">sources 2, chunks 2</span>`,
 		`<span class="muted">chunks 1</span>`,
-		"chunk lines 15",
+		"chunk lines 16",
 		"None: no image refused, no window failed, and no chunk rejected.",
 	} {
 		if !strings.Contains(page, want) {
@@ -155,7 +155,7 @@ func TestReport_Content(t *testing.T) {
 		`/srv/inputs/hello\.txt  images 0  windows 0  chunks 2  failures 0  \S+`,
 		`/srv/inputs/copy/hello\.txt  images 0  windows 0  chunks 2  failures 0  \S+`,
 		`/srv/inputs/report\.pdf  images 1  windows 0  chunks 3  failures 0  \S+`,
-		`/srv/inputs/notes\.docx  images 0  windows 0  chunks 2  failures 0  \S+`,
+		`/srv/inputs/notes\.docx  images 0  windows 0  chunks 3  failures 0  \S+`,
 		`/srv/inputs/talk\.wav  images 0  windows 3  chunks 2  failures 0  \S+`,
 		`/srv/inputs/blob\.bin  images 0  windows 0  chunks 1  failures 0  \S+`,
 		`/srv/inputs/broken\.pdf  images 0  windows 0  chunks 2  failures 0  \S+`,

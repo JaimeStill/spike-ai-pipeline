@@ -56,8 +56,8 @@ Every time is RFC 3339 in UTC with nine digits of nanoseconds, such as
 A field this page doesn't call optional is always present, its zero value included. An optional
 field is absent, not null or empty, when it has no value.
 
-Fields this page calls docproc's (a chunk line's `file` and `content_type`, a part's names, and an
-output's) are copied from docproc's record, schema "1", and mean what
+Fields this page calls docproc's (a chunk line's `file` and `content_type`, a part's fields, and
+an output's) are copied from docproc's record, schema "1", and mean what
 [docs/docproc-schema.md](docproc-schema.md) says they mean.
 
 ### The manifest
@@ -275,16 +275,22 @@ The source **kinds**:
 | `vision` | The vision model's text of an image output, stored by docinfer. |
 | `transcript` | The joined transcript of one part's audio windows, cut by one stage, stored by docinfer and recorded in the manifest's `transcripts`. |
 
-A **part**, the part the source belongs to, in docproc's names:
+A **part**, the part the source belongs to: docproc's part, whole and in its names, and the
+outcome its part line gives it. `kind` and `route` repeat its `content_type`'s, the names a reader
+found them under before the part was carried whole.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `sha256` | string | docproc's `part.sha256`. |
 | `name` | string | docproc's `part.name`. |
+| `size` | integer | docproc's `part.size`, in bytes. |
+| `sha256` | string | docproc's `part.sha256`. |
+| `content_type` | docproc content type | docproc's `part.content_type`: the part's own, which for a nested part is not the input's. |
+| `flags` | array of docproc flag | docproc's `part.flags`, its inspection's. Optional: absent when it has none. |
+| `parent` | string | docproc's `part.parent`. Optional: absent for an input. |
+| `depth` | integer | docproc's `part.depth`. |
+| `where` | string | docproc's `part.where`. Optional: absent for an input. |
 | `kind` | string | docproc's `part.content_type.kind`. Optional. |
 | `route` | string | docproc's `part.content_type.route`. Optional. |
-| `where` | string | docproc's `part.where`. Optional: absent for an input. |
-| `depth` | integer | docproc's `part.depth`. |
 | `outcome` | string | The outcome the part's own part line gives it, such as `"prepared"`, `"seen"`, or `"failed"`. Optional: absent when the record holds no part line for it. |
 
 An **output**, in docproc's names:

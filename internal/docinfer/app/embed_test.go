@@ -20,6 +20,7 @@ import (
 	docinfertest "github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/apptest"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/chunk"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 )
 
 // embedConfig is a config.json of the embeddings capability alone on the endpoint "fake" at url,
@@ -159,14 +160,14 @@ func TestRun_Embeds(t *testing.T) {
 		t.Errorf("space = %+v, want %+v", m.Space, wantSpace)
 	}
 
-	// Text and Markdown outputs alone: five output lines, each one chunk at the default bound.
+	// Text and Markdown outputs alone: six output lines, each one chunk at the default bound.
 	var kinds []string
 	for _, l := range lines {
 		if l.Source.Kind == outdir.SourceOutput {
 			kinds = append(kinds, l.Output.Kind)
 		}
 	}
-	if want := []string{"text", "text", "text", "markdown", "text"}; !slices.Equal(kinds, want) {
+	if want := []string{"text", "text", "text", "markdown", "text", "text"}; !slices.Equal(kinds, want) {
 		t.Errorf("output lines' kinds = %q, want %q", kinds, want)
 	}
 
@@ -192,12 +193,34 @@ func TestRun_Embeds(t *testing.T) {
 	// An output line carries its input's file metadata and content type, and its part's fields
 	// and outcome, a failed part's among them.
 	broken := byInput(lines, "/srv/inputs/broken.pdf", "output")
-	if len(broken) != 1 || broken[0].Part == nil || *broken[0].Part != (outdir.Part{
-		SHA256: "07e1e845732d27e3cd2f7b792c117ed9c3136200209bfd0c3720daec39173246", Name: "broken.pdf",
-		Kind: "pdf", Route: "document", Depth: 0, Outcome: "failed",
+	if len(broken) != 1 || broken[0].Part == nil || !reflect.DeepEqual(*broken[0].Part, outdir.Part{
+		Name: "broken.pdf", Size: 30551, SHA256: "07e1e845732d27e3cd2f7b792c117ed9c3136200209bfd0c3720daec39173246",
+		ContentType: schema.ContentType{Kind: "pdf", Route: "document", RouteReason: "pdf signature", Detected: "application/pdf"},
+		Kind:        "pdf", Route: "document", Outcome: "failed",
 	}) || broken[0].ContentType == nil || broken[0].ContentType.Detected != "application/pdf" ||
 		broken[0].File == nil || broken[0].File.Name != "broken.pdf" || broken[0].Output.Meta["count"] != "2" {
 		t.Errorf("broken.pdf lines = %+v, want the failed part's", broken)
+	}
+
+	// A nested part's line carries docproc's part whole: its size, flags, parent, and its own
+	// content type, the input's beside it.
+	var nested []outdir.Line
+	for _, l := range byInput(lines, "/srv/inputs/notes.docx", "output") {
+		if l.Part != nil && l.Part.Depth == 1 {
+			nested = append(nested, l)
+		}
+	}
+	wantNested := outdir.Part{
+		Name: "readme.txt.exe", Size: 42, SHA256: "aed53747882dde512884d5c2d45e4e0639b73c2ddfa45184087b880683029d79",
+		ContentType: schema.ContentType{Route: "text", RouteReason: "text/plain; charset=utf-8", Stored: "text/plain"},
+		Flags:       []schema.Flag{{Check: "double-extension", Class: "active", Evidence: `name "readme.txt.exe"`}},
+		Parent:      "3b5f0bccbf1a7bed1b0deaf89f249fc9938710945d12b869fc777a487e5ba322",
+		Depth:       1, Where: "media readme.txt.exe",
+		Route: "text", Outcome: "prepared",
+	}
+	if len(nested) != 1 || !reflect.DeepEqual(*nested[0].Part, wantNested) ||
+		nested[0].ContentType == nil || nested[0].ContentType.Kind != "docx" || nested[0].File == nil || nested[0].File.Name != "notes.docx" {
+		t.Errorf("notes.docx nested lines = %+v, want the flagged part's, whole, under the input's file and content type", nested)
 	}
 
 	// One metadata text per input with file metadata, the error line's included, listing no
@@ -226,7 +249,7 @@ func TestRun_Embeds(t *testing.T) {
 	}
 
 	embedTokens := docinfertest.EmbeddingTokens(all)
-	wantCounts := outdir.Counts{Outputs: 11, Texts: 5, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 15,
+	wantCounts := outdir.Counts{Outputs: 12, Texts: 6, Metadata: 8, Chunks: m.Counts.Chunks, Lines: 16,
 		Embedded: m.Counts.Chunks, Requests: 1, Images: 1,
 		Vision:        &outdir.VisionCounts{Images: 1, Described: 1, Requests: 1, Texts: 1},
 		Windows:       3,
@@ -241,7 +264,7 @@ func TestRun_Embeds(t *testing.T) {
 		t.Errorf("counts = %+v, want %+v, its chunks the %d sent", m.Counts, wantCounts, len(all))
 	}
 	// The chunk record's path and the report's are relative to --out, as docproc prints its record's.
-	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 15: runs/`+m.Run+`/chunks\.jsonl`)
+	wantLine(t, stdout, `docinfer run `+m.Run+`: lines 16: runs/`+m.Run+`/chunks\.jsonl`)
 	wantLine(t, stdout, `report runs/`+m.Run+`/report\.html`)
 }
 
@@ -283,7 +306,7 @@ func TestRun_RerunSendsNothing(t *testing.T) {
 	if second.Counts.Tokens != (outdir.Tokens{}) {
 		t.Errorf("second run's tokens = %+v, want none: it sent no request", second.Counts.Tokens)
 	}
-	wantLine(t, stdout, `embeddings: texts 5, metadata 8, chunks \d+: held \d+, embedded 0, rejected 0; requests 0`)
+	wantLine(t, stdout, `embeddings: texts 6, metadata 8, chunks \d+: held \d+, embedded 0, rejected 0; requests 0`)
 }
 
 // A changed chunk bound cuts the texts again and embeds them again.
