@@ -10,8 +10,8 @@ import (
 
 	"github.com/JaimeStill/spike-ai-pipeline-processing/dispatch"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 var (

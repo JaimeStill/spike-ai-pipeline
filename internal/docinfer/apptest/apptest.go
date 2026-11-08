@@ -20,8 +20,8 @@ import (
 	"github.com/standards-lab/go-core/graph"
 	"github.com/standards-lab/go-core/lifecycle"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/app"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
 )
 
 // Builds returns a Recorder of the name of each node a's runs build, in the order each Build

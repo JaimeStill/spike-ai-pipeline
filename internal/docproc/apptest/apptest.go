@@ -8,8 +8,8 @@ import (
 	"github.com/standards-lab/go-core/graph"
 	"github.com/standards-lab/go-core/lifecycle"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/app"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/app"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // Recorder records events in order. It is safe for concurrent use. The zero value is ready to

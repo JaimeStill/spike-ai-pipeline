@@ -10,7 +10,7 @@ import (
 
 	"github.com/standards-lab/go-core/process"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
 )
 
 // report runs docproc report with args, and fails the test unless it exits with want. It

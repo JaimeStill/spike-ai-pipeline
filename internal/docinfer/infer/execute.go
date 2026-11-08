@@ -23,7 +23,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/report"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/source"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // job is one docinfer run's inputs, once its configuration is valid, its docproc run read, and

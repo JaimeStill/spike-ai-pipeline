@@ -7,7 +7,7 @@ import (
 	"github.com/standards-lab/go-core/graph"
 	"github.com/standards-lab/go-core/lifecycle"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // App is docproc: its dependency graph and the [Nodes] that describe it, its command tree, and

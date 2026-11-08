@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // kinds are the output kinds of schema "1", in the order its contract lists them and [Run.Counts]

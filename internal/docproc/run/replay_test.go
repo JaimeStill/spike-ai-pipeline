@@ -5,8 +5,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/run"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/run"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // stage is the one stage identity the replay's records name.

@@ -13,15 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/report"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/report"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // update rewrites the report's golden page from the render instead of comparing against it.
 var update = flag.Bool("update", false, "rewrite testdata/report.golden.html")
 
-// goldenRecord is the record internal/app's test pins, its times written <time> and its inputs'
-// directory <in>.
+// goldenRecord is the record internal/docproc/app's test pins, its times written <time> and its
+// inputs' directory <in>.
 var goldenRecord = filepath.Join("..", "app", "testdata", "record.golden.jsonl")
 
 // placeholder matches the golden record's normalized times.
@@ -78,8 +78,8 @@ func render(t *testing.T, m schema.Manifest, evs []schema.Event) string {
 	return buf.String()
 }
 
-// The page rendered from the record internal/app pins: a quarantined input with its flags and
-// kept file, a text input with its output linked, an archive with a part found in it nested
+// The page rendered from the record internal/docproc/app pins: a quarantined input with its flags
+// and kept file, a text input with its output linked, an archive with a part found in it nested
 // below, and an input whose dispatch stopped with an error.
 func TestRender_Golden(t *testing.T) {
 	m, evs := fixture(t)
@@ -97,7 +97,7 @@ func TestRender_Golden(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got != string(want) {
-		t.Errorf("report differs from %s; go test ./internal/report -update rewrites it, and git diff shows how", golden)
+		t.Errorf("report differs from %s; go test ./internal/docproc/report -update rewrites it, and git diff shows how", golden)
 	}
 }
 

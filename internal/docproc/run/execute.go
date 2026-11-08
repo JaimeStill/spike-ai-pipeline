@@ -13,10 +13,10 @@ import (
 
 	"github.com/JaimeStill/spike-ai-pipeline-processing/dispatch"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/report"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/report"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // execute runs inputs, which came from the path arguments args, through set's stages over the

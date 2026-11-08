@@ -4,8 +4,8 @@ import (
 	"github.com/standards-lab/go-cli-sdk"
 	"github.com/standards-lab/go-core/graph"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/report"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/run"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/report"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/run"
 )
 
 // defineDomain defines the domain services on g into n. docproc has none of its own yet: its run

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
 )
 
 func TestRecorder_LogsInOrder(t *testing.T) {

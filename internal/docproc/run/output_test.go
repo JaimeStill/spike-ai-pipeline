@@ -14,10 +14,10 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline-processing/dispatch"
 	"github.com/JaimeStill/spike-ai-pipeline-processing/route"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/run"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/run"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // failing is a stage that fails every part it is given with err.

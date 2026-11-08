@@ -15,7 +15,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline-processing/inspect"
 	"github.com/JaimeStill/spike-ai-pipeline-processing/route"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // marshal returns v as JSON, failing the test on an error.

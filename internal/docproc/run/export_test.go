@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // Brief is brief, for the terminal's error tests.

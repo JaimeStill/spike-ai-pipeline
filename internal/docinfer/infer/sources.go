@@ -8,7 +8,7 @@ import (
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/source"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // textKinds are the output kinds whose stored file is a text docinfer embeds: never a record,

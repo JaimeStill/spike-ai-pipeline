@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // Processing's index replays a seen part's own outputs but dispatches none of the parts found in
@@ -47,8 +47,8 @@ func (n *node) whole() bool {
 	return len(n.children) == count(n.line.Children)
 }
 
-// tree builds the nodes of one input's record lines, which arrive in the record's order: a
-// part's output lines and the lines of the parts found in it before its own, as internal/report's
+// tree builds the nodes of one input's record lines, which arrive in the record's order: a part's
+// output lines and the lines of the parts found in it before its own, as internal/docproc/report's
 // tree takes them.
 type tree struct {
 	outputs map[outputKey][]schema.Event // output lines waiting for their part's own line

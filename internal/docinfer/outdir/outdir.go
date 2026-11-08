@@ -16,8 +16,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // Version is the schema of docinfer's directory: its layout, manifest, chunk lines, and held

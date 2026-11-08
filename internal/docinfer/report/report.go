@@ -14,8 +14,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // name is the report's file name in its run's directory.

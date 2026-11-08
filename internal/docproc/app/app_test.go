@@ -16,8 +16,8 @@ import (
 	"github.com/standards-lab/go-core/lifecycle"
 	"github.com/standards-lab/go-core/process"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/app"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/app"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
 )
 
 // shutdownTimeout is the one variable docproc reads.

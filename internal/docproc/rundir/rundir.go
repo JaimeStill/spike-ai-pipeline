@@ -20,7 +20,7 @@ import (
 
 	"github.com/JaimeStill/spike-ai-pipeline-processing/dispatch"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // The run directory's subdirectories.

@@ -14,9 +14,9 @@ import (
 	"github.com/standards-lab/go-cli-sdk"
 	"github.com/standards-lab/go-core/process"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/app"
 	docinfertest "github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/apptest"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
 )
 
 // docproc is the committed docproc run directory docinfer reads: testdata/README.md says what

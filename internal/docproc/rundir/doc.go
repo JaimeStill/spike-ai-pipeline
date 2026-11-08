@@ -8,7 +8,7 @@
 //	quarantine/<sha256>/flags.json       beside its flags
 //	runs/<run id>/manifest.json          each run's schema.Manifest
 //	runs/<run id>/record.jsonl           and its record, a schema.Event per line
-//	runs/<run id>/report.html            and its report, internal/report's
+//	runs/<run id>/report.html            and its report, internal/docproc/report's
 //
 // <stage> is the stage's name and the first twelve hex digits of the SHA-256 of its whole
 // identity, name, version, and configuration hash, so a new tool version prepares content again

@@ -16,8 +16,8 @@ import (
 
 	"github.com/standards-lab/go-core/process"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/apptest"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/apptest"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // update rewrites the record's golden file from the run instead of comparing against it.

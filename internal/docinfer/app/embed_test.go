@@ -20,7 +20,7 @@ import (
 	docinfertest "github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/apptest"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/chunk"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // embedConfig is a config.json of the embeddings capability alone on the endpoint "fake" at url,

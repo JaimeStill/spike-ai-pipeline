@@ -6,7 +6,7 @@ import (
 
 	"github.com/standards-lab/go-cli-sdk"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
 )
 
 // Commands returns the report command. It declares no nodes: it reads a run directory and

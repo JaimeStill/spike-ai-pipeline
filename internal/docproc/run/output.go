@@ -13,8 +13,8 @@ import (
 
 	"github.com/JaimeStill/spike-ai-pipeline-processing/route"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/stages"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/stages"
 )
 
 // errorOutcome is the outcome the terminal and the summary give an input whose dispatch stopped

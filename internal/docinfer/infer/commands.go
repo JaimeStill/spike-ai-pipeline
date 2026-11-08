@@ -10,7 +10,7 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/models"
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/source"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/rundir"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/rundir"
 )
 
 // Commands returns the run command, which sends its requests through the HTTP client hc names.

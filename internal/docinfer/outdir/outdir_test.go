@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
-	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/schema"
 )
 
 // marshal returns v as compact JSON, <, >, and & left as they are.

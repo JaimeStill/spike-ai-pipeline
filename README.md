@@ -167,13 +167,13 @@ store's naming are in [docs/docproc-schema.md](docs/docproc-schema.md).
 ### Updating the golden files
 
 Two tests compare docproc's output with a golden file, and `-update` makes each rewrite its file
-instead; no other package takes the flag. The `internal/report` package's test renders the
-`internal/app` package's record golden, so a regenerated record golden needs the report golden
-regenerated after it:
+instead; no other package takes the flag. The `internal/docproc/report` package's test renders the
+`internal/docproc/app` package's record golden, so a regenerated record golden needs the report
+golden regenerated after it:
 
 ```sh
-go test ./internal/app -update      # internal/app/testdata/record.golden.jsonl
-go test ./internal/report -update   # internal/report/testdata/report.golden.html
+go test ./internal/docproc/app -update      # internal/docproc/app/testdata/record.golden.jsonl
+go test ./internal/docproc/report -update   # internal/docproc/report/testdata/report.golden.html
 ```
 
 `git diff` then shows what changed.
