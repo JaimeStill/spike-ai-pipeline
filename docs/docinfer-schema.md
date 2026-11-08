@@ -1,11 +1,11 @@
 # docinfer's directory, schema "1"
 
-`docinfer run <docproc-dir> --out <dir>` writes docinfer's directory, and the capstone reads one:
-its chunk records and vectors are what the capstone loads. This page is the contract: the
-directory's layout, each run's manifest, its chunk record, one JSON object per line, the held
-results, the stored texts, and how a chunk joins back to the docproc run it was cut from. It is
-written from the types in `internal/docinfer/outdir`, whose doc comments are the source; where
-this page and they disagree, they win and this page is wrong.
+This page is the contract for docinfer's directory, which `docinfer run <docproc-dir> --out
+<dir>` writes and the capstone reads: its chunk records and vectors are what the capstone loads.
+It covers the directory's layout, each run's manifest, its chunk record, one JSON object per
+line, the held results, the stored texts, and how a chunk joins back to the docproc run it was cut
+from. The types in `internal/docinfer/outdir` and their doc comments are the source; where this
+page and they disagree, they win.
 
 A reader checks the manifest's `"schema"` is `"1"` before reading anything else.
 
@@ -276,8 +276,7 @@ The source **kinds**:
 | `transcript` | The joined transcript of one part's audio windows, cut by one stage, stored by docinfer and recorded in the manifest's `transcripts`. |
 
 A **part**, the part the source belongs to: docproc's part, whole and in its names, and the
-outcome its part line gives it. `kind` and `route` repeat its `content_type`'s, the names a reader
-found them under before the part was carried whole.
+outcome its part line gives it. `kind` and `route` repeat its `content_type`'s `kind` and `route`.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -340,10 +339,10 @@ hex SHA-256 of the content the result is of. The settings are those that change 
 | `vision` | the image file's bytes | `max_tokens=<n>`, a newline, `reasoning=<effort>`, a newline, `prompt=<prompt>` |
 | `transcription` | the window file's bytes | `language=<language>`, a newline, `prompt=<prompt>`, each value a Go-quoted string |
 
-So a changed model, prompt, cap, reasoning effort, or language sends that capability's requests again, and a changed
-`chunk_size` cuts and embeds every text again while sending no image and no window: vision and
-transcription are held apart from the chunk settings. Endpoint, format, batch, and concurrency are
-not part of any key.
+So a changed model, prompt, cap, reasoning effort, or language sends that capability's requests
+again, and a changed `chunk_size` cuts and embeds every text again while sending no image and no
+window: vision and transcription are held apart from the chunk settings. Endpoint, format, batch,
+and concurrency are not part of any key.
 
 An **embeddings** result, `results/embeddings/<xx>/<key>.json`:
 

@@ -16,7 +16,10 @@ stage by stage in real time?
 ## The evidence
 
 1. Client: chat with tools and a reasoning round trip, streamed and unstreamed; vision, audio
-   input, embeddings, and transcription; each proven against set A on gb10-2.
+   input, embeddings, and transcription; each proven against set A on gb10-2. The root's docinfer
+   finding, `docs/findings/docinfer.md`, runs vision, transcription, and embeddings through the
+   client over all of ~/docs: 3,470 images, 1,254 audio windows, and 28,937 chunk lines in 6.0 h,
+   with no request failed.
 2. Two more wire formats, Anthropic Messages and Open Responses (the model's own baseline), fit
    under the same request and response model as Chat Completions, with no change to callers.
 3. The client's base module is standard library only, and the check passes.
@@ -115,12 +118,12 @@ stage by stage in real time?
 
 ## Gates
 
-The capstone waits for the host, client, and processing tasks, the last of them two CLIs:
-docproc, which runs the processing suite over an input set, and docinfer, which runs inference
-over docproc's run directory. It also waits for two answers: experiment.hosting's
-spike-model-layout and spike-model-gateway. spike-model-engines and experiment.html's
-spike-html-apps have answered, and neither experiment's intake is a gate. Once docinfer ships,
-after docproc, the spike returns to `planned` until the answers arrive.
+The capstone waits for two answers: experiment.hosting's spike-model-layout and
+spike-model-gateway. The host, client, and processing tasks it also needs are done, the last of
+them two CLIs: docproc, which runs the processing suite over an input set, and docinfer, which
+runs inference over docproc's run directory. spike-model-engines and experiment.html's
+spike-html-apps have answered, and neither experiment's intake is a gate. With docinfer shipped,
+the spike returns to `planned` until the answers arrive.
 
 ## Capability map
 
@@ -144,5 +147,5 @@ after docproc, the spike returns to `planned` until the answers arrive.
   "docinfer"; `docs/docinfer-schema.md`), the capstone's input. Its finding,
   `docs/findings/docinfer.md`, records it over ~/docs through set A on gb10-2.
 - **consumers**: the check that builds on the layers at their released tags.
-- **capstone**: the backend and web UI, once the gates clear. It moves to a non-experimental
-  repository of its own, which a `marathon plan` session sets up, and reads docinfer's directory.
+- **capstone**: the backend and web UI, once the gates clear, planned for a non-experimental
+  repository of its own, which a `marathon plan` session sets up. It reads docinfer's directory.

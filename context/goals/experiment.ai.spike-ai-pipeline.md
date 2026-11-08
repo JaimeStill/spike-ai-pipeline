@@ -204,7 +204,7 @@ Door          two-way: code on a branch, no tag, the
 
 ## Progress
 
-slices 6/7 committed, 7 (finding) running · standards ✓ · spec ✓ for 1-11 (1 gap closed), 12 pending · editor —
+slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap closed in b044ad8; behavior 12's 8 finding gaps closed in e50541a) · editor ✓
 
 ## Decisions
 
@@ -2071,6 +2071,42 @@ slices 6/7 committed, 7 (finding) running · standards ✓ · spec ✓ for 1-11 
 - docinfer (plan): defaults: vision prompt the tier's, output cap 2048; no transcription prompt or
   language; 16 chunks per embedding request; a model listed as unloaded is a warning, not a
   refusal; an endpoint's query passes through to the client's Query.
+- docinfer (build, the architect): a quality check 4 h into the first full run found 22% of the
+  held vision texts empty and 29% cut at the 2,048-token cap: Gemma 4 26B-A4B's reasoning spent
+  the cap. The run was stopped and, at the architect's direction, a 31-input sample of ~/docs was
+  run and fixed first, tuning gb10-2 and docinfer to the workload, then the full set was run.
+  Amends r5 q4, which still holds for the full run.
+- docinfer (build): vision sends a reasoning effort, `vision.reasoning`, one of the client's
+  efforts, "none" by default as processing's vision tier asks, and part of vision's held-result
+  key. An incomplete vision text that is empty is counted as `counts.vision.empty`.
+- docinfer (build): gb10-2's preset gives the vision model `image-min-tokens = 560`: speech.png,
+  at about 100 image tokens, was paraphrased and then looped to the cap. 8 vision slots were tried
+  and rejected: each slot's rate halved, and the sample's vision time fell only from 279 s to
+  260 s.
+- docinfer (build): `config/example` sends a transcription prompt asking for only the words
+  spoken; without it, gemma-4-E4B answered music-only windows with a remark, embedded as
+  transcript.
+- docinfer (build): llama.cpp b12098's Messages route ignores disabled thinking, so vision on
+  gb10-2 uses the completions or responses format; the README and the Vision type say so.
+- docinfer (build, escalation, the architect): every image goes to vision, including pages whose
+  text layer docproc extracted, and the finding measures what vision adds over the layer, as
+  evidence for the capstone's decision to skip vision on such pages. Rejected: a skip setting now.
+- docinfer (build): the manifest's counts carry each capability's token usage; the closing lines
+  print paths relative to --out.
+- docinfer (build, spec review): a chunk line's part carries docproc's part whole (size,
+  content_type, flags, parent), additively within schema "1".
+- docinfer (build): behavior 9's "sends no request" means no inference request; a re-run still
+  makes behavior 2's /models check.
+- docinfer (build, standards review): the run command reads its configuration from the directory
+  --config names (r3 q2), not from a graph node as cli-applications.md describes. Kept.
+- docinfer (build): the full run took 6.0 h in one attempt with 0 failures. 24 of 1,289 text-heavy
+  pages (at least 100 layer words, outside text_heavy.pdf) came back described instead of
+  transcribed; a stricter prompt ("…word for word, in reading order. Do not summarize or describe
+  text…") transcribed one such page in the partway check. The stricter prompt and a lower
+  temperature are a recommendation for the capstone, not applied: a prompt change sends every
+  image again.
+- docinfer (build): gb10-2's clone was switched to the `docinfer` branch to serve the preset; the
+  session switches it back to `main` at ship.
 
 ## Pending edits
 
@@ -2506,9 +2542,13 @@ slices 6/7 committed, 7 (finding) running · standards ✓ · spec ✓ for 1-11 
   chunk records are the input the capstone's pgvector load reads.
 - coordinator · context/ai-strategy.md, the spike's bullets: one for the root's CLIs: "`docproc`
   runs processing's whole suite over an input set into a versioned run directory, with no
-  inference; `docinfer` sends its outputs through the client to any configured workstation:
-  vision, transcription joined by audio.Join, and chunked embeddings of every text and of each
-  input's metadata."
+  inference. `docinfer` sends a docproc run's outputs through the client to any configured
+  workstation: every image to vision with reasoning off, every audio window to transcription,
+  joined per part by `audio.Join`, and every text and each input's metadata, chunked, to
+  embeddings. It writes a directory of its own, schema "1", the capstone's input. Its
+  [finding](https://github.com/JaimeStill/spike-ai-pipeline/blob/main/docs/findings/docinfer.md)
+  records a run over all of ~/docs through set A on gb10-2: 3,470 images, 1,254 windows, and
+  28,937 chunk lines in 6.0 h, with 0 failures."
 - coordinator · roadmap, the spike's summary: "and the root, which holds gb10-2's host scripts
   and, once its gates clear, the capstone" reads "and the root, which holds gb10-2's host scripts
   and the docproc and docinfer CLIs; the capstone moves to its own repository (docinfer r6)".
@@ -2563,6 +2603,23 @@ slices 6/7 committed, 7 (finding) running · standards ✓ · spec ✓ for 1-11 
   spike-ai-pipeline's root and not an experiment (the architect, docinfer r6); the session sets it
   up: its name, its goal, and the spike's capstone gates, evidence 7 and 15, and the capstone note
   carried to it.
+- coordinator · roadmap, a note on experiment.ai.spike-ai-pipeline's planned table, for the plan
+  session to carry to the capstone's own goal (docinfer): whether to skip vision on a page with a
+  text layer. The docinfer finding's text-layer comparison is the evidence for a skip rule: where
+  a layer holds the page, vision repeats it (median word recall 0.91 to 1.00); vision rescued 49
+  pages with a thin layer and 61 with none; and 24 of 1,289 text-heavy pages came back described
+  instead of transcribed. A skip rule must tell a thin layer from a whole one. The note also
+  carries the finding's prompt result: a stricter vision prompt ("Transcribe all the text in this
+  picture, word for word, in reading order. Do not summarize or describe text…") and a lower
+  temperature are recommended against described pages.
+- coordinator · context/ai-hosting.md, "Hosts and access": gb10-2's preset sets
+  `image-min-tokens = 560` for Gemma 4 26B-A4B, so a small image of dense text gets enough tokens
+  to be read (docinfer). llama.cpp b12098's `/v1/messages` ignores `thinking: disabled` and
+  `reasoning_effort`; only `chat_template_kwargs.enable_thinking = false` stops the reasoning, so
+  vision sent through Messages reasons.
+- roadmap note · spike-ai-pipeline (the root, its next task): STANDARDS.md applies
+  cli-applications.md to docproc and domain-files.md to docproc's command packages only; say
+  whether docinfer's packages follow both too.
 - spike-ai-pipeline · at sync step 5, before the record is deleted: the root's own links to
   context/goals/experiment.ai.spike-ai-pipeline.md (docs/findings/docproc.md and the docinfer
   finding) become a permalink to the record at the last commit before its deletion.

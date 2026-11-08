@@ -16,7 +16,8 @@
 // beside the prompt, its reply capped at max_tokens, at the reasoning effort, unless an earlier run
 // holds its result, keyed by the image's content, the model, and the prompt, cap, and effort; each
 // text is stored whole in --out and its result held as it completes. A reply cut at the cap is
-// recorded incomplete and its text kept, and counted empty too when it has none; an image the endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
+// recorded incomplete and its text kept, and counted empty too when it has none; an image the
+// endpoint refuses is recorded, not fatal, and held when the refusal is a 4xx.
 // Unconfigured, vision skips the images, counting them.
 //
 // When transcription is configured, it sends each distinct audio window of the docproc run, every
@@ -42,6 +43,7 @@
 // it completes, so a run stopped part way resumes from what it stored. The vision and
 // transcription results are held apart from the chunk settings, so a changed bound cuts and
 // embeds again and sends no image and no window.
+//
 // The run writes a chunk line per chunk per occurrence, the same content under two inputs two
 // lines, one vector, and its manifest, with the embedding space, the tokens each capability's
 // requests took, as the replies report them, and its failures, each image or window output line

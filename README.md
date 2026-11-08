@@ -47,8 +47,8 @@ each released by tag:
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and two CLIs on the layers: docproc, which prepares an input set, and
 docinfer, which runs inference over what docproc prepared. The capstone, a backend on the layers
-and a web UI on experiment.html's stack, moves to a non-experimental repository of its own, which a
-`marathon plan` session sets up; docinfer's directory is its input.
+and a web UI on experiment.html's stack, is planned for a non-experimental repository of its own,
+which a `marathon plan` session sets up; docinfer's directory is its input.
 
 ## docproc
 
@@ -316,12 +316,12 @@ whole run:
    capped at `max_tokens`, at the `reasoning` effort, in the endpoint's format: Chat Completions
    sends it as `reasoning_effort`, Open Responses as `reasoning.effort`, and Messages as `thinking`,
    `disabled` for `none` and `adaptive` with `output_config.effort` for the rest. A reply cut at the
-   cap is recorded incomplete, its text kept and embedded; one cut before it gave any text, as
-   Gemma 4 26B-A4B on gb10-2 does when it reasons over a dense page and spends the whole cap, is
-   counted empty too. With reasoning on, 22% of the first full run's images came back so; with
-   `none`, the model answers at once. llama.cpp b12098 honors `none` in Chat Completions and Open
-   Responses, but its Messages route ignores `thinking` `disabled` (and `reasoning_effort`), so the
-   model reasons anyway: on gb10-2, speak `completions` or `responses` for vision.
+   cap is recorded incomplete, its text kept and embedded; one cut before it gave any text is
+   counted empty too. Gemma 4 26B-A4B on gb10-2 leaves many dense pages empty when it reasons, since
+   its reasoning spends the whole cap ([the finding](docs/findings/docinfer.md)); at `none` it
+   answers at once. llama.cpp b12098 honors `none` in Chat Completions and Open Responses, but its
+   Messages route ignores `thinking` `disabled` (and `reasoning_effort`), so the model reasons
+   anyway: on gb10-2, use the `completions` or `responses` format for vision.
 2. **Transcription**: each distinct audio window goes to the transcription route. Each part's
    windows, by stage, are then joined in plan order, by the index each window's meta gives, by
    processing's `audio.Join`; a refused window, or one the plan counts but the record lacks, joins
@@ -370,9 +370,8 @@ chunk's embedding, and `<time>` is how long after the run began that was: an inp
 send ends as the embeddings begin.
 
 Then a `warning:` line for each refused image, incomplete vision text, an empty one saying so,
-refused window, and
-rejected chunk; a line of counts for each capability, `not configured` for one skipped; a closing
-summary of each capability's requests and failures, `CAPABILITY REQUESTS FAILURES`, a skipped one
+refused window, and rejected chunk; a line of counts for each capability, `not configured` for
+one skipped; a closing summary of each capability's requests and failures, `CAPABILITY REQUESTS FAILURES`, a skipped one
 saying why; and, last, the run's id, its chunk lines, the chunk record's path, and the report's,
 each relative to `--out`, as docproc prints its record's.
 
@@ -396,13 +395,13 @@ transcript's seams, each refused output, and the counts, among them the tokens e
 requests took in the run, as the endpoint's replies report them.
 
 Each result is held as its request completes, keyed by the SHA-256 of its content, the
-capability, the model, and the settings that change it: the prompt, cap, and reasoning effort for vision, the prompt
-and language for transcription, and the chunk bound and the chunker's version for embeddings. A
-run over the same docproc run and configuration sends no request but the listings and writes the
-same chunk lines under a new run id; a changed chunk bound cuts and embeds again and sends no
-image and no window; a run that stopped part way, its manifest naming the error, resumes from what
-it held. A refusal the endpoint gives with a 4xx reply is held as a verdict; any other is sent
-again by the next run. The directory is schema `"1"`, the contract the capstone reads: every field,
+capability, the model, and the settings that change it: the prompt, cap, and reasoning effort
+for vision, the prompt and language for transcription, and the chunk bound and the chunker's
+version for embeddings. A run over the same docproc run and configuration sends no request but
+the listings and writes the same chunk lines under a new run id; a changed chunk bound cuts and
+embeds again and sends no image and no window; a run that stopped part way, its manifest naming
+the error, resumes from what it held. A refusal the endpoint gives with a 4xx reply is held as a
+verdict; any other is sent again by the next run. The directory is schema `"1"`, the contract the capstone reads: every field,
 the path rules, the held results' keys, and how a chunk joins back to docproc's run are in
 [docs/docinfer-schema.md](docs/docinfer-schema.md).
 

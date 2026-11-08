@@ -25,8 +25,9 @@
 // picture. If it has no text, describe it in one sentence.", "max_tokens", its reply's cap,
 // 2048 by default, and "reasoning", how much the model reasons before it answers, one of the
 // client's efforts, "none", "low", "medium", "high", or "xhigh", "none" by default, so a
-// reasoning model doesn't spend the cap reasoning. Transcription is optional, with an optional "prompt" and "language", empty by
-// default, which send none. A capability the configuration leaves unset is skipped.
+// reasoning model doesn't spend the cap reasoning. Transcription is optional, with an optional
+// "prompt" and "language", empty by default, which send none. A capability the configuration
+// leaves unset is skipped.
 //
 // Each setting has an override, DOCINFER_ and its path upper-cased: DOCINFER_EMBEDDINGS_MODEL,
 // DOCINFER_VISION_MAX_TOKENS, DOCINFER_ENDPOINTS_GB10_2_TOKEN for the endpoint "gb10-2", and so
@@ -35,8 +36,8 @@
 //
 // Every error comes from [Load], before any request: no embeddings capability, a capability
 // naming an endpoint the configuration doesn't hold, a format that isn't one of the three, a base
-// URL that isn't an absolute http or https URL without a query or fragment, a count below 1, a vision
-// reasoning effort that isn't one of the client's, or an override that doesn't parse.
+// URL that isn't an absolute http or https URL without a query or fragment, a count below 1, a
+// vision reasoning effort that isn't one of the client's, or an override that doesn't parse.
 //
 // The package exports:
 //
