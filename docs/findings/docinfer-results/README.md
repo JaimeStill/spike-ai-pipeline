@@ -2,7 +2,7 @@
 
 [`../docinfer.md`](../docinfer.md) cites these files. The runs themselves live on the laptop in
 `~/docinfer-finding/`: `docproc/` (the docproc run), `docinfer-full/` (docinfer's directory),
-`logs/`, `sample/`, and the run scripts.
+`docinfer/` (the stopped first run's directory), `logs/`, `sample/`, and the run scripts.
 
 ## The docproc run
 
@@ -44,10 +44,11 @@ clone on branch `docinfer` for the preset.
 | `counts.sh` | The jq that derives the counts. |
 | `du.txt` | `du -sb` and `du -sh` of docinfer's directory and its parts after the re-run, with the file counts. |
 | `router-1-requests.tsv` | Run 1's router log cut to one line per request with its timing: the model, slot, task, prompt tokens and milliseconds, output tokens and milliseconds; 4,730 requests (embeddings log no generation timing, so none of theirs). |
-| `textlayer.py` | The comparison of vision texts with docproc's text layer, page by page. |
-| `textlayer-sample.json` | Its summary over all 2,234 paired pages, by input, and the seeded 30-page sample, each page's counts, its paths, and the words vision has that the layer lacks. |
+| `textlayer.py` | The comparison of vision texts with docproc's text layer, page by page. Run as `python3 -I textlayer.py "$F/docproc" "$F/docinfer-full" textlayer-sample.json`. |
+| `textlayer-sample.json` | Its summary over all 2,234 paired pages, by input, and the seeded 30-page sample, each page's counts, its paths, its vision text's opening, and the words vision has that the layer lacks. The summary's `thin_layer`, `described`, and `no_layer` hold the counts the finding cites, each with the rule that decides it; the first two leave out `text_heavy.pdf`. |
 | `prompt-compare-partway.txt` | The partway check's 6 requests, three described pages under the run's prompt and a stricter one. |
-| `first-run.txt`, `first-run-vision-qc.txt` | The stopped first run's terminal and the quality check of its 2,086 held vision results. |
+| `first-run.txt`, `first-run-vision-qc.txt` | The stopped first run's terminal and the quality check of its 2,086 held vision results, taken just before the stop. |
+| `first-run-manifest.json` | The stopped first run's `runs/<run id>/manifest.json`, verbatim: written by docinfer when it was signalled, its error `vision: terminated signal received`. |
 | `vortex-p20-reasoning-on.json`, `-none.json` | VORTEX's page 20 sent alone, reasoning on and off; each text field cut at 400 characters, its length noted. |
 | `sample.md` | The 31-input sample, its runs, and its fixes. |
 
@@ -61,5 +62,17 @@ What isn't committed, for its size:
 | run 2's `report.html` | 8,098,749 | `50b09d47422fc78289ed9cd1dc4b5fabcfc5290fd580049e648cc7a2fc8ff141` |
 | run 1's router log | 16,314,048 | `a7fdf212012d04c2d0664aa290bd3b8fbe933f2d0257cc6d4a3912625f2b683b` |
 | `results/`, `texts/` | 101,750,297 in 27,889 files; 7,899,819 in 4,610 | |
+| `textlayer.py`'s per-page rows, `textlayer-sample-rows.json` | 2,331,063 | `1837e2a731991a68db81fa1d5ef3591839d066b8664549b126bdde947ba65ee2` |
 
 The re-run's router log is empty: the router logged nothing over its window.
+
+## How the first run was stopped
+
+The session ran the first run through `run-docinfer.sh` in a background shell. To stop it, the
+session stopped that background shell, then signalled the docinfer process. docinfer caught the
+signal, stopped vision, and wrote its manifest and report at 03:24:22 UTC, 4 h 13 min after its
+start: `first-run-manifest.json`, its error `vision: terminated signal received`, 2,099 vision
+requests and 2,094 images answered. `first-run.txt` is docinfer's stdout as the background shell
+showed it; its closing `[exited with code 0]` is that shell's report on its wrapper shell, not
+docinfer's exit status. docinfer's exit status was not recorded: `run-docinfer.sh` was stopped
+before it wrote its end line, so `logs/docinfer-1.time` has only its start.
