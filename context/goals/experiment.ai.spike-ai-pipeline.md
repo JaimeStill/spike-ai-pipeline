@@ -204,7 +204,7 @@ Door          two-way: code on a branch, no tag, the
 
 ## Progress
 
-slices 6/7 committed · standards — · spec — · editor —
+slices 6/7 committed, 7 (finding) running · standards ✓ · spec ✓ for 1-11 (1 gap closed), 12 pending · editor —
 
 ## Decisions
 
