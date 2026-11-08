@@ -201,6 +201,13 @@ func summary(w io.Writer, m outdir.Manifest) error {
 	return errors.Join(err, tw.Flush())
 }
 
+// verdict reports whether rejected, an endpoint's refusal, is a verdict on what was sent, to be
+// held: a 4xx reply is, while any other, such as a 5xx, may not recur, so the next run sends what
+// it refused again.
+func verdict(rejected *client.APIError) bool {
+	return rejected.Status >= 400 && rejected.Status <= 499
+}
+
 // sum returns the lowercase hex SHA-256 of s.
 func sum(s string) string {
 	h := sha256.Sum256([]byte(s))
@@ -291,7 +298,7 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 			hold := true
 			if r.Rejected != nil {
 				held.Error = r.Rejected.Error()
-				hold = r.Rejected.Status >= 400 && r.Rejected.Status <= 499
+				hold = verdict(r.Rejected)
 			} else {
 				held.Vector, held.Dimensions = outdir.EncodeVector(r.Vector), len(r.Vector)
 				m.Counts.Embedded++

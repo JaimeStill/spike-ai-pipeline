@@ -12,9 +12,9 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 )
 
-// Kinds are the output kinds of schema "1", in the order its contract lists them and [Run.Counts]
+// kinds are the output kinds of schema "1", in the order its contract lists them and [Run.Counts]
 // writes them.
-var Kinds = []string{"text", "markdown", "image", "record", "audio"}
+var kinds = []string{"text", "markdown", "image", "record", "audio"}
 
 // Run is one docproc run, as docinfer reads it: the run directory it is in, its manifest, its
 // record, and the record's output lines.
@@ -71,14 +71,14 @@ func (r *Run) Path(o schema.Output) string {
 }
 
 // Counts returns how many of r's outputs are of each kind, as "text 3, markdown 1, ...": the
-// kinds of [Kinds] in its order, each that has an output, then any other kind, in sorted order.
+// kinds of kinds, in its order, each that has an output, then any other kind, in sorted order.
 func (r *Run) Counts() string {
 	n := map[string]int{}
 	for _, ev := range r.Outputs {
 		n[ev.Output.Kind]++
 	}
 	var parts []string
-	for _, k := range Kinds {
+	for _, k := range kinds {
 		if n[k] > 0 {
 			parts = append(parts, k+" "+strconv.Itoa(n[k]))
 			delete(n, k)

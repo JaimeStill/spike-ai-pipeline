@@ -11,5 +11,4 @@
 //
 //   - [Describer], whose [Describer.Run] sends images, each to a [Result]
 //   - [Image], an image to send: its file and media type
-//   - [Text], which returns a response's text
 package vision

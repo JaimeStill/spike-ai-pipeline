@@ -115,7 +115,7 @@ func (d Describer) describe(ctx context.Context, img Image) (Result, bool, error
 	case err != nil:
 		return Result{}, true, err
 	}
-	r := Result{Text: Text(resp), Usage: resp.Usage}
+	r := Result{Text: text(resp), Usage: resp.Usage}
 	if resp.Status == protocol.StatusIncomplete {
 		r.Incomplete = "incomplete"
 		if resp.IncompleteDetails != nil && resp.IncompleteDetails.Reason != "" {
@@ -127,9 +127,9 @@ func (d Describer) describe(ctx context.Context, img Image) (Result, bool, error
 	return r, true, nil
 }
 
-// Text returns resp's text: the output text of its assistant messages, in order, never its
+// text returns resp's text: the output text of its assistant messages, in order, never its
 // reasoning, each message's parts joined as they are and the messages by a blank line.
-func Text(resp *protocol.Response) string {
+func text(resp *protocol.Response) string {
 	var msgs []string
 	for _, it := range resp.Output {
 		m, ok := it.(protocol.Message)

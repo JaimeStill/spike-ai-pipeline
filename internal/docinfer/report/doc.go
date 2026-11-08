@@ -32,7 +32,6 @@
 //
 // The package exports:
 //
-//   - [Name], the report's file name
 //   - [Write], which renders a run of docinfer's directory into its report
 //   - [Commands], which returns the report command
 package report

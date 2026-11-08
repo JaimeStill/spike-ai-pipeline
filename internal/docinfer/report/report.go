@@ -18,8 +18,8 @@ import (
 	"github.com/JaimeStill/spike-ai-pipeline/internal/schema"
 )
 
-// Name is the report's file name in its run's directory.
-const Name = "report.html"
+// name is the report's file name in its run's directory.
+const name = "report.html"
 
 // toRoot is the way from the report, at runs/<run id>/report.html, back to docinfer's directory,
 // which every path docinfer records of a file it wrote is relative to.
@@ -67,7 +67,7 @@ func Write(root, id string) (string, error) {
 	if err := page.Execute(&buf, build(dir, m, lines, docprocLink(reportDir, m.Docproc.Dir))); err != nil {
 		return "", err
 	}
-	return rundir.WriteRunFile(dir.Root(), id, Name, func(w io.Writer) error {
+	return rundir.WriteRunFile(dir.Root(), id, name, func(w io.Writer) error {
 		_, err := w.Write(buf.Bytes())
 		return err
 	})

@@ -123,7 +123,7 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 			windows[s].result = held
 			if r.Rejected != nil {
 				held.Error = r.Rejected.Error()
-				if r.Rejected.Status < 400 || r.Rejected.Status > 499 {
+				if !verdict(r.Rejected) {
 					return nil
 				}
 			} else {

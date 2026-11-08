@@ -201,11 +201,15 @@ func (d *Dir) ReadChunks(id string) ([]Line, error) {
 // ReadManifest reads run id's manifest.
 func (d *Dir) ReadManifest(id string) (Manifest, error) {
 	var m Manifest
-	b, err := os.ReadFile(filepath.Join(d.root, filepath.FromSlash(RunPath(id, "manifest.json"))))
+	p := filepath.Join(d.root, filepath.FromSlash(RunPath(id, "manifest.json")))
+	b, err := os.ReadFile(p)
 	if err != nil {
 		return m, err
 	}
-	return m, json.Unmarshal(b, &m)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return m, fmt.Errorf("%s: %w", p, err)
+	}
+	return m, nil
 }
 
 // EncodeVector returns v as standard base64 of its little-endian float32s, as the embeddings

@@ -8,6 +8,6 @@
 // The package exports:
 //
 //   - [Run], one docproc run's manifest, record, and output lines, read by [Open]
-//   - [Run.Path], an output's file, and [Run.Counts], its outputs counted by kind
-//   - [Kinds], the output kinds of schema "1", in its order
+//   - [Run.Path], an output's file, and [Run.Counts], its outputs counted by kind, in schema
+//     "1"'s order of kinds
 package source
