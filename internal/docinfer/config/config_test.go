@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/config"
@@ -21,7 +22,7 @@ func clean(t *testing.T) {
 }
 
 // The committed example loads and validates: set A's three models on gb10-2's router, with its
-// autoload=false query, at the defaults.
+// autoload=false query, at the defaults but for the transcription prompt.
 func TestLoad_Example(t *testing.T) {
 	clean(t)
 	cfg, err := config.Load(example)
@@ -51,8 +52,10 @@ func TestLoad_Example(t *testing.T) {
 		cfg.Vision.Reasoning != config.DefaultVisionReasoning {
 		t.Errorf("vision prompt, max_tokens, reasoning = %q, %d, %q, want the defaults", cfg.Vision.Prompt, *cfg.Vision.MaxTokens, cfg.Vision.Reasoning)
 	}
-	if cfg.Transcription.Prompt != "" || cfg.Transcription.Language != "" {
-		t.Errorf("transcription prompt, language = %q, %q, want none", cfg.Transcription.Prompt, cfg.Transcription.Language)
+	// The example asks for nothing from a window with no speech, which gemma-4-E4B otherwise
+	// answers with a remark.
+	if !strings.Contains(cfg.Transcription.Prompt, "If there is no speech, write nothing.") || cfg.Transcription.Language != "" {
+		t.Errorf("transcription prompt, language = %q, %q, want the example's prompt and no language", cfg.Transcription.Prompt, cfg.Transcription.Language)
 	}
 	if got := cfg.Env.Endpoints["gb10-2"].Token; got != "DOCINFER_ENDPOINTS_GB10_2_TOKEN" {
 		t.Errorf("gb10-2's token override = %q, want DOCINFER_ENDPOINTS_GB10_2_TOKEN", got)

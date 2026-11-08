@@ -24,6 +24,7 @@
   "transcription": {
     "endpoint": "gb10-2",
     "model": "ggml-org/gemma-4-E4B-it-GGUF:Q8_0",
+    "prompt": "Transcribe the speech in this audio verbatim, in its own language. Write only the words spoken. If there is no speech, write nothing.",
     "concurrency": 4
   }
 }

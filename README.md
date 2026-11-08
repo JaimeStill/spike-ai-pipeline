@@ -235,6 +235,13 @@ There is no default endpoint. Each capability names an endpoint and a model ther
 | `vision` | no | `prompt`, what is asked of each image, by default processing's dispatch tier's, "Transcribe the text in this picture. If it has no text, describe it in one sentence."; `max_tokens`, the reply's cap, reasoning included, 2048; `reasoning`, how much the model reasons before it answers, one of the client's efforts, `none`, `low`, `medium`, `high`, or `xhigh`, by default `none`, as processing's dispatch tier asks |
 | `transcription` | no | `prompt` and `language`, empty by default, which sends neither |
 
+`config/example` sets a transcription prompt: "Transcribe the speech in this audio verbatim, in
+its own language. Write only the words spoken. If there is no speech, write nothing." llama.cpp
+sends it in place of its own instruction. Without it, gemma-4-E4B on gb10-2 answers a window of
+music or noise with a remark, such as "The audio consists only of instrumental music and does not
+contain discernible speech.", which would be embedded as transcript; with it, such a window comes
+back empty, and speech, English, Hindi, or Japanese, transcribes as before.
+
 A capability the configuration leaves unset is skipped: its outputs are counted, not sent.
 
 Each setting has an override, `DOCINFER_` and its path upper-cased, each run of characters
