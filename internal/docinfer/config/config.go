@@ -187,27 +187,28 @@ func (c *Config) Merge(src *Config) {
 		c.Endpoints[name].merge(e)
 	}
 	if src.Embeddings != nil {
-		c.Embeddings = cmpNew(c.Embeddings)
+		c.Embeddings = orNew(c.Embeddings)
 		c.Embeddings.merge(src.Embeddings)
 	}
 	if src.Vision != nil {
-		c.Vision = cmpNew(c.Vision)
+		c.Vision = orNew(c.Vision)
 		c.Vision.merge(src.Vision)
 	}
 	if src.Transcription != nil {
-		c.Transcription = cmpNew(c.Transcription)
+		c.Transcription = orNew(c.Transcription)
 		c.Transcription.merge(src.Transcription)
 	}
 }
 
-// cmpNew returns p, or a new zero T when p is nil.
-func cmpNew[T any](p *T) *T {
+// orNew returns p, or a new zero T when p is nil.
+func orNew[T any](p *T) *T {
 	if p == nil {
 		return new(T)
 	}
 	return p
 }
 
+// merge sets each of e's fields src sets, adding src's query members to e's.
 func (e *Endpoint) merge(src *Endpoint) {
 	setString(&e.BaseURL, src.BaseURL)
 	setString(&e.Format, src.Format)
@@ -220,18 +221,21 @@ func (e *Endpoint) merge(src *Endpoint) {
 	}
 }
 
+// merge sets each of c's fields src sets.
 func (c *Capability) merge(src *Capability) {
 	setString(&c.Endpoint, src.Endpoint)
 	setString(&c.Model, src.Model)
 	setInt(&c.Concurrency, src.Concurrency)
 }
 
+// merge sets each of e's fields src sets.
 func (e *Embeddings) merge(src *Embeddings) {
 	e.Capability.merge(&src.Capability)
 	setInt(&e.Batch, src.Batch)
 	setInt(&e.ChunkSize, src.ChunkSize)
 }
 
+// merge sets each of v's fields src sets.
 func (v *Vision) merge(src *Vision) {
 	v.Capability.merge(&src.Capability)
 	setString(&v.Prompt, src.Prompt)
@@ -239,6 +243,7 @@ func (v *Vision) merge(src *Vision) {
 	setString(&v.Reasoning, src.Reasoning)
 }
 
+// merge sets each of t's fields src sets.
 func (t *Transcription) merge(src *Transcription) {
 	t.Capability.merge(&src.Capability)
 	setString(&t.Prompt, src.Prompt)
@@ -311,7 +316,7 @@ func (c *Config) readEnv(prefix string) error {
 	errs = append(errs, emb.readEnv(c.Env.Embeddings.CapabilityEnv),
 		envInt(&emb.Batch, c.Env.Embeddings.Batch), envInt(&emb.ChunkSize, c.Env.Embeddings.ChunkSize))
 	if emb != (Embeddings{}) {
-		c.Embeddings = cmpNew(c.Embeddings)
+		c.Embeddings = orNew(c.Embeddings)
 		c.Embeddings.merge(&emb)
 	}
 	var vis Vision
@@ -319,7 +324,7 @@ func (c *Config) readEnv(prefix string) error {
 	envString(&vis.Prompt, c.Env.Vision.Prompt)
 	envString(&vis.Reasoning, c.Env.Vision.Reasoning)
 	if vis != (Vision{}) {
-		c.Vision = cmpNew(c.Vision)
+		c.Vision = orNew(c.Vision)
 		c.Vision.merge(&vis)
 	}
 	var tr Transcription
@@ -327,12 +332,14 @@ func (c *Config) readEnv(prefix string) error {
 	envString(&tr.Prompt, c.Env.Transcription.Prompt)
 	envString(&tr.Language, c.Env.Transcription.Language)
 	if tr != (Transcription{}) {
-		c.Transcription = cmpNew(c.Transcription)
+		c.Transcription = orNew(c.Transcription)
 		c.Transcription.merge(&tr)
 	}
 	return errors.Join(errs...)
 }
 
+// capabilityEnv composes the overrides every capability has, for the capability name, from
+// prefix: <PREFIX>_<NAME>_ENDPOINT, _MODEL, and _CONCURRENCY.
 func capabilityEnv(prefix, name string) CapabilityEnv {
 	return CapabilityEnv{
 		Endpoint:    config.EnvName(prefix, name, "endpoint"),
@@ -341,6 +348,8 @@ func capabilityEnv(prefix, name string) CapabilityEnv {
 	}
 }
 
+// readEnv applies the overrides env names that are set; a concurrency that doesn't parse is an
+// error.
 func (c *Capability) readEnv(env CapabilityEnv) error {
 	envString(&c.Endpoint, env.Endpoint)
 	envString(&c.Model, env.Model)
@@ -381,6 +390,7 @@ func (c *Config) defaults() {
 	}
 }
 
+// defaultInt sets *p to v when it is unset, nil.
 func defaultInt(p **int, v int) {
 	if *p == nil {
 		*p = &v

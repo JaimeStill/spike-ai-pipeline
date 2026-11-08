@@ -36,7 +36,8 @@
 //     [Dir.ReadChunks], which read them
 //   - [Key], a held result's key, and [RunPath], a run's file's path in the directory
 //   - [Manifest], with its [Docproc], [Capability], [Skipped], [Space], [Transcript], with its
-//     [Seam]s, [Failure], and [Counts], with its [VisionCounts] and [TranscriptionCounts]
+//     [Seam]s, [Failure], and [Counts], with its [VisionCounts] and [TranscriptionCounts], and its
+//     [Tokens], each capability's [Usage]
 //   - [Line], with its [Span], [Source], of kind [SourceOutput], [SourceMetadata], or
 //     [SourceVision], or [SourceTranscript], [Part], and [Output]
 //   - [Embedding], a held embeddings result, [Vision], a held vision result, and

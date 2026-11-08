@@ -75,6 +75,7 @@ type partKey struct {
 	depth                              int
 }
 
+// keyOf returns the key of p, a part of input's.
 func keyOf(input string, p *schema.Part) partKey {
 	return partKey{input: input, sha256: p.SHA256, parent: p.Parent, where: p.Where, name: p.Name, depth: p.Depth}
 }
