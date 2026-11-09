@@ -2111,6 +2111,11 @@ slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap cl
   internal/docproc/ (app, apptest, report, run, rundir, schema, stages), as docinfer's sit under
   internal/docinfer/; docinfer imports docproc's contract packages, rundir and schema, from there.
   No behavior change.
+- docinfer (redirect, the architect): docinfer prints a line as each phase starts (distinct items
+  to send and held) and as each inference request completes (capability, count over the phase's
+  total, input, output ref, outcome, duration), so a long run is never silent; held items print
+  none. Amends behavior 10's terminal output. The architect: the output formats are settled at
+  the experiment's intake.
 
 ## Pending edits
 
