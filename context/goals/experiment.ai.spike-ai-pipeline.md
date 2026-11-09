@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** answer
-- **Branch:** answer
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -28,7 +28,7 @@
 20. [x] formats
 21. [x] docproc
 22. [x] docinfer
-23. [ ] answer
+23. [x] answer
 
 ## Task brief · experiment.ai.spike-ai-pipeline · answer
 
@@ -80,10 +80,6 @@ Out of scope  layer repositories and their notes (the intake's); any gb10-2 step
 Door          two-way: prose and one module bump, no tag; the coordinator edit lands
               through the sync pull request
 ```
-
-## Progress
-
-slices 5/5 committed · standards ✓ · spec ✓ · editor ✓
 
 ## Decisions
 
