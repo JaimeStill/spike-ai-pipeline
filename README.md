@@ -514,106 +514,116 @@ The items keep the spike's own numbers (`context/README.md`, "The evidence"). P 
 spike-ai-pipeline-processing, and "the findings tier" for a test tier that runs the measurements
 and commits their results.
 
-1. The client: chat with tools and a reasoning round trip, streamed and unstreamed, vision, audio
-   input (asserted on Chat Completions), embeddings, and transcription each pass against set A
-   on gb10-2; the retry policy is proven by unit tests only. docinfer then ran vision,
-   transcription, and embeddings through the client over all of ~/docs: 3,470 images, 1,254
-   audio windows, and 28,937 chunk lines in 21,634 s, 0 of 6,172 requests failed, and the re-run
-   sent no inference request (3.1 s). 272 vision answers stopped at the 2,048-token cap, 262 of
-   them synthetic pages of random letters, and a first run with the model reasoning was stopped
-   after 454 empty answers of 2,086. Proven by the client's integration tier (`integration/`,
-   b11669) and a running demo, docinfer over ~/docs (b12098, 2026-11-08):
-   [docinfer finding](docs/findings/docinfer.md).
-2. Anthropic Messages and Open Responses fit under the same request and response model as Chat
-   Completions with no change to callers: every `Generate` and `GenerateStream` scenario runs
-   through all three from one piece of test code
-   ([`integration/router_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/integration/router_test.go)).
-   The router behind them drops hints: its `/v1/messages` drops `output_config`, so reasoning
-   effort and structured output's schema reach no model, a tool's `strict`, and the `none` tool
-   choice; its `/v1/responses` drops `text` and
-   reasoning's summary, reports every reply completed, and refuses audio; at b12098 Messages also
-   ignores `thinking: disabled`. Proven by the client's integration tier against gb10-2 (b11669,
-   2026-10-27 and 2026-10-28): [host finding](docs/findings/host.md).
-3. The client's base module is standard library only. Proven by the check only: a strict
-   depguard rule in the client's lint, over every Go file, tests included, allows nothing but
-   the standard library and the module
-   ([`.golangci.yml`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/.golangci.yml)).
-4. A PDF's pages go through vision whole and as a page stream. Ghostscript wins the renderer
-   bake-off: it ties the others on accuracy and leads on time (0.126 s a page) and memory
-   (27 MiB); it is AGPL, so the package runs it as a separate program. The model reads with
-   reasoning off: with it on, 8 of 105 scanned pages came back empty and it invented seal text.
-   Page 7's NOFORN is read on no build at any image budget. P releases preparation only; the
-   inference is test code. Proven by P's integration and bake-off tiers against gb10-2 (b11669,
-   2026-10-29 and 2026-10-30):
-   [documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md).
-5. Mixed. Long audio cut at its silences and transcribed 4 windows at once is 2.6 to 3.4 times
-   faster than one unsplit pass, with no window failed up to a 4.4 h audiobook, but less accurate
-   on many speakers (word error rate 0.298 against 0.258 on a 4-speaker meeting, 0.069 against
-   0.053 on an 8-speaker call) and the same or slightly better on read speech and an accented
-   call; most of the seams' excess edits are at seams with no words to align. The gpt-oss seam
-   pass is falsified: it made every run worse. Proven by P's findings tier against gb10-2
-   (b12098, 2026-11-05 and 2026-11-06):
-   [audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md).
-6. Skype for Business conversation history in a PST passes through as conversation records: each
-   of the fixture's 4 conversation items equals the hand truth, and a message beside them stays a
-   message. Fixture only: the PST is generated, its transcript HTML is invented, since no open
-   sample exists, the turns within a transcript aren't parsed, and no real store was read.
-   Proven by P's findings tier only (2026-11-07, no model):
-   [formats finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/formats.md).
-9. The dependency runs one way, processing to client. P v0.9.0 requires client v0.4.0 but imports
-   it only in its test-support packages (`internal/visiontest`, `internal/audiotest`) and tests;
-   its released packages prepare content and run no inference. The root's docinfer imports the
-   client (its `config`, `embed`, `infer`, `transcribe`, and `vision` packages) and P. Proven by
-   the check, whose depguard rule keeps the client from importing anything but the standard
-   library (P's rule allows the client anywhere, so the test-only import is how v0.9.0 stands,
-   not a rule), and by docinfer's running demo (item 1). Where the layer lives is experiment.ai's
-   intake's decision. ([P's `go.mod`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/go.mod))
-11. ImageMagick's corrections don't help vision reliably: at 150 dpi the synthetic faults leave
-    nothing to fix, at 72 dpi Unsharp helps the hardest page while Deskew and Despeckle hurt it,
-    and on the real scans which corrections help and hurt flips with the DPI and the build.
-    Proven by P's bake-off tier against gb10-2 (b11669, 2026-10-29 and 2026-10-30):
-    [documents finding, "Evidence 11"](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md#evidence-11-do-image-corrections-help).
-12. The Open XML CLI keeps every element the pool's truth holds, 1,768 of 1,768, where markitdown
-    and xberg lose most slide lists, chart data, headers, footers, and comments; its median file
-    takes 17.2 ms (xberg 12.3 ms, markitdown 675 ms) at 35.4 MiB, from a 28.80 MiB binary. The
-    legacy round trip through LibreOffice loses structure in .doc (headings become one-item
-    lists), a little in .xls, nothing in .ppt; its container is 441 MB to pull and 1.02 GB on
-    disk, at 0.75 to 1.04 s a conversion. Proven by office's bench (2026-10-31, no model) and P's
-    integration tier against gb10-2 (b11669, 2026-11-02):
-    [office-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-office/blob/main/docs/findings/office-cli.md),
-    [office finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/office.md).
-13. Live media is processed as it arrives: three videos read at real time, with no window, frame,
-    or request failed; a window is yielded once the stream passes its 30 s limit (at most 15 s
-    after its last sample, on NASA), transcribed 0.8 to 4.6 s later, a frame described within
-    4 s, and a cancellation stops the stream within 0.5 s. The live transcript matches the file
-    path's under the same detector, and is 0.015 worse on AMI than the file path's default. Proven
-    by P's findings tier's paced runs against gb10-2 (b12098, 2026-11-06):
-    [streams finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/streams.md).
-14. One tool runs through each runner under the same contract: ffprobe through the exec runner
-    and through the container runner, in a digest-pinned image
-    ([`tool/ffprobe_integration_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/tool/ffprobe_integration_test.go)).
-    docproc's run over ~/docs wired all ten stages, soffice in a digest-pinned container and the
-    rest on the host: 592 inputs, 515 prepared, 4 failed (three malformed or form-broken PDFs
-    and OneNote's encryption fixture). Proven by P's integration tier and a running demo, docproc
-    over ~/docs (2026-11-07, no model): [docproc finding](docs/findings/docproc.md).
-16. The mail CLI recovers every field the generated fixtures' truth expects that the generator
-    stores (147 of 180, 33 not stored, none wrong), 47 of 47 of Tika's threading truth, and 21 of
-    22 and 31 of 31 .msg assertions, missing only an Exchange recipient's SMTP address, by
-    design; it reads a 2.1 GB store in 13.27 s at 65 to 67 MiB. The adapter rebuilds 11 of 11
-    threads, routes 51 of 51 attachments as the hand truth says, and adds 1 to 3% to mail's
-    time. Proven by the mail bench (from 2026-11-03, no model) and P's findings and integration
-    tiers, vision against gb10-2 (b11669, 2026-11-03 and 2026-11-04):
-    [mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md),
-    [email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md).
-17. The OneNote CLI recovers every expected field of the public fixtures (236 of 236 over the
-    sections, 138 of 138 over the notebooks, 129 of 129 content fields) and reads a 161 MB section
-    in 0.24 s at 135 MiB; there is no authored notebook, so no authored hand truth. Every OneNote
-    medium routes to its real stage, 225 parts from 119 inputs with no mismatch; vision reads a
-    page's ink at a character error rate of 0.028 against 0.68 for OneNote's own recognition.
-    Proven by the onenote bench (2026-11-04, no model) and P's findings tier, vision against
-    gb10-2 (b11669, 2026-11-05):
-    [onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md),
-    [onenote finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/onenote.md).
+**1.** The client: chat with tools and a reasoning round trip, streamed and unstreamed, vision,
+audio input (asserted on Chat Completions), embeddings, and transcription each pass against set A
+on gb10-2; the retry policy is proven by unit tests only. docinfer then ran vision, transcription,
+and embeddings through the client over all of ~/docs: 3,470 images, 1,254 audio windows, and
+28,937 chunk lines in 21,634 s, 0 of 6,172 requests failed, and the re-run sent no inference
+request (3.1 s). 272 vision answers stopped at the 2,048-token cap, 262 of them synthetic pages of
+random letters, and a first run with the model reasoning was stopped after 454 empty answers of
+2,086. Proven by the client's integration tier (`integration/`, b11669) and a running demo,
+docinfer over ~/docs (b12098, 2026-11-08): [docinfer finding](docs/findings/docinfer.md).
+
+**2.** Anthropic Messages and Open Responses fit under the same request and response model as
+Chat Completions with no change to callers: every `Generate` and `GenerateStream` scenario runs
+through all three from one piece of test code
+([`integration/router_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/integration/router_test.go)).
+The router behind them drops hints: its `/v1/messages` drops `output_config`, so reasoning effort
+and structured output's schema reach no model, a tool's `strict`, and the `none` tool choice; its
+`/v1/responses` drops `text` and reasoning's summary, reports every reply completed, and refuses
+audio. Proven only by tests: the client's integration tier against gb10-2 (b11669, 2026-10-27 and
+2026-10-28): [host finding](docs/findings/host.md). docinfer's run (b12098, 2026-11-08) adds that
+Messages also ignores `thinking: disabled`: [docinfer finding](docs/findings/docinfer.md).
+
+**3.** The client's base module is standard library only. Proven by the check only: a strict
+depguard rule in the client's lint, over every Go file, tests included, allows nothing but the
+standard library and the module
+([`.golangci.yml`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/.golangci.yml)).
+
+**4.** A PDF's pages go through vision whole and as a page stream. Ghostscript wins the renderer
+bake-off: it ties the others on accuracy and leads on time (0.126 s a page) and memory (27 MiB);
+it is AGPL, so the package runs it as a separate program. The model reads with reasoning off: with
+it on, 8 of 105 scanned-page transcriptions came back empty and it invented seal text. Page 7's
+NOFORN is read on no build at any image budget. P releases preparation only; the inference is test
+code. Proven only by tests: P's integration and bake-off tiers against gb10-2 (b11669, 2026-10-29
+and 2026-10-30):
+[documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md).
+
+**5.** Mixed. Long audio cut at its silences and transcribed 4 windows at once is 2.6 to 3.4 times
+faster than one unsplit pass, with no window failed up to a 4.4 h audiobook, but less accurate on
+many speakers (word error rate 0.298 against 0.258 on a 4-speaker meeting, 0.069 against 0.053 on
+an 8-speaker call) and the same or slightly better on read speech and an accented call; most of
+the seams' excess edits are at seams with no words to align. The gpt-oss seam pass is falsified:
+it made every run worse. Proven only by tests: P's findings tier against gb10-2 (b12098,
+2026-11-05 and 2026-11-06):
+[audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md).
+
+**6.** Skype for Business conversation history in a PST passes through as conversation records:
+each of the fixture's 4 conversation items equals the hand truth, and a message beside them stays
+a message. Fixture only: the PST is generated, its transcript HTML is invented, since no open
+sample exists, the turns within a transcript aren't parsed, and no real store was read. Proven by
+P's findings tier only (2026-11-07, no model):
+[formats finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/formats.md).
+
+**9.** The dependency runs one way, processing to client. P v0.9.0 requires client v0.4.0 but
+imports it only in its test-support packages (`internal/visiontest`, `internal/audiotest`) and
+tests; its released packages prepare content and run no inference. The root's docinfer imports the
+client (its `config`, `embed`, `infer`, `transcribe`, and `vision` packages) and P. Proven by the
+check, whose depguard rule keeps the client from importing anything but the standard library (P's
+rule allows the client anywhere, so the test-only import is how v0.9.0 stands, not a rule), and by
+docinfer's running demo (item 1). Where the layer lives is experiment.ai's intake's decision.
+([P's `go.mod`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/go.mod))
+
+**11.** ImageMagick's corrections don't help vision reliably: at 150 dpi the synthetic faults
+leave nothing to fix, at 72 dpi Unsharp helps the hardest page while Deskew and Despeckle hurt it,
+and on the real scans which corrections help and hurt flips with the DPI and the build. Proven
+only by tests: P's bake-off tier against gb10-2 (b11669, 2026-10-29 and 2026-10-30):
+[documents finding, "Evidence 11"](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md#evidence-11-do-image-corrections-help).
+
+**12.** The Open XML CLI keeps every element the pool's truth holds, 1,768 of 1,768, where
+markitdown and xberg lose most slide lists, chart data, headers, footers, and comments; its median
+file takes 17.2 ms (xberg 12.3 ms, markitdown 675 ms) at 35.4 MiB, from a 28.80 MiB binary. The
+legacy round trip through LibreOffice loses structure in .doc (headings become one-item lists), a
+little in .xls, nothing in .ppt; its container is 441 MB to pull and 1.02 GB on disk, at 0.75 to
+1.04 s a conversion. Proven by office's bench (2026-10-31, no model) and P's integration tier
+against gb10-2 (b11669, 2026-11-02):
+[office-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-office/blob/main/docs/findings/office-cli.md),
+[office finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/office.md).
+
+**13.** Live media is processed as it arrives: three videos read at real time, with no window,
+frame, or request failed; a window is yielded once the stream passes its 30 s limit (at most 15 s
+after its last sample, on NASA), transcribed 0.8 to 4.6 s later, a frame described within 4 s,
+and a cancellation stops the stream within 0.5 s. The live transcript matches the file path's
+under the same detector, and is 0.015 worse on AMI than the file path's default. Proven only by
+tests: P's findings tier's paced runs against gb10-2 (b12098, 2026-11-06):
+[streams finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/streams.md).
+
+**14.** One tool runs through each runner under the same contract: ffprobe through the exec
+runner and through the container runner, in a digest-pinned image
+([`tool/ffprobe_integration_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/tool/ffprobe_integration_test.go)).
+docproc's run over ~/docs wired all ten stages, soffice in a digest-pinned container and the rest
+on the host: 592 inputs, 515 prepared, 4 failed (three malformed or form-broken PDFs and OneNote's
+encryption fixture). Proven by P's integration tier and a running demo, docproc over ~/docs
+(2026-11-07, no model): [docproc finding](docs/findings/docproc.md).
+
+**16.** The mail CLI recovers every field the generated fixtures' truth expects that the generator
+stores (147 of 180, 33 not stored, none wrong), 47 of 47 of Tika's threading truth, and 21 of 22
+and 31 of 31 .msg assertions, missing only an Exchange recipient's SMTP address, by design; it
+reads a 2.1 GB store in 13.27 s at 65 to 67 MiB. The adapter places 11 of 11 messages under the
+parent the hand truth gives, routes 51 of 51 attachments as the hand truth says, and adds 1 to 3%
+to mail's time. Proven by the mail bench (from 2026-11-03, no model) and P's findings and
+integration tiers, vision against gb10-2 (b11669, 2026-11-03 and 2026-11-04):
+[mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md),
+[email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md).
+
+**17.** The OneNote CLI recovers every expected field of the public fixtures (236 of 236 over the
+sections, 138 of 138 over the notebooks, 129 of 129 content fields) and reads a 161 MB section in
+0.24 s at 135 MiB; there is no authored notebook, so no authored hand truth. Every OneNote medium
+routes to its real stage, 225 parts from 119 inputs with no mismatch; vision reads a page's ink at
+a character error rate of 0.028 against 0.68 for OneNote's own recognition. Proven by the onenote
+bench (2026-11-04, no model) and P's findings tier, vision against gb10-2 (b11669, 2026-11-05):
+[onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md),
+[onenote finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/onenote.md).
 
 The original evidence's other items moved:
 
@@ -625,8 +635,9 @@ The original evidence's other items moved:
 - 15, the browser's consumption of the event sequence: the capstone's events design task, on
   the web client stack experiment.html's intake and v1.client promote.
 - The gates, spike-model-layout's and spike-model-gateway's answers: the capstone's gates, which
-  add experiment.ai's, experiment.hosting's, and experiment.html's intakes, graph-ergonomics,
-  and the pgvector v1.data task.
+  add experiment.hosting's intake and v1.ai.hosting building ai-hosting from it; experiment.ai's
+  intake, with a design review closing each library it promotes; experiment.html's intake and
+  v1.client promoting the web client stack; graph-ergonomics; and the pgvector v1.data task.
 
 Each moved with the capstone, not failed:
 [`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md),
