@@ -263,7 +263,8 @@ fragment, a count below 1, an unknown key, or an override that doesn't parse.
 `http://gb10-2:8080/v1` in the `completions` format with `autoload=false`, granite-embedding
 English R2 (BF16) for embeddings, Gemma 4 26B-A4B (Q4_0) for vision, and Gemma 4 E4B (Q8_0) for
 transcription, each at its defaults. `secrets.json.example` shows the secrets file's shape, its
-token empty. `mise run host-update` leaves set A loaded.
+token empty. `mise run host-update` left set A loaded while gb10-2 served the spike
+("gb10-2").
 
 The configuration isn't tied to gb10-2. To point docinfer at another workstation's server, or at
 one per capability, copy the directory and change the endpoints and models: any server that lists
@@ -450,9 +451,16 @@ and joined into a transcript that isn't empty, and every chunk embedded at the s
 
 ## gb10-2
 
-gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,
+gb10-2 left the spike on 2026-11-09 for experiment.hosting's spike-model-layout, which runs in its
+own session. spike-model-layout's `hosts` task moved gb10-2's router preset mount onto
+spike-model-engines' clone there and removed this repository's clone from gb10-2
+(spike-model-layout's `docs/findings/hosts.md`, section D). `mise run host-update` is therefore no
+longer run: it would pull the removed clone and point gb10-2's router back at this spike's preset.
+The host scripts stay as the record of how the spike ran set A, described below as they ran.
+
+gb10-2 served set A from llama.cpp's router container, run from this repository's clone there,
 `~/repos/spike-ai-pipeline`, by spike-model-engines' scripts copied into `host/` (`host/README.md`).
-Each session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale
+Each session started with `mise run host-update`, on the laptop, which drove gb10-2 over Tailscale
 SSH (`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs
 a root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
 architect; otherwise it pulls the clone, moves the router to gb10's pin, reloads a changed preset,
@@ -464,21 +472,23 @@ with the mount moved, by `host/engines llama update`. A running one that can't s
 preset, because a delivery recreated `host/llama-preset/` under its bind mount, is restarted.
 `HOST_UPDATE_HOST` names another host.
 
-host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
-no upstream, so a session delivers it from the laptop by push before running host-update:
+host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged had
+no upstream, so a session delivered it from the laptop by push before running host-update:
 
 ```sh
 git push ssh://gb10-2/~/repos/spike-ai-pipeline <branch>:refs/heads/<branch>
 ```
 
-host-update sets the clone's `receive.denyCurrentBranch` to `updateInstead`, so the push updates
-the checked-out branch and its files. Once the task merges, switch the clone to `main`, which
-tracks `origin/main`, and host-update pulls it from then on:
+host-update sets the clone's `receive.denyCurrentBranch` to `updateInstead`, so the push updated
+the checked-out branch and its files. Once a task merged, the clone was switched to `main`, which
+tracks `origin/main`, and host-update pulled it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
-`mise run integration` probes the router from the laptop (`probe/`). It checks every set A
-capability, and checks the build, sampling, slots, and prompt cache against the pin and the
-preset.
+`mise run integration` probes the router `SPIKE_ROUTER_URL` names from the laptop (`probe/`). It
+checks every set A capability, and checks the build, sampling, slots, and prompt cache against the
+pin and the preset. Its default still names gb10-2's router, `http://gb10-2:8080`, which now
+serves spike-model-layout's preset rather than this spike's, so a run there may differ from set A
+as the spike ran it.
 [The host finding](docs/findings/host.md) records its runs, including whether the router answers
 `/v1/responses` and whether transcription returns timestamps, and what the router's
 `/v1/messages` and `/v1/responses` drop, from the client's integration runs.
