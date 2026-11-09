@@ -1,0 +1,83 @@
+{
+  "schema": "1",
+  "run": "019a5e2a-1b3c-7d4e-8f00-000000000002",
+  "start": "2026-11-07T11:00:00.000000000Z",
+  "end": "2026-11-07T11:06:00.000000000Z",
+  "workers": 1,
+  "inputs": [
+    "/srv/inputs"
+  ],
+  "record": "runs/019a5e2a-1b3c-7d4e-8f00-000000000002/record.jsonl",
+  "tools": [],
+  "stages": [
+    {
+      "route": "document",
+      "state": "wired",
+      "stage": {
+        "name": "document",
+        "version": "gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0, document 1",
+        "config": "c0ffee000002"
+      },
+      "tools": "gs 10.8.0, qpdf 12.4.2, pdfdetach 26.10.0"
+    },
+    {
+      "route": "office",
+      "state": "wired",
+      "stage": {
+        "name": "office",
+        "version": "spike-ai-pipeline-office 0.1.0, office 1",
+        "config": "c0ffee000003"
+      },
+      "tools": "spike-ai-pipeline-office 0.1.0"
+    },
+    {
+      "route": "vision-converted",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "vision",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "nested",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "onenote",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "archive",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "audio",
+      "state": "wired",
+      "stage": {
+        "name": "audio",
+        "version": "ffmpeg 8.0, ffprobe 8.0, audio 1",
+        "config": "c0ffee000004"
+      },
+      "tools": "ffmpeg 8.0, ffprobe 8.0"
+    },
+    {
+      "route": "video",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "text",
+      "state": "wired",
+      "stage": {
+        "name": "text",
+        "version": "text 1",
+        "config": "c0ffee000001"
+      }
+    }
+  ]
+}

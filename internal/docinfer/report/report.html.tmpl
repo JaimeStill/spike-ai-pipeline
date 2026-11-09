@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>docinfer run {{.M.Run}}</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa; --fg: #1d1d1b; --muted: #6b6b66; --line: #dddcd6; --panel: #f1f0ec;
+  --link: #1f5fa8; --ok: #2f7a3a; --warn: #9a6400; --bad: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181a; --fg: #e6e5e1; --muted: #9a9a94; --line: #34363a; --panel: #212226;
+    --link: #8ab8f0; --ok: #79c487; --warn: #e0b45c; --bad: #f08a80;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0 auto; max-width: 72rem; padding: 1.5rem 1rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; border-bottom: 1px solid var(--line); padding-bottom: .25rem; }
+a { color: var(--link); }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .92em; }
+.muted { color: var(--muted); }
+.error { color: var(--bad); }
+.warning { color: var(--warn); }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: .3rem .6rem .3rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+td.n, th.n { text-align: right; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: .15rem 1rem; margin: .5rem 0; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+.badge { display: inline-block; padding: 0 .45rem; border-radius: .6rem; border: 1px solid var(--line); background: var(--panel); font-size: .85em; white-space: nowrap; }
+.badge.bad { color: var(--bad); border-color: currentColor; }
+details.input { border: 1px solid var(--line); border-radius: .4rem; margin: .6rem 0; background: var(--bg); }
+details.input > summary { cursor: pointer; padding: .5rem .75rem; background: var(--panel); border-radius: .4rem; overflow-wrap: anywhere; }
+details.input[open] > summary { border-bottom: 1px solid var(--line); border-radius: .4rem .4rem 0 0; }
+details.input > .body { padding: .25rem .75rem .75rem; }
+.source { display: flex; gap: 1rem; margin: .6rem 0; padding-top: .6rem; border-top: 1px dashed var(--line); }
+.source:first-child { border-top: 0; }
+.source .what { flex: 0 0 16rem; max-width: 16rem; overflow-wrap: anywhere; }
+.source .what img { display: block; max-width: 100%; max-height: 16rem; border: 1px solid var(--line); background: #fff; }
+.source .text { flex: 1 1 auto; min-width: 0; }
+.source pre { margin: .25rem 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92em; background: var(--panel); padding: .4rem .6rem; border-radius: .3rem; }
+@media (max-width: 40rem) { .source { flex-direction: column; } .source .what { flex-basis: auto; max-width: none; } }
+</style>
+</head>
+<body>
+<header>
+<h1>docinfer run <code>{{.M.Run}}</code></h1>
+<dl class="facts">
+<dt>Schema</dt><dd>{{.M.Schema}}</dd>
+<dt>Start</dt><dd class="mono">{{time .M.Start}}</dd>
+<dt>End</dt><dd class="mono">{{if .M.End.IsZero}}<span class="muted">never ended</span>{{else}}{{time .M.End}} ({{.Took}}){{end}}</dd>
+<dt>Docproc run</dt><dd><code>{{.M.Docproc.Run}}</code> in <code>{{.M.Docproc.Dir}}</code></dd>
+{{- with .M.Chunks}}
+<dt>Chunk record</dt><dd><code>{{.}}</code></dd>
+{{- end}}
+{{- if .M.Error}}
+<dt>Stopped</dt><dd class="error">{{.M.Error}}</dd>
+{{- end}}
+</dl>
+</header>
+
+<h2>Capabilities</h2>
+<div class="scroll"><table>
+<thead><tr><th>Capability</th><th>Endpoint</th><th>Model</th><th>Settings</th></tr></thead>
+<tbody>
+{{- range .M.Capabilities}}
+<tr><td>{{.Name}}</td><td>{{.Endpoint}} <code class="muted">{{.BaseURL}}</code></td><td><code>{{.Model}}</code></td><td>{{range $k, $v := .Settings}}{{$k}} <code>{{printf "%v" $v}}</code><br>{{end}}</td></tr>
+{{- end}}
+{{- range .M.Skipped}}
+<tr><td>{{.Name}}</td><td colspan="3" class="muted">skipped: {{.Reason}}</td></tr>
+{{- end}}
+</tbody>
+</table></div>
+
+<h2>Embedding space</h2>
+{{- with .M.Space}}
+<dl class="facts">
+<dt>Model</dt><dd>{{.Endpoint}} <code>{{.Model}}</code></dd>
+<dt>Dimensions</dt><dd>{{.Dimensions}}, vectors {{.Vectors}}</dd>
+<dt>Norms</dt><dd>{{printf "%.6f" .MinNorm}} to {{printf "%.6f" .MaxNorm}}; {{if .Unit}}unit length{{else}}not unit length{{end}} within {{.Tolerance}}</dd>
+<dt>Chunks</dt><dd>at most {{.ChunkSize}} characters, chunker {{.Chunker}}</dd>
+</dl>
+{{- else}}
+<p class="muted">None: the run ended before it measured one.</p>
+{{- end}}
+
+<h2>Counts</h2>
+{{- with .M.Counts}}
+<div class="scroll"><table>
+<thead><tr><th>Capability</th><th>Counts</th></tr></thead>
+<tbody>
+<tr><td>docproc</td><td>outputs {{.Outputs}}, images {{.Images}}, windows {{.Windows}}</td></tr>
+<tr><td>vision</td><td>{{with .Vision}}distinct images {{.Images}}: held {{.Held}}, described {{.Described}}, incomplete {{.Incomplete}} (empty {{.Empty}}), refused {{.Refused}}; requests {{.Requests}}; texts {{.Texts}}{{else}}<span class="muted">skipped</span>{{end}}</td></tr>
+<tr><td>transcription</td><td>{{with .Transcription}}distinct windows {{.Distinct}}: held {{.Held}}, transcribed {{.Transcribed}}, failed {{.Failed}}; requests {{.Requests}}; transcripts {{.Transcripts}}, seams matched {{.SeamsMatched}}, unmatched {{.SeamsUnmatched}}{{else}}<span class="muted">skipped</span>{{end}}</td></tr>
+<tr><td>embeddings</td><td>texts {{.Texts}}, metadata {{.Metadata}}; distinct chunks {{.Chunks}}: held {{.Held}}, embedded {{.Embedded}}, rejected {{.Rejected}}; requests {{.Requests}}; chunk lines {{.Lines}}</td></tr>
+</tbody>
+</table></div>
+{{- end}}
+
+<h2>Failures</h2>
+{{- if or .Refused .Failed .Rejected}}
+<div class="scroll"><table>
+<thead><tr><th>Failure</th><th>Input</th><th>Of</th><th>Error</th></tr></thead>
+<tbody>
+{{- range .Refused}}
+<tr><td>refused image</td><td><code>{{.Input}}</code></td><td><a href="{{$.Docproc}}{{.Ref}}"><code>{{.Ref}}</code></a></td><td class="error">{{.Error}}</td></tr>
+{{- end}}
+{{- range .Failed}}
+<tr><td>failed window</td><td><code>{{.Input}}</code></td><td><a href="{{$.Docproc}}{{.Ref}}"><code>{{.Ref}}</code></a></td><td class="error">{{.Error}}</td></tr>
+{{- end}}
+{{- range .Rejected}}
+<tr><td>rejected chunk</td><td><code>{{.Input}}</code></td><td>chunk {{.Index}} of <code>{{.Source}}</code></td><td class="error">{{.Error}}</td></tr>
+{{- end}}
+</tbody>
+</table></div>
+{{- else}}
+<p class="muted">None: no image refused, no window failed, and no chunk rejected.</p>
+{{- end}}
+
+<h2>Inputs</h2>
+{{- range $i, $in := .Inputs}}
+<details class="input" id="input-{{$i}}" open>
+<summary><code>{{$in.Path}}</code> <span class="muted">sources {{len $in.Sources}}, chunks {{$in.Chunks}}</span>{{with $in.Failures}} <span class="badge bad">failures {{.}}</span>{{end}}</summary>
+<div class="body">
+{{- range $in.Sources}}{{template "source" .}}{{end}}
+</div>
+</details>
+{{- else}}
+<p class="muted">The run has no chunk line and no failure.</p>
+{{- end}}
+</body>
+</html>
+{{define "source" -}}
+<div class="source" data-kind="{{.Kind}}">
+<div class="what">
+{{- if eq .Kind "output"}}
+<a href="{{.Href}}">{{with .Output}}{{with .Name}}{{.}}{{else}}{{.Kind}}{{end}}{{end}}</a> <span class="muted">{{with .Output}}{{.Kind}}{{with .MediaType}}, {{.}}{{end}}{{end}}</span>
+{{- else if eq .Kind "metadata"}}
+<span>metadata</span> <span class="muted">file metadata and content type</span>
+{{- else if eq .Kind "vision"}}
+<a href="{{.Href}}"><img src="{{.Href}}" alt="{{with .Output}}{{with .Name}}{{.}}{{else}}image{{end}}{{end}}" loading="lazy"></a>
+<span class="muted">vision text of {{with .Output}}{{with .Name}}{{.}}{{else}}image{{end}}{{end}}</span>
+{{- else if eq .Kind "transcript"}}
+<span>transcript</span>{{with .Transcript}} <span class="muted">{{.Stage}}{{with .Part}}, part {{.Name}}{{end}}</span>{{end}}
+<br>windows {{range .Windows}}{{if .Href}}<a href="{{.Href}}">{{.Index}}</a>{{else}}{{.Index}}{{end}}{{if .Failed}}<span class="error" title="joined as empty">*</span>{{end}} {{end}}
+{{- if or .Matched .Unmatched}}<br><span class="muted">seams matched {{.Matched}}, unmatched {{.Unmatched}}</span>{{end}}
+{{- else if eq .Kind "refused"}}
+{{- if .Image}}
+<a href="{{.Href}}"><img src="{{.Href}}" alt="refused image" loading="lazy"></a>
+<span class="badge bad">refused image</span>
+{{- else}}
+<a href="{{.Href}}">window</a> <span class="badge bad">failed window</span>
+{{- end}}
+{{- end}}
+</div>
+<div class="text">
+{{- if eq .Kind "refused"}}
+<p class="error">{{.Error}}</p>
+{{- else}}
+<div><span class="muted">chunks {{.Chunks}}</span>{{with .Rejected}} <span class="badge bad">rejected {{.}}</span>{{end}}{{with .Incomplete}} <span class="badge warning">incomplete: {{.}}</span>{{end}}</div>
+{{- if .TextHref}}
+{{- if .TextError}}
+<p class="error">{{.TextError}}</p>
+{{- else}}
+<pre>{{.Text}}{{if .Cut}}…{{end}}</pre>
+{{- end}}
+<a href="{{.TextHref}}">{{if .Cut}}whole text{{else}}stored text{{end}}</a>
+{{- end}}
+{{- end}}
+</div>
+</div>
+{{- end}}

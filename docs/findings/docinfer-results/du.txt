@@ -1,0 +1,6 @@
+516842726 610M docinfer-full
+101750297 200M docinfer-full/results
+7899819 22M docinfer-full/texts
+407192610 389M docinfer-full/runs
+1881300551 1.8G docproc
+files: results 27889, texts 4610

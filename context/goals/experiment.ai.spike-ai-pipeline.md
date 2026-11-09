@@ -27,120 +27,178 @@
 19. [x] streams
 20. [x] formats
 21. [x] docproc
-22. [ ] docinfer
+22. [x] docinfer
 
-## Task brief · experiment.ai.spike-ai-pipeline · docproc
+## Task brief · experiment.ai.spike-ai-pipeline · docinfer
 
 ```
-Problem       Processing's stages are wired together only inside
-              its tests: no wiring outside them runs the whole
-              suite over a real input set, so the layer can't be
-              exercised end to end or presented, and the later
-              inference CLI (docinfer) has no stable input to
-              read. The root requires no layer and pins no system
-              tool.
+Problem       docproc's run directory holds every input's outputs
+              ready for a model, but nothing sends them to one:
+              no wiring carries a real input set through the
+              client to vision, transcription and embeddings, so
+              the client and processing are proven only one
+              capability and one fixture at a time. The
+              capstone's pgvector load has no chunk records or
+              vectors to read. The root doesn't require the
+              client.
 
 Behaviors
-  1. Pins: the root's mise pins office 0.1.0, mail 0.3.1,
-     onenote 0.1.0 and 7zz 26.06 from their GitHub releases,
-     digests checked. The root requires processing v0.9.0,
-     go-cli-sdk v0.2.0, go-core v0.10.0 and golang.org/x/sys,
-     each at its latest. Its currency reports only llama.cpp,
-     held at b12098, and its check passes.
-  2. docproc's stages: at start, docproc builds every tool and
-     checks its version against processing's minimum. It wires
-     a stage for each of the ten routes: document with qpdf
-     and pdfdetach, office with LibreOffice in its pinned
-     image and magick, picture, vision, email, onenote,
-     archive with 7zz, audio, video and text. It prints a
-     table of stages, tools and versions. A missing or
-     too-old tool leaves out the stages that need it, each
-     listed with its reason, and their routes report no
-     processor yet. --exclude <route> leaves a route's stage
-     out, listed as excluded. An unknown route is a usage
-     error (exit 2).
-  3. docproc run <path>... --out <dir>: each path is a file or
-     a directory walked for regular files, and no symbolic
-     link is followed. The inputs go through processing's
-     pool with runtime.NumCPU() workers by default. --workers
-     above NumCPU, or below 1, is a usage error (cli.Usagef,
-     exit 2). As each input's last event arrives, the
-     terminal prints one line: its path, route, outcome,
-     outputs, children and time. A closing summary counts
-     inputs by route and outcome. A part that fails is
-     counted, not fatal. An error that stops the whole
-     dispatch exits 1.
-  4. Metadata: each input's record carries its file name,
-     path, size, mode and modified time. Where the filesystem
-     records a birth time, statx's created time is included;
-     otherwise the field is absent. Its content type is
-     processing's signature kind and route, plus
-     net/http.DetectContentType's MIME and the stored MIME
-     where one exists. A nested part carries processing
-     Part's name, stored MIME, size, SHA-256, kind, route,
-     parent, depth and where, with no filesystem times.
-  5. Run directory, schema "1": a run manifest (schema, run
-     id from uuid.NewV7, start and end, stages, tools and
-     versions, excluded and missing stages, workers, the
-     input paths), and a JSON Lines record of every event:
-     part fields, outcome, reason, error, stage identity, each
-     output's kind, name, media type, Meta and Ref, and each
-     input's time. Outputs are stored once, by the part's
-     SHA-256 and the stage identity, so a Seen output's Ref
-     names the copy already stored. A quarantined part's file
-     is kept beside its flags. Every path in the record is
-     relative to the run directory.
-  6. Re-run: docproc over an existing run directory reuses its
-     file index and output store under a new run id with its
-     own record. Run again over unchanged inputs, it prepares
-     nothing: every input is Seen, and every output's Ref
-     names the first run's copy.
-  7. docproc report: a static HTML page from html/template,
-     rendered from the run's record. Its header lists the
-     stages, tools, and missing and excluded routes. Each
-     input shows its part tree with route, outcome, flags,
-     quarantine evidence and time. Images show inline, and
-     text and Markdown are linked, by relative paths. The
-     same record always renders the same page.
-  8. Docs: the README documents docproc, its host
-     prerequisites, and the run directory's schema "1"
-     contract, which docinfer will read. context/README.md's
-     capability map names docproc.
-  9. Finding: docs/findings/docproc.md, in the root's findings
-     format (docs/findings/host.md), records docproc over
-     ~/docs: inputs and parts by route and outcome, time,
-     disk, workers, tools and versions, missing stages, and a
-     re-run that prepares nothing.
+  1. Requirement and configuration: the root requires
+     spike-ai-pipeline-client v0.4.0, its currency reports
+     only llama.cpp, held at b12098, and its check passes.
+     docinfer reads go-core's layered JSON configuration
+     (base, environment overlay, secrets, secrets overlay)
+     from the directory --config names, with overrides from
+     DOCINFER_ variables. The configuration has named
+     endpoints (base URL; format: completions, messages or
+     responses; token; optional query) and three
+     capabilities, each naming an endpoint and a model:
+     embeddings (required), vision and transcription.
+     Defaults: vision prompt the tier's ("Transcribe the
+     text in this picture. If it has no text, describe it
+     in one sentence."), output cap 2048; transcription no
+     prompt, no language; 16 chunks to an embeddings
+     request; a chunk bound of 2,000 characters; 4 requests
+     in flight per capability. No default endpoint. A
+     missing embeddings capability, an unknown endpoint or
+     format, or a bad setting is an error before any
+     request. A committed example configuration serves set
+     A on gb10-2.
+  2. Models at start: for each endpoint a capability uses,
+     docinfer reads its /models listing over HTTP and
+     refuses a model the listing doesn't name (exit 1). An
+     endpoint with no listing gets a warning, as does a
+     listed model whose status says unloaded. An unset
+     vision or transcription capability is skipped and
+     listed. It prints a table of each capability's
+     endpoint, model and state.
+  3. Reading docproc's run: docinfer run <docproc-dir>
+     --out <dir> reads the latest run, or the one --run
+     <id> names; a --run that is a path or a dot entry is a
+     usage error (exit 2). A manifest whose schema isn't
+     "1" is refused. It reads every output line, whatever
+     its part's outcome, and sends each distinct content
+     once.
+  4. Vision: every image output (pages, pictures, frames)
+     goes as a data URL beside the vision prompt, in the
+     endpoint's format, and its text is stored. A reply cut
+     at the output cap is recorded incomplete, its text
+     kept. A request the endpoint refuses is recorded, not
+     fatal.
+  5. Transcription: a part's audio windows, grouped by part
+     and stage and ordered by window index, are transcribed
+     and joined by processing's audio.Join. A failed window
+     joins as "" and is recorded. The joined transcript is
+     stored, with each seam's matched or unmatched state.
+  6. Chunking: each text is chunked on its own, so a chunk
+     never spans two outputs: by Markdown heading, then
+     blank-line paragraph, then sentence, then a hard cut,
+     each chunk at most the bound, never splitting a UTF-8
+     character. No overlap; each chunk records its byte
+     span in its source text. Empty and whitespace-only
+     texts yield no chunk. The same text and bound always
+     give the same chunks.
+  7. Embeddings: every text and Markdown output, every
+     vision text and joined transcript, and one metadata
+     text per input that has file metadata (unrouted inputs
+     and inputs with an error line included). The metadata
+     text holds the input's file fields and content type as
+     docproc records them, and no listing of its parts. A
+     chunk the endpoint rejects is recorded, not fatal.
+     Vectors are stored as returned. The manifest records
+     the embedding space: endpoint, model, dimensions,
+     whether every vector was unit length within a stated
+     tolerance, the chunk bound, the chunker's version.
+  8. Its directory, schema "1": a manifest (schema, run id
+     from uuid.NewV7, start and end, the docproc run
+     directory (absolute) and run id, each capability's
+     endpoint, model and settings, skipped capabilities,
+     the embedding space, counts) and a JSON Lines record
+     of chunks, one line per chunk per input it belongs to:
+     the chunk's text, its source and byte span, the
+     input's file metadata and content type, the part's
+     fields and outcome, the output's kind, name, ref and
+     meta, and the vector as base64 little-endian float32.
+     The same content under two inputs gives two lines, the
+     vector reused. Results are stored as each completes,
+     each file written whole; paths to files docinfer
+     writes are relative to its directory.
+  9. Re-run: held results are keyed by content SHA-256,
+     capability, model, and the prompt or chunk settings.
+     Over the same docproc run and configuration, docinfer
+     sends no request. A changed chunk bound re-chunks and
+     re-embeds without any vision or transcription request.
+     An interrupted run resumes from what it stored.
+ 10. Terminal and report: as each input's work ends, one
+     line: its path, images, windows and chunks done,
+     failures, time; a closing summary counts requests and
+     failures by capability. A static HTML page per run
+     (html/template), rendered again by docinfer report
+     <dir> [--run <id>], shows each output beside its
+     vision text or transcript and its chunk count, images
+     inline by relative path into the docproc run
+     directory. The same record always renders the same
+     page.
+ 11. Docs: the README documents docinfer, its configuration
+     and the set A example, and its front page no longer
+     says the root will hold the capstone: the capstone
+     moves to its own repository, which a marathon plan
+     session sets up. A schema page documents docinfer's
+     schema "1" as the capstone's input.
+     context/README.md's capability map names docinfer, its
+     capstone entry says the same as the README, and its
+     Gates no longer call docinfer planned.
+ 12. Finding: a finding records a fresh docproc run over
+     all of ~/docs, kept on disk, then docinfer through set
+     A on gb10-2: requests, failures, time and tokens per
+     capability, chunks and texts by kind, the vectors'
+     dimensions and norms, disk, then a re-run that sends
+     no request. Each measurement names the llama.cpp
+     build, gb10-2's stack and the network path.
 
-Test seams    docproc's run command through the App's apptest
-              fixtures over small committed inputs and a run
-              directory; the record's shape pinned by a test
+Test seams    docinfer's run command through the App's apptest
+              fixtures, against an httptest fake server
+              speaking all three formats, embeddings and
+              transcription, over a small committed docproc run
+              directory; the chunk record's shape pinned by a
+              test; an integration tier over the configuration
+              DOCINFER_CONFIG names, skipped when unset
 
 Slices
-  1. Pins and requirements: the four mise pins and the
-     module requirements; currency reports only the held
-     llama.cpp.
-  2. docproc's composition root: cmd/docproc and
-     internal/app, tools version-checked, all ten stages
-     wired, the stage table, --exclude, --workers.
-  3. Metadata and schema "1": file metadata with statx, the
-     content types, nested parts' fields.
-  4. Run directory and record: the output store by content,
-     the JSON Lines record, the manifest, the reused index,
-     terminal lines and summary.
-  5. docproc's HTML report.
-  6. README, the schema "1" contract, context/README.md.
-  7. Finding: docproc over ~/docs, with its re-run.
+  1. Composition root: the client requirement,
+     configuration and the set A example, the /models check
+     and capability table, reading the chosen docproc run
+     and refusing a wrong schema.
+  2. Embeddings: the chunker, the metadata text, schema
+     "1"'s manifest and chunk record, held results and the
+     re-run; text, Markdown and metadata embedded end to
+     end against the fake server and the integration tier.
+  3. Vision: image outputs to vision in each format,
+     incomplete and refused replies, vision text chunked
+     and embedded.
+  4. Transcription: windows ordered, transcribed and joined
+     by audio.Join, failed windows, the transcript chunked
+     and embedded.
+  5. Terminal lines and summary, the HTML report and
+     docinfer report.
+  6. README, docinfer's schema page, context/README.md, the
+     capstone's home stated as its own repository.
+  7. Finding: a fresh docproc run over ~/docs on disk, then
+     docinfer through set A on gb10-2, then its re-run.
 
-Out of scope  inference of any kind (docinfer is the next task);
-              any change to processing or the CLIs it runs;
-              scoring against truth; checkpointing a mail store
-              mid-way; document-embedded properties; a tag or
-              binary release; CI for the root; llama.cpp past
-              b12098 (held)
+Out of scope  structured extraction (the capstone's); loading
+              pgvector or any database; normalizing vectors;
+              token-aware chunking; skipping vision on a page
+              with a text layer; a subset flag; any change to
+              the client, processing, or docproc's schema "1";
+              scoring against truth; a tag or binary release;
+              CI for the root; llama.cpp past b12098 (held);
+              setting up the capstone's repository, or moving
+              its gates and evidence (7, 15) out of the root
+              (the plan session's)
 
-Door          two-way: code on a branch, no tag, pins and
-              requirements revert, and the contract and finding
+Door          two-way: code on a branch, no tag, the
+              requirement reverts, and the contract and finding
               are text
 ```
 
@@ -1975,6 +2033,90 @@ Door          two-way: code on a branch, no tag, pins and
   seen with subtrees copied, re-render, usage errors, --exclude, missing pinned tools, quarantine,
   the check). No tag.
 
+- docinfer (r5 q1): every output line is inferred, whatever its part's outcome, the outcome
+  carried on each chunk record; the CFR volume failed on its form read, not its pages. Rejected:
+  only the outputs of prepared or seen parts.
+- docinfer (r5 q2): the metadata text per input is its file fields and content type as docproc
+  records them; per-format metadata is the capstone's (docproc r4 q6). Rejected: adding a listing
+  of the parts found inside it.
+- docinfer (r5 q3): vectors are stored as the endpoint returns them; the manifest records the
+  embedding space (endpoint, model, dimensions, whether every vector was unit length, chunk bound,
+  chunker version). Rejected: L2-normalizing in docinfer.
+- docinfer (r5 q4): the finding runs a fresh docproc over all of ~/docs, kept on disk, then
+  docinfer through set A, then a re-run that sends nothing. Rejected: a subset of ~/docs.
+- docinfer (r5 q5): the /models check is the root's, on net/http; the client stays at v0.4.0, and
+  a pending edit notes a listing as a client diagnostic for go-ai's intake. Rejected: a client
+  v0.5.0 first.
+- docinfer (r5 q6): at sync the 22 finished task tables are deleted as the spike moves to
+  `planned`, and pending edits that only amend them are dropped. Rejected: keeping them until the
+  capstone's sync.
+- docinfer (r5 q7): at sync the goal record is deleted, and the root's own links to it are
+  rewritten to a permalink at the last commit before deletion. Rejected: keeping the record while
+  the spike is planned.
+- docinfer (r6 q1): the sync stages nothing; its next line reads "proposed, not staged:
+  experiments reorganized by a `marathon plan` session first". Rejected: staging
+  spike-scanned-documents on accept.
+- docinfer (r6 q2): the sync's coordinator edits fix only what docinfer's shipping makes false
+  (docinfer done, the spike active → planned); the sequencing prose (the roadmap's header
+  comment, spike-scanned-documents' summary, the capstone's gate ordering) is the plan session's,
+  so the ai-strategy.md "Gates" edit is carried to it, not applied.
+- docinfer (r6, the architect): the capstone lives in its own non-experimental repository under
+  github.com/JaimeStill, not this spike's root and not an experiment; a `marathon plan` session
+  sets it up. The sync still moves the spike active → planned (r5 q6). Rejected: the capstone in
+  spike-ai-pipeline's root.
+- docinfer (plan): defaults: vision prompt the tier's, output cap 2048; no transcription prompt or
+  language; 16 chunks per embedding request; a model listed as unloaded is a warning, not a
+  refusal; an endpoint's query passes through to the client's Query.
+- docinfer (build, the architect): a quality check 4 h into the first full run found 22% of the
+  held vision texts empty and 29% cut at the 2,048-token cap: Gemma 4 26B-A4B's reasoning spent
+  the cap. The run was stopped and, at the architect's direction, a 31-input sample of ~/docs was
+  run and fixed first, tuning gb10-2 and docinfer to the workload, then the full set was run.
+  Amends r5 q4, which still holds for the full run.
+- docinfer (build): vision sends a reasoning effort, `vision.reasoning`, one of the client's
+  efforts, "none" by default as processing's vision tier asks, and part of vision's held-result
+  key. An incomplete vision text that is empty is counted as `counts.vision.empty`.
+- docinfer (build): gb10-2's preset gives the vision model `image-min-tokens = 560`: speech.png,
+  at about 100 image tokens, was paraphrased and then looped to the cap. 8 vision slots were tried
+  and rejected: each slot's rate halved, and the sample's vision time fell only from 279 s to
+  260 s.
+- docinfer (build): `config/example` sends a transcription prompt asking for only the words
+  spoken; without it, gemma-4-E4B answered music-only windows with a remark, embedded as
+  transcript.
+- docinfer (build): llama.cpp b12098's Messages route ignores disabled thinking, so vision on
+  gb10-2 uses the completions or responses format; the README and the Vision type say so.
+- docinfer (build, escalation, the architect): every image goes to vision, including pages whose
+  text layer docproc extracted, and the finding measures what vision adds over the layer, as
+  evidence for the capstone's decision to skip vision on such pages. Rejected: a skip setting now.
+- docinfer (build): the manifest's counts carry each capability's token usage; the closing lines
+  print paths relative to --out.
+- docinfer (build, spec review): a chunk line's part carries docproc's part whole (size,
+  content_type, flags, parent), additively within schema "1".
+- docinfer (build): behavior 9's "sends no request" means no inference request; a re-run still
+  makes behavior 2's /models check.
+- docinfer (build, standards review): the run command reads its configuration from the directory
+  --config names (r3 q2), not from a graph node as cli-applications.md describes. Kept.
+- docinfer (build): the full run took 6.0 h in one attempt with 0 failures. 24 of 1,289 text-heavy
+  pages (at least 100 layer words, outside text_heavy.pdf) came back described instead of
+  transcribed; a stricter prompt ("…word for word, in reading order. Do not summarize or describe
+  text…") transcribed one such page in the partway check. The stricter prompt and a lower
+  temperature are a recommendation for the capstone, not applied: a prompt change sends every
+  image again.
+- docinfer (build): gb10-2's clone was switched to the `docinfer` branch to serve the preset; the
+  session switches it back to `main` at ship.
+- docinfer (redirect, the architect): both CLIs follow one layout: docproc's packages moved under
+  internal/docproc/ (app, apptest, report, run, rundir, schema, stages), as docinfer's sit under
+  internal/docinfer/; docinfer imports docproc's contract packages, rundir and schema, from there.
+  No behavior change.
+- docinfer (redirect, the architect): docinfer prints a line as each phase starts (distinct items
+  to send and held) and as each inference request completes (capability, count over the phase's
+  total, input, output ref, outcome, duration), so a long run is never silent; held items print
+  none. Amends behavior 10's terminal output. The architect: the output formats are settled at
+  the experiment's intake.
+- docinfer (accept): the architect accepted the session brief on 2026-11-09 after a manual run
+  of their own (docproc and docinfer over six documents, a re-run, a stricter vision prompt) and a
+  semantic search over the full run's vectors. No tag. The sync follows: the spike returns to
+  `planned`, nothing is staged, and a `marathon plan` session reorganizes the experiments.
+
 ## Pending edits
 
 - coordinator · context/ai-hosting.md, "Hosts and access": the gb10-2 paragraph says the spike's
@@ -2402,19 +2544,23 @@ Door          two-way: code on a branch, no tag, pins and
 - roadmap note · spike-ai-pipeline-processing (backlog): inspect exports no options check, so
   dispatch's bombRule validates its options through `inspect.CheckListing(route.Zstd, 0, nil,
   opts)`. An exported check would replace the indirect call.
-- coordinator · roadmap, experiment.ai.spike-ai-pipeline's capstone (the architect, docproc r4
-  q6): plan compositional metadata structures that extend docproc's base file metadata per format
+- coordinator · roadmap, a note on experiment.ai.spike-ai-pipeline's planned table, for the plan
+  session to carry to the capstone's own goal (the architect, docproc r4 q6): plan compositional metadata structures that extend docproc's base file metadata per format
   (PDF, office, mail, OneNote, media), and decide where authoritative metadata capture lives: the
   web layer, the processing layer, or elsewhere. docproc's schema "1" metadata and docinfer's
   chunk records are the input the capstone's pgvector load reads.
 - coordinator · context/ai-strategy.md, the spike's bullets: one for the root's CLIs: "`docproc`
   runs processing's whole suite over an input set into a versioned run directory, with no
-  inference; `docinfer` sends its outputs through the client to any configured workstation:
-  vision, transcription joined by audio.Join, and chunked embeddings of every text and of each
-  input's metadata."
+  inference. `docinfer` sends a docproc run's outputs through the client to any configured
+  workstation: every image to vision with reasoning off, every audio window to transcription,
+  joined per part by `audio.Join`, and every text and each input's metadata, chunked, to
+  embeddings. It writes a directory of its own, schema "1", the capstone's input. Its
+  [finding](https://github.com/JaimeStill/spike-ai-pipeline/blob/main/docs/findings/docinfer.md)
+  records a run over all of ~/docs through set A on gb10-2: 3,470 images, 1,254 windows, and
+  28,937 chunk lines in 6.0 h, with 0 failures."
 - coordinator · roadmap, the spike's summary: "and the root, which holds gb10-2's host scripts
-  and, once its gates clear, the capstone" reads "and the root, which holds gb10-2's host scripts,
-  the docproc and docinfer CLIs, and, once its gates clear, the capstone".
+  and, once its gates clear, the capstone" reads "and the root, which holds gb10-2's host scripts
+  and the docproc and docinfer CLIs; the capstone moves to its own repository (docinfer r6)".
 - roadmap note · spike-ai-pipeline-processing (its next task): its README's adapter convention
   could name the root's docproc as the shipped composition root, since every wiring in the
   repository is a test's.
@@ -2439,3 +2585,59 @@ Door          two-way: code on a branch, no tag, pins and
 - coordinator · roadmap, the docinfer task's summary: "that reads a docproc run directory" reads
   "that reads one run of a docproc run directory, its manifest and its record, which is whole on
   its own".
+- coordinator · roadmap, experiment.ai.spike-ai-pipeline, at docinfer's sync: remove it from
+  `active` and add it to `planned` after experiment.ai.spike-local-models, the last experiment.ai
+  entry (its order is the plan session's); delete its 22 finished task tables, keeping its own
+  table (name, root, repos, remote, path, summary). No answer section lands: what the spike still
+  answers, now that the capstone moves to its own repository (docinfer r6, the architect), is the
+  plan session's.
+- coordinator · roadmap, experiment.ai's intake (a note, for go-ai): a /models listing would be a
+  helpful diagnostic function of the client library when go-ai is ingested; docinfer reads
+  /models itself on net/http, since client v0.4.0 has none (docinfer r5 q5).
+- coordinator · roadmap, the header comment, a paragraph headed "Direction for the next `marathon
+  plan` session (the architect, 2026-11-07)", which that session reads and replaces: organize the
+  experiments around what spike-ai-pipeline's capstone requires and what can follow it, so the
+  workspace can (a) finish the pre-capstone experiments; (b) ingest and build out the standards-lab
+  libraries and infrastructure that emerge from them to support the capstone, with thorough reviews
+  of what is promoted, so the code is optimally structured, aligns with the architecture standards,
+  and fits the ~/architecture workspace; (c) run the capstone build itself; and (d) continue the
+  ~/architecture marathon roadmap. Between (b) and (c), the architect asks for appropriate time
+  designing the protocols and practices that let the capstone execute well (2026-11-09): the
+  output formats of docproc's and docinfer's directories, settled at the experiment's intake
+  rather than in the spike; the chunk record and embedding spaces the pgvector load reads; the
+  choice between a page's text layer and its vision text (the docinfer finding: two-column text
+  layers interleave their columns, and 24 of 1,289 text-heavy pages came back described); and
+  the vision prompt and sampling. A first sort, as input: before the capstone,
+  spike-hosting-upgrades (active), spike-model-layout and spike-model-gateway (the capstone's
+  gates), an intake for spike-ai-pipeline alone, promoting go-ai's client and processing (today
+  experiment.ai's one intake waits on all four spikes, the harness spikes included), and
+  experiment.html's intake (the web client stack the capstone's UI needs); after it,
+  spike-scanned-documents (the OCR tier; the capstone runs on vision transcription without it),
+  spike-go-harness, spike-local-models, spike-host-admin, and spike-html-go-wasm. Decided: the
+  capstone lives in its own non-experimental repository under github.com/JaimeStill, not
+  spike-ai-pipeline's root and not an experiment (the architect, docinfer r6); the session sets it
+  up: its name, its goal, and the spike's capstone gates, evidence 7 and 15, and the capstone note
+  carried to it.
+- coordinator · roadmap, a note on experiment.ai.spike-ai-pipeline's planned table, for the plan
+  session to carry to the capstone's own goal (docinfer): whether to skip vision on a page with a
+  text layer. The docinfer finding's text-layer comparison is the evidence for a skip rule: where
+  a layer holds the page, vision repeats it (median word recall 0.91 to 1.00); vision rescued 49
+  pages with a thin layer and 61 with none; and 24 of 1,289 text-heavy pages came back described
+  instead of transcribed. A skip rule must tell a thin layer from a whole one. The note also
+  carries the finding's prompt result: a stricter vision prompt ("Transcribe all the text in this
+  picture, word for word, in reading order. Do not summarize or describe text…") and a lower
+  temperature are recommended against described pages.
+- coordinator · context/ai-hosting.md, "Hosts and access": gb10-2's preset sets
+  `image-min-tokens = 560` for Gemma 4 26B-A4B, so a small image of dense text gets enough tokens
+  to be read (docinfer). llama.cpp b12098's `/v1/messages` ignores `thinking: disabled` and
+  `reasoning_effort`; only `chat_template_kwargs.enable_thinking = false` stops the reasoning, so
+  vision sent through Messages reasons.
+- roadmap note · spike-ai-pipeline (the root, its next task): STANDARDS.md applies
+  cli-applications.md to docproc and domain-files.md to docproc's command packages only; say
+  whether docinfer's packages follow both too.
+- spike-ai-pipeline · at sync step 5, before the record is deleted: the root's own links to
+  context/goals/experiment.ai.spike-ai-pipeline.md (docs/findings/docproc.md and the docinfer
+  finding) become a permalink to the record at the last commit before its deletion.
+- sync plan (docinfer r5 q6, r6 q2): pending edits that only amend the 22 finished task tables'
+  summaries, repos, or proofs, or that are already applied, are dropped at the sync; the
+  ai-strategy.md "Gates" edit is carried to the plan session; every other edit applies.

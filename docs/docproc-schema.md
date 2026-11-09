@@ -1,8 +1,8 @@
 # docproc's run directory, schema "1"
 
 `docproc run --out <dir>` writes a run directory, and docinfer, the inference CLI, reads one. This
-page is the contract between them: the directory's layout, each run's manifest, and its record,
-one JSON object per line. It is written from the types in `internal/schema`, whose doc comments
+page is the contract between them: the directory's layout, each run's manifest, and its record, one
+JSON object per line. It is written from the types in `internal/docproc/schema`, whose doc comments
 are the source; where this page and they disagree, they win and this page is wrong.
 
 A reader checks the manifest's `"schema"` is `"1"` before reading anything else.

@@ -1,0 +1,880 @@
+CAPABILITY     ENDPOINT  MODEL                                            STATE
+embeddings     gb10-2    mrutkows/granite-embedding-english-r2-GGUF:BF16  loaded
+vision         gb10-2    google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0     loaded
+transcription  gb10-2    ggml-org/gemma-4-E4B-it-GGUF:Q8_0                loaded
+docproc run 01a1b82d-54aa-73a2-81db-67577e9cb5da: outputs 11116: text 3522, markdown 737, image 4701, record 897, audio 1259
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.B.words.xml  images 0  windows 0  chunks 68  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.A.segments.xml  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/README.md  images 0  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.C.segments.xml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings21-4330115.truth.rttm  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings21-4330115.truth.nlp  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.D.words.xml  images 0  windows 0  chunks 53  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.D.segments.xml  images 0  windows 0  chunks 14  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.B.segments.xml  images 0  windows 0  chunks 14  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.A.words.xml  images 0  windows 0  chunks 14  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-truth/ES2002a.C.words.xml  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/MANIFEST.json  images 0  windows 0  chunks 166  failures 0  1.825s
+/home/jaime/docs/archive/password-protected.zip  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/archive/unicode-filenames.zip  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/archive/mixed-bundle.zip  images 4  windows 0  chunks 17  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings21.LICENSE.md  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings22-4479944.truth-aligned.nlp  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings22-4479944.truth.nlp  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/long/librivox-stella-maberly.truth-approx.txt  images 0  windows 0  chunks 158  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/archive/mixed-bundle.7z  images 4  windows 0  chunks 17  failures 0  1.825s
+/home/jaime/docs/archive/mixed-bundle.tar.gz  images 4  windows 0  chunks 17  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings22.LICENSE.md  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1730.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.m4a  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1993.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1608.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ar/fleurs-ar-eg-1995.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.opus  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.mp3  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000.ogg  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1602.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-hi/fleurs-hi_in-1601.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/codecs/librispeech-2277-149896-0000-stereo-44k.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1519.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/archive/high-ratio-200mb.zip  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1614.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1607.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1554.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ja/fleurs-ja_jp-1608.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1605.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-ru/fleurs-ru_ru-1634.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1581.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0000.flac  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0001.flac  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/fleurs-zh/fleurs-cmn_hans_cn-1579.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0002.flac  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/librispeech/librispeech-dev-clean-2277-149896-0003.flac  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-0.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/cpython.LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_01.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_02.eml  images 0  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_03.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_04.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_05.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-1.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_06.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_07.eml  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_08.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_09.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-0.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-1.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-es/minds14-es-ES-2.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_10.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_11.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-0.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_12.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_12a.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_13.eml  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_15.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_14.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_16.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-fr/minds14-fr-FR-2.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-1.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_18.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_17.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_19.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/short/phrase.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_20.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/short/tone.wav  images 0  windows 1  chunks 1  failures 0  1.825s
+/home/jaime/docs/audio/short/minds14-ko/minds14-ko-KR-2.wav  images 0  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_21.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_22.eml  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_23.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_24.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_25.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_26.eml  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_27.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_28.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_29.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_30.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_31.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_32.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_33.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_34.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_37.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_35.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_36.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_38.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_39.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_40.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_41.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_43.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_42.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_44.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_45.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_46.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/eml/cpython/msg_47.eml  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/01-plain.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/04-attachment-cyrillic.eml  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/02-reply-latin1.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/03-html-inline-image.eml  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/05-japanese.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/06-chinese.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/07-html-only-bcc.eml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/audio/long/ami-es2002a-mix-headset.wav  images 0  windows 50  chunks 10  failures 0  1.825s
+/home/jaime/docs/email/generated/eml/08-forward-attached-message.eml  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/generated/layout.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/manifest.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/01-plain.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/02-reply-latin1.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/03-html-inline-image.msg  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/04-attachment-cyrillic.msg  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/05-japanese.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/06-chinese.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/07-html-only-bcc.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/generated/msg/08-forward-attached-message.msg  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/generated/pst/mailbox.pst  images 1  windows 0  chunks 12  failures 0  1.825s
+/home/jaime/docs/email/generated/truth.json  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/ASCII_UTF-8_CP1252_LCID1031_HTML.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/mbox/tika-dev-2024-03.mbox  images 0  windows 0  chunks 1196  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/example_sent_regular.msg  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/msgClassAppointment.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/msg/poi-truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/msg/poi/outlook_30_msg.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/msg/sources.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/test-outlook2003.msg  images 11  windows 0  chunks 18  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/testMSG_att_msg.msg  images 1  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/testMSG_chinese.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/msg/tika/testMSG_forwarded.msg  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/msg/tika-truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/pst/java-libpst/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/pst/java-libpst/dist-list.pst  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/email/pst/libyal/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/pst/java-libpst/passworded.pst  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/pst/sources.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/email/pst/tika/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/pst/libyal/outlook.pst  images 22  windows 0  chunks 35  failures 0  1.825s
+/home/jaime/docs/email/pst/tika/NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/email/pst/tika-threading.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/email/pst/tika/testPST_variousBodyTypes.pst  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/email/pst/tika/testPST.pst  images 0  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/image/formats/bmp/photo.bmp  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/gif/animated-shapes.gif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/gif/photo.gif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/avif/example.avif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/avif/monochrome.avif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/heic/libheif-examples.COPYING  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/image/formats/jpeg/photo-with-gps-exif.jpg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/jpeg/rotated-exif-orientation.jpg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/webp/text-lossless.webp  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/image/formats/tiff/photo-deflate.tif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/heic/example.heic  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/tiff/scanned-3page-g4.tif  images 3  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/image/formats/avif/bbb-alpha-inverted.avif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/graphics/logo.jpg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/graphics/shapes.png  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/graphics/speech.png  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/image/photo/house-chair-bicycle.jpg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/photo/test.jpg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/vector/pipeline-diagram.svg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/MANIFEST  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/archive/zip-in-zip.zip  images 6  windows 0  chunks 21  failures 0  1.825s
+/home/jaime/docs/image/vector/script-bearing.svg  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/archive/mixed-bundle.tar.zst  images 4  windows 0  chunks 17  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/charts.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/charts.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/charts.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments-plain.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/avif/hdr-cosmos.avif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/tiff/old-style-jpeg-compression.tif  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/webp/photo.webp  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/tiff/scanned-3page-lzw-gray.tif  images 3  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/comments.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headers-even-off.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headings.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/lists.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headings.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/headings.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/media.libreoffice.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/media.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/lists.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/lists.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/notes.libreoffice.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/notes.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/notes.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/notes.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/emf/wrench.emf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/sections.libreoffice.truth.json  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/image/formats/emf/simple-emf-windows.emf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/sections.libreoffice.docx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/sections.truth.json  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tables.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tables.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tables.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/sections.python-docx.docx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.libreoffice.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/tracked-changes.python-docx.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/image/formats/emf/vector-image.emf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/bullets.libreoffice.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/bullets.python-pptx.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/bullets.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/groups.libreoffice.pptx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/cells.libreoffice.xls  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/groups.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/groups.python-pptx.pptx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.libreoffice.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.libreoffice.pptx  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.python-pptx.pptx  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/bullets.libreoffice.ppt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slide-objects.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/image/formats/wmf/poi-61338.wmf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slides.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/image/formats/wmf/fuzz-minimized.wmf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/comments.libreoffice.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slides.libreoffice.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/pptx/slides.python-pptx.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.libreoffice.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/image/formats/wmf/santa.wmf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.libreoffice.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/cells.openpyxl.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.libreoffice.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.libreoffice.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/dates-1904.openpyxl.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.libreoffice.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.libreoffice.xlsx  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/drawings.openpyxl.xlsx  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.libreoffice.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/formulas.openpyxl.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/charts.libreoffice.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/merges.libreoffice.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/merges.openpyxl.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/merges.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/image/formats/wmf/file-45.wmf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.openpyxl.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/xlsx/sheets.libreoffice.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/other/word-perfect-6.wpd  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/SampleSS.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/SampleSS.xls  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/basic_test_ppt_file.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/simple-table.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/bingo-sheet.dotx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/macro-enabled.openxmlsdk.docm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/ed-stud-pres.potx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/macro.openxmlsdk.xltm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/macro-enabled.openxmlsdk.dotm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/macro.openxmlsdk.xlsm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/protected-passtika.poi.xlsb  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/macro-template/simple-invoice.xltx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/simple-macro.poi.docm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/simple.poi.xlsb  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/macro-template/simple-macro.poi.pptm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/simple-macro.poi.xlsm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/xlm-macro.poi.xlsm  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/macro-template/test-ppt.poi.ppsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/multilang/multilang-rtl.docx  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/multilang/multilang-rtl.odt  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/multilang/multilang-rtl.source.html  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/multilang/multilang-rtl.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/odf/draw-odf13.odg  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/calc-odf13.ods  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/formulas.libreoffice.ods  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/impress-odf13.odp  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/slides.libreoffice.odp  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/tables.libreoffice.odt  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/odf/writer-odf13.odt  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/SOURCES.md  images 0  windows 0  chunks 16  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chart-column.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chart-column.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex-funnel-word.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex-waterfall-word.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex-funnel-word.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex-waterfall-word.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/chartex.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/complex-numbered-lists.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/content-control-rows.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/complex-numbered-lists.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/content-control-rows.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/delins.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/delins.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/endnotes.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/media.python-docx.docx  images 4  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/endnotes.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/footnote.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/footnote.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/docx/media.libreoffice.docx  images 4  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/form-footnotes.truth.json  images 0  windows 0  chunks 15  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/ruby.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/strict-column-charts.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/drawings.libreoffice.xls  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/ruby.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/test-comment.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/form-footnotes.docx  images 1  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/strict-column-charts.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/test-comment.docx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/unit-test-formatting.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/word-tables.docx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/word-tables.truth.json  images 0  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/word-with-attachments.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/Open-XML-SDK.NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/Open-XML-SDK.LICENSE  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/poi.LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/docling.LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/poi.NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/rsWordParser.LICENSE-MIT  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/licenses/rsWordParser.LICENSE-APACHE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/unit-test-formatting.docx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/chart-2d.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/chartex-slide.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/layouts.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/linked-pictures.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/chartex-slide.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/chart-2d.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/powerpoint-sample.truth.json  images 0  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/shapes.truth.json  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/linked-pictures.pptx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/layouts.pptx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/chart-sheet.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/powerpoint-sample.pptx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/pptx/shapes.pptx  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/copy-rows.truth.json  images 0  windows 0  chunks 9  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/date-format-tests.truth.json  images 0  windows 0  chunks 19  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/chart-sheet.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/copy-rows.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/notes.libreoffice.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/excel-online-index-space.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/simple-monthly-budget.truth.json  images 0  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/simple-strict.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/with-drawing.truth.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/excel-online-index-space.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/date-format-tests.xlsx  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/with-two-charts.truth.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/simple-monthly-budget.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/simple-strict.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/formulas.libreoffice.xls  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/merges.libreoffice.xls  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/lists.libreoffice.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/with-two-charts.xlsx  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/interop/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/content.json  images 0  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/Encryption.one  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/interop/Resources/AlternativePackaging.one  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/interop/Resources/AlternativePackaging.onetoc2  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/interop/Resources/NoSection.onetoc2  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/interop/Resources/Open Notebook.onetoc2  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/FileSyncWOPI_OneNoteWithODB.one  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/InvalidData.one  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/OneWithFileData.one  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/OneWithoutFileData.one  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/interop/SUT/Open Notebook.onetoc2  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/onenote/interop/sources.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/onenote/notebooks.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/New Section 1.one  images 2  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/New Section Group/New Section 1.one  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/New Section Group/New Section 2.one  images 1  windows 1  chunks 4  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/New Section Group/Open Notebook.onetoc2  images 1  windows 1  chunks 5  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/sections.libreoffice.doc  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/OneNote_RecycleBin/OneNote_DeletedPages.one  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/OneNote_RecycleBin/Open Notebook.onetoc2  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/Open Notebook.onetoc2  images 2  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/handwriting_recognition.one  images 2  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/simple-table.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/real/basic_test_ppt_file.ppt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 1 2.one  images 2  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/onenote/large/Large Desktop.one  images 999  windows 0  chunks 4551  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 2.one  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/tables.libreoffice.doc  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/slides.libreoffice.ppt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/non-legacy/New Section 3.one  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/large/Large OneDrive.one  images 999  windows 0  chunks 4551  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/sources.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/object-revision/Open Notebook.onetoc2  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/onenote/sections.json  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/onenote/onenote-rs/non-legacy/Open Notebook.onetoc2  images 2  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/pdf/born-digital/mgrs-field-report.pdf  images 3  windows 0  chunks 11  failures 0  1.825s
+/home/jaime/docs/pdf/born-digital/speech.pdf  images 2  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/onenote/sources.json  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/pdf/edge/attachments/file-attachment.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/attachments/file-attachment-annotation.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/born-digital/text-0.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/encryption-nocopy.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/encryption-openpassword.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/simple-open-password.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/attachments/embedded-video-avi.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/unicode-passwords-corrigendum5.md  images 0  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/unicode-password-corrigendum5.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/unicode-passwords.README.md  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/pdf/edge/forms/isartor-interactive-form.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/forms/pdfa2b-interactive-form-pass.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/born-digital/vortex-150-mini-manual.pdf  images 17  windows 0  chunks 44  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/encryption-notextaccess.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings21-4330115.mp3  images 0  windows 96  chunks 25  failures 0  1.825s
+/home/jaime/docs/pdf/born-digital/dodm-5200-01.pdf  images 111  windows 0  chunks 431  failures 0  1.825s
+/home/jaime/docs/pdf/edge/encrypted/unicode-password-baseline.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/rtf/lists.libreoffice.rtf  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/header-no-version-info.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/fonts/no-fonts-embedded.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/no-document-catalog.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/corruption-one-byte-missing.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/media.libreoffice.doc  images 4  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/office/legacy/generated/slide-objects.libreoffice.ppt  images 2  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/rtf/tables.libreoffice.rtf  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/rtf/test-rtf.rtf  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/office/rtf/lorem-ipsum-calibre.rtf  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/dialect-dict-is-stream.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/safedocs.LICENSE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/safedocs.NOTICE  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/compacted-syntax.pdf  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/no-page-contents.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/javascript.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/dual-startxref.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/verapdf.README.md  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.truth.xml  images 0  windows 0  chunks 2766  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-bg.html  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/malformed/utf16le-test.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/pdfa/pdfa1b-filters-fail.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-el.html  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/pdfa/embedded-lucinda-sans-pdfa-1a.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-en.html  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-pl.html  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/edge/pdfa/pdfa3b-embedded-files-fail.pdf  images 1  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/edge/tagged/pdfua1-annotations-pass.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/edge/tagged/pdfua1-text-pass.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/README.md  images 0  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-1.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-2.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-3.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-4.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-5.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean/page-6.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/edge/pdfa/pdfa3b-embedded-files-pass.pdf  images 1  windows 1  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/large/cfr-2024-title32-vol1.pdf  images 915  windows 0  chunks 6668  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/multilang-rtl.pdf  images 2  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/onenote/large/LargeData.one  images 0  windows 0  chunks 15  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean.typ  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-1.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-2.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-3.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-4.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-5.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-6.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-7.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-8.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded/page-9.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/edge/signed/digitally-signed-3d-portfolio.pdf  images 9  windows 0  chunks 44  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/generate.sh  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/clean.pdf  images 6  windows 0  chunks 13  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-en.pdf  images 4  windows 0  chunks 29  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-el.pdf  images 4  windows 0  chunks 34  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-pl.pdf  images 4  windows 0  chunks 30  failures 0  1.825s
+/home/jaime/docs/pdf/multilang/eurlex-32011D0833/decision-2011-833-bg.pdf  images 4  windows 0  chunks 34  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/degraded.pdf  images 9  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-013a3686ef75b4150c07d3ebc510ca2455d6_page_6_pg1.pdf  images 1  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0925342e1efabb7957efa34203f65d3cbc4d_page_6_pg1.pdf  images 1  windows 0  chunks 11  failures 0  1.825s
+/home/jaime/docs/office/realworld/xlsx/with-drawing.xlsx  images 5  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0a2b678b6c6825364a5a18154dd59064922e_page_8_pg1.pdf  images 1  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/office/realworld/docx/word-with-attachments.docx  images 5  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column.truth.jsonl  images 0  windows 0  chunks 11  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-09f90a8fad0997f7cf454cbcbe79cab3bc0f_page_1_pg1.pdf  images 1  windows 0  chunks 102  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0b128decb905a38700baf486672b8634c308_page_4_pg1.pdf  images 1  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/multi_column-0e5f0c3447c4f1335b330d58b5e14d6f15b1_page_8_pg1.pdf  images 1  windows 0  chunks 9  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-17.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-15.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-31.pdf  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans.truth.jsonl  images 0  windows 0  chunks 23  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/table_tests.truth.jsonl  images 0  windows 0  chunks 22  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-30.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-033c1efd2c0e15b829f9e9164f0e7bc1fecf_pg5_pg1.pdf  images 1  windows 0  chunks 9  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-63.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-5.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-4.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-26076dc369efd78b3087643cc7153509bd18_pg3_pg1.pdf  images 1  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-1.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-2.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-3.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-4.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-5.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-6.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned/page-7.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-0953927d7a3f032c46a2e6d0ead837398a0b_pg20.pdf  images 1  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/report.md  images 0  windows 0  chunks 28  failures 0  1.825s
+/home/jaime/docs/text/csv/employees.csv  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-4c77cbf4de004721c9da33c7f3843716c9a6_pg4_pg1.pdf  images 1  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/text/csv/large-100k-rows.csv  images 0  windows 0  chunks 3652  failures 0  1.825s
+/home/jaime/docs/text/csv/semicolon-decimal-comma.csv  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/csv/sample-data.csv  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/csv/server-inventory.csv  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/csv/tab-separated.tsv  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/text/encodings/crlf-windows-1252.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/encodings.truth.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/text/encodings/euc-jp.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/iso-8859-1.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/koi8-r.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/shift-jis.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/utf16be-nobom.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/utf16le-bom.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/utf8-bom.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/utf8-nobom.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/windows-1252.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/encodings/windows-1256-arabic.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/epub/lorem-ipsum.epub  images 1  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/text/json/config.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/json/deeply-nested-64.json  images 0  windows 0  chunks 14  failures 0  1.825s
+/home/jaime/docs/text/json/incident-reports.json  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/text/json/malformed-trailing-comma.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/json/records.ndjson  images 0  windows 0  chunks 112  failures 0  1.825s
+/home/jaime/docs/text/json/sample-data.json  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/markdown/swarm-capstone.md  images 0  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/text/txt/entity-extraction.txt  images 0  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/text/txt/geopoints.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/txt/meeting-notes.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/txt/product-catalog.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/txt/ssh-session-log.txt  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/text/txt/text-0.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/xml/billion-laughs-small.xml  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/text/xml/catalog.xml  images 0  windows 0  chunks 25  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-c8c858692b4b469c2af1fc55edcf6292f6ed_pg4_pg1.pdf  images 1  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002a/ami-es2002a-overhead.avi  images 125  windows 0  chunks 126  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-closeup1.avi  images 269  windows 0  chunks 270  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-corner.avi  images 269  windows 0  chunks 270  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/scanned.pdf  images 7  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-64.pdf  images 1  windows 0  chunks 5  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/tables-fa18a15c1dbbfcb71b1f1ea1b8f116e24b8a_pg2_pg1.pdf  images 1  windows 0  chunks 15  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.A.segments.xml  images 0  windows 0  chunks 19  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.A.words.xml  images 0  windows 0  chunks 107  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.B.segments.xml  images 0  windows 0  chunks 31  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.B.words.xml  images 0  windows 0  chunks 124  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.C.segments.xml  images 0  windows 0  chunks 36  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.C.words.xml  images 0  windows 0  chunks 139  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.D.segments.xml  images 0  windows 0  chunks 11  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-truth/ES2002d.D.words.xml  images 0  windows 0  chunks 36  failures 0  1.825s
+/home/jaime/docs/video/nasa-epps-interviews/nasa-epps-interviews-640x360.mp4  images 117  windows 45  chunks 129  failures 0  1.825s
+/home/jaime/docs/video/nasa-epps-interviews/nasa-epps-interviews.srt  images 0  windows 0  chunks 21  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-46.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/video/nasa-iss-inflight-pittsburgh/nasa-iss-inflight-pittsburgh.srt  images 0  windows 0  chunks 19  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/real/stella-maberly-1896-ia-scan.pdf  images 250  windows 0  chunks 497  failures 0  1.825s
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-divx.avi  images 138  windows 21  chunks 146  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-69.pdf  images 1  windows 0  chunks 6  failures 0  1.825s
+/home/jaime/docs/video/nasa-iss-inflight-pittsburgh/nasa-iss-inflight-pittsburgh-640x360.mp4  images 156  windows 62  chunks 166  failures 0  1.825s
+/home/jaime/docs/pdf/edge/pdfa/balloon-a1b-jp2k.pdf  images 1  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-mpeg2.mpeg  images 0  windows 0  chunks 1  failures 0  1.825s
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover.asr.srt  images 0  windows 0  chunks 7  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/copyright.txt  images 0  windows 0  chunks 2  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-clip-180s-480p-subs.mkv  images 35  windows 7  chunks 37  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-clip-180s-480p.mp4  images 35  windows 7  chunks 37  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-71.pdf  images 1  windows 0  chunks 8  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-clip-30s-360p.webm  images 7  windows 1  chunks 9  failures 0  1.825s
+/home/jaime/docs/pdf/scanned/olmocr-bench/old_scans-70.pdf  images 1  windows 0  chunks 10  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-en.srt  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-he.srt  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-jp.srt  images 0  windows 0  chunks 3  failures 0  1.825s
+/home/jaime/docs/video/tears-of-steel/tos-ru.srt  images 0  windows 0  chunks 4  failures 0  1.825s
+/home/jaime/docs/video/ami-es2002d/ami-es2002d-mix-headset.wav  images 0  windows 107  chunks 21  failures 0  1.825s
+/home/jaime/docs/video/prelinger-duck-and-cover/duck-and-cover-theora.ogv  images 0  windows 23  chunks 6  failures 0  1.825s
+/home/jaime/docs/audio/long/earnings22-4479944.mp3  images 0  windows 156  chunks 36  failures 0  1.825s
+/home/jaime/docs/audio/long/librivox-stella-maberly.m4b  images 0  windows 645  chunks 109  failures 0  1.825s
+warning: vision: incomplete text of image outputs/507d070512077153643449ade1397787883600a1f55cce68220bbe5548697a3b/document-922742d65749/3.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a232484913948488aa39030416451b45bf5b68618b93213c8d495b0649769600/document-922742d65749/2.png: max_output_tokens
+warning: vision: incomplete text of image outputs/663ada5e6a5c21fe5cf275d20ec1530df280ee86311eaa2a1583afe68a36dd8c/document-922742d65749/2.png: max_output_tokens
+warning: vision: incomplete text of image outputs/b006f56a88a339fc2b3b5b064ea20dc0dbc82ba2c6f89c5f40eae18cccbd91f0/document-922742d65749/1.png: max_output_tokens
+warning: vision: incomplete text of image outputs/f81700c42a2ea1fb76edb0ea9bece15764ad30f1956df5355aef06dc69636d26/document-922742d65749/1.png: max_output_tokens
+warning: vision: incomplete text of image outputs/f6cdea86394ed659f5511eb1dfeaaf0cad3aea47dd0f690264b288e7d3a4c5aa/document-922742d65749/66.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/2.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a1946ff2e79347cc55adf80a0b0618e071d45d36ed367c7ddd979bdb3560e660/document-922742d65749/150.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/12.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/24.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/36.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/40.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/42.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/46.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/50.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/56.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/60.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/66.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/68.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/76.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/78.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/80.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/84.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/90.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/106.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/114.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/124.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/132.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/140.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/144.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/156.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/160.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/164.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/166.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/168.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/176.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/182.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/194.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/196.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/206.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/217.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/219.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/223.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/231.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/235.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/261.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/263.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/267.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/271.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/275.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/281.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/291.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/293.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/299.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/303.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/305.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/315.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/319.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/321.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/327.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/337.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/347.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/357.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/359.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/367.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/371.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/373.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/377.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/385.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/395.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/407.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/427.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/437.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/441.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/443.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/455.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/457.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/465.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/470.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/482.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/486.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/490.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/492.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/496.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/500.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/508.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/518.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a1946ff2e79347cc55adf80a0b0618e071d45d36ed367c7ddd979bdb3560e660/document-922742d65749/936.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/526.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/530.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/540.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/546.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a1946ff2e79347cc55adf80a0b0618e071d45d36ed367c7ddd979bdb3560e660/document-922742d65749/974.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/550.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/562.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/564.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/568.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/572.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/586.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/606.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/614.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/618.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/620.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/630.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/636.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/638.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/646.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/658.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/666.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/676.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/680.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/682.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/688.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/692.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/700.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/706.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/712.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/714.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/718.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/722.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/734.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/738.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/742.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/746.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/750.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/754.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/756.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/758.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/764.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/768.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/771.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/773.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/777.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/781.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/783.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/789.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/817.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/821.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/841.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/849.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/853.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/857.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/863.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/867.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/885.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/889.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/893.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/897.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/901.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/905.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/911.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/921.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/925.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/931.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/934.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/958.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a1946ff2e79347cc55adf80a0b0618e071d45d36ed367c7ddd979bdb3560e660/document-922742d65749/1626.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/966.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/974.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/978.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/982.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/984.png: max_output_tokens
+warning: vision: incomplete text of image outputs/a1946ff2e79347cc55adf80a0b0618e071d45d36ed367c7ddd979bdb3560e660/document-922742d65749/1662.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/988.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1002.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1004.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1006.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1013.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1019.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1025.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1029.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1048.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1052.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1066.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1078.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1084.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1090.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1094.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1098.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1100.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1102.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1108.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1116.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1118.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1122.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1124.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1132.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1141.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1145.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1149.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1159.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1165.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1173.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1181.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1185.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1187.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1193.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1207.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1217.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1219.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1237.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1239.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1245.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1255.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1257.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1261.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1273.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1277.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1283.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1287.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1305.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1319.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1323.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1327.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1334.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1338.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1342.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1350.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1352.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1356.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1362.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1364.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1374.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1380.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1382.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1384.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1386.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1392.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1395.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1399.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1401.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1405.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1413.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1417.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1438.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1440.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1442.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1453.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1459.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1469.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1473.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1475.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1485.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1491.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1495.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1499.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1501.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1507.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1521.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1525.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1533.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1539.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1545.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1547.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1557.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1563.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1579.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1583.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1585.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1601.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1605.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1631.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1641.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1647.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1651.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1659.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1661.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1665.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1675.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1677.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1681.png: max_output_tokens
+warning: vision: incomplete text of image outputs/234c2fe0a0fa4c033cbdd92d60dc57a1ac486c84257ba03c02e65619d925d988/document-922742d65749/1683.png: max_output_tokens
+vision: images 4701, distinct 3470: held 3470, described 0, incomplete 272 (empty 0), refused 0; requests 0
+transcription: windows 1259, distinct 1254: held 1254, transcribed 0, failed 0; requests 0; transcripts 51: seams matched 1075, unmatched 133
+embeddings: texts 4259, metadata 592, chunks 23165: held 23165, embedded 0, rejected 0; requests 0
+
+CAPABILITY     REQUESTS  FAILURES
+vision         0         0
+transcription  0         0
+embeddings     0         0
+
+docinfer run 01a1ba9f-443d-77f3-a010-1460884c935d: lines 28937: runs/01a1ba9f-443d-77f3-a010-1460884c935d/chunks.jsonl
+report runs/01a1ba9f-443d-77f3-a010-1460884c935d/report.html

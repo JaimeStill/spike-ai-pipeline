@@ -1,0 +1,80 @@
+{
+  "schema": "1",
+  "run": "01a1b847-cbc9-7d7c-86a4-a15f773a6f26",
+  "start": "2026-11-07T23:11:15.401655798Z",
+  "end": "2026-11-08T03:24:22.483718276Z",
+  "docproc": {
+    "dir": "/home/jaime/docinfer-finding/docproc",
+    "run": "01a1b82d-54aa-73a2-81db-67577e9cb5da"
+  },
+  "capabilities": [
+    {
+      "name": "vision",
+      "endpoint": "gb10-2",
+      "base_url": "http://gb10-2:8080/v1",
+      "model": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf:Q4_0",
+      "settings": {
+        "concurrency": 4,
+        "max_tokens": 2048,
+        "prompt": "Transcribe the text in this picture. If it has no text, describe it in one sentence."
+      }
+    },
+    {
+      "name": "transcription",
+      "endpoint": "gb10-2",
+      "base_url": "http://gb10-2:8080/v1",
+      "model": "ggml-org/gemma-4-E4B-it-GGUF:Q8_0",
+      "settings": {
+        "concurrency": 4,
+        "language": "",
+        "prompt": ""
+      }
+    },
+    {
+      "name": "embeddings",
+      "endpoint": "gb10-2",
+      "base_url": "http://gb10-2:8080/v1",
+      "model": "mrutkows/granite-embedding-english-r2-GGUF:BF16",
+      "settings": {
+        "batch": 16,
+        "chunk_size": 2000,
+        "concurrency": 4
+      }
+    }
+  ],
+  "counts": {
+    "outputs": 11116,
+    "texts": 0,
+    "metadata": 0,
+    "chunks": 0,
+    "lines": 0,
+    "held": 0,
+    "embedded": 0,
+    "rejected": 0,
+    "requests": 0,
+    "images": 4701,
+    "vision": {
+      "images": 3470,
+      "held": 0,
+      "described": 2094,
+      "incomplete": 0,
+      "refused": 0,
+      "requests": 2099,
+      "texts": 0
+    },
+    "windows": 0,
+    "tokens": {
+      "vision": {
+        "input": 973375,
+        "output": 1997332,
+        "total": 2970707
+      },
+      "embeddings": {
+        "input": 0,
+        "output": 0,
+        "total": 0
+      }
+    }
+  },
+  "error": "vision: terminated signal received"
+}

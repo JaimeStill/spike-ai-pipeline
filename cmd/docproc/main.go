@@ -1,5 +1,5 @@
 // Command docproc runs processing's stages over a set of inputs. Its main derives the signal
-// context and makes one call into the composition root, internal/app.
+// context and makes one call into the composition root, internal/docproc/app.
 package main
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/standards-lab/go-cli-sdk"
 	"github.com/standards-lab/go-core/process"
 
-	"github.com/JaimeStill/spike-ai-pipeline/internal/app"
+	"github.com/JaimeStill/spike-ai-pipeline/internal/docproc/app"
 )
 
 func main() {

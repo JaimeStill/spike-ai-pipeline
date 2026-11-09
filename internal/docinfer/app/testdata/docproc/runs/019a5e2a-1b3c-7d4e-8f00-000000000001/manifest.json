@@ -1,0 +1,68 @@
+{
+  "schema": "1",
+  "run": "019a5e2a-1b3c-7d4e-8f00-000000000001",
+  "start": "2026-11-07T10:00:00.000000000Z",
+  "end": "2026-11-07T10:01:00.000000000Z",
+  "workers": 1,
+  "inputs": [
+    "/srv/inputs/hello.txt"
+  ],
+  "record": "runs/019a5e2a-1b3c-7d4e-8f00-000000000001/record.jsonl",
+  "tools": [],
+  "stages": [
+    {
+      "route": "document",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "office",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "vision-converted",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "vision",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "nested",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "onenote",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "archive",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "audio",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "video",
+      "state": "missing",
+      "reason": "the fixture wires no stage for it"
+    },
+    {
+      "route": "text",
+      "state": "wired",
+      "stage": {
+        "name": "text",
+        "version": "text 1",
+        "config": "c0ffee000001"
+      }
+    }
+  ]
+}

@@ -1,4 +1,6 @@
-# Project kind: this repository holds the spike's record, its host scripts, and the consumer check over the layers; later, the capstone. Checked by `mise run check`. Its goals live in the coordinator's roadmap
+# Project kind: this repository holds the spike's record, its host scripts, the consumer check
+# over the layers, and the docproc and docinfer CLIs. The capstone is planned for a repository of
+# its own. Checked by `mise run check`. Its goals live in the coordinator's roadmap
 # (standards-lab/context/roadmap.toml), under experiment.ai.spike-ai-pipeline.
 # `mise run currency` reports every Go requirement, the go directive, and every mise tool behind
 # its latest. No gate.
