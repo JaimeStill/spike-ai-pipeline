@@ -127,17 +127,17 @@ only by tests. docinfer ran 3,470 images, 1,254 audio windows, and 28,937 chunk 
 through it in 21,634 s, 0 of 6,172 requests failed. Proven by the client's integration tier
 (b11669) and a running demo, docinfer over ~/docs (b12098, 2026-11-08).
 
-**2.** Anthropic Messages and Open Responses fit under Chat Completions' request and response
-model with no change to callers; the router drops some hints: `/v1/messages` reasoning effort,
-structured output's schema, `strict`, and the `none` tool choice; `/v1/responses` `text`. Proven only by tests: the client's
-integration tier (b11669, 2026-10-27 and 2026-10-28).
+**2.** Anthropic Messages and Open Responses fit under Chat Completions' request and response model
+with no change to callers; the router drops some hints: `/v1/messages` reasoning effort, structured
+output's schema, `strict`, and the `none` tool choice; `/v1/responses` `text`. Proven only by tests:
+the client's integration tier (b11669, 2026-10-27 and 2026-10-28).
 
 **3.** The client's base module is standard library only. Proven only by the check: a strict
 depguard rule over every Go file.
 
 **4.** A PDF's pages go through vision whole and as a page stream; Ghostscript wins the renderer
-bake-off (0.126 s a page, 27 MiB of memory), run as a separate program since it is AGPL, and the model
-reads with reasoning off; page 7's NOFORN marking is read on no build. Proven only by tests:
+bake-off (0.126 s a page, 27 MiB of memory), run as a separate program since it is AGPL, and the
+model reads with reasoning off; page 7's NOFORN marking is read on no build. Proven only by tests:
 processing's integration and bake-off tiers (b11669, 2026-10-29 and 2026-10-30).
 
 **5.** Mixed: long audio cut at silences and transcribed in windows is 2.6 to 3.4 times faster
