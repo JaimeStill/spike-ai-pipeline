@@ -46,10 +46,12 @@ const embeddings = "embeddings"
 // and its manifest again, with its end, its embedding space, its transcripts, its failures, and
 // its counts, and then its report, internal/docinfer/report's page. Vision and transcription run
 // one after the other, and both before any text is embedded, so the embeddings are sent in one
-// pass, as the embedder takes them. Each input's terminal line, progress's, is written as its
-// work ends; then the warnings, each capability's counts, the closing summary, the chunk record's
-// path, and the report's, each relative to j.out, as docproc prints its record's. A run that stops writes its manifest with its end and the error that
-// stopped it, no chunk record, and its report; the results it stored are held for the next run.
+// pass, as the embedder takes them. Each phase's line, as it begins, and each request's, as it
+// completes, are progress's, as is each input's terminal line, written as its work ends; then the
+// warnings, each capability's counts, the closing summary, the chunk record's path, and the
+// report's, each relative to j.out, as docproc prints its record's. A run that stops writes its
+// manifest with its end and the error that stopped it, no chunk record, and its report; the
+// results it stored are held for the next run.
 func execute(ctx context.Context, w io.Writer, j job) error {
 	start := time.Now()
 	if _, err := fmt.Fprintf(w, "docproc run %s: outputs %d: %s\n", j.run.Manifest.Run, len(j.run.Outputs), j.run.Counts()); err != nil {
@@ -95,10 +97,10 @@ func execute(ctx context.Context, w io.Writer, j job) error {
 	occs, err := occurrences(j.run)
 	p := newProgress(w, start, j.run, occs)
 	if err == nil {
-		occs, warnings, err = visionTexts(ctx, j, dir, &m, occs)
+		occs, warnings, err = visionTexts(ctx, j, dir, &m, occs, p)
 	}
 	if err == nil {
-		occs, failed, err = transcriptionTexts(ctx, j, dir, &m, occs)
+		occs, failed, err = transcriptionTexts(ctx, j, dir, &m, occs, p)
 		warnings = append(warnings, failed...)
 	}
 	if err == nil {
@@ -280,6 +282,9 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 		}
 	}
 	waiters := p.waiters()
+	if err := p.phase(embeddings, "chunks", m.Counts.Chunks, len(pending), m.Counts.Held); err != nil {
+		return nil, nil, err
+	}
 	if err := p.idle(); err != nil {
 		return nil, nil, err
 	}
@@ -291,6 +296,11 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 		}
 		e := embed.Embedder{Client: cl, Model: emb.Model, Batch: *emb.Batch, Concurrency: *emb.Concurrency}
 		var usage client.EmbeddingUsage
+		// The request whose results are being taken: how many chunks it carried, how many it had
+		// rejected, and the inputs waiting for them, each once, in the order first seen.
+		answered, carried, refused := 0, 0, 0
+		var inputs []string
+		seen := map[string]bool{}
 		m.Counts.Requests, usage, err = e.Run(ctx, pending, func(i int, r embed.Result) error {
 			s := pendingSums[i]
 			held := &outdir.Embedding{Model: emb.Model, Settings: settings, Content: s}
@@ -308,7 +318,26 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 					return err
 				}
 			}
-			return p.embedded(waiters[s], s, r.Rejected != nil)
+			p.embedded(waiters[s], s, r.Rejected != nil)
+			answered, carried = answered+1, carried+1
+			if r.Rejected != nil {
+				refused++
+			}
+			for _, in := range waiters[s] {
+				if !seen[in] {
+					seen[in] = true
+					inputs = append(inputs, in)
+				}
+			}
+			if !r.Last {
+				return nil
+			}
+			if err := p.request(embeddings, answered, len(pending), batchNames(inputs, carried), batchOutcome(refused), r.Took); err != nil {
+				return err
+			}
+			carried, refused, inputs = 0, 0, nil
+			clear(seen)
+			return p.flush()
 		})
 		m.Counts.Tokens.Embeddings = outdir.Usage{Input: usage.PromptTokens, Total: usage.TotalTokens}
 		if err != nil {
@@ -343,6 +372,29 @@ func embedTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest,
 	}
 	m.Counts.Lines = len(lines)
 	return lines, rejected, nil
+}
+
+// batchNames names an embeddings request's chunks for its progress line: the first input waiting
+// for them, how many inputs wait, when more than one, and how many chunks the request carried.
+func batchNames(inputs []string, chunks int) []string {
+	var names []string
+	if len(inputs) > 0 {
+		names = append(names, inputs[0])
+	}
+	if len(inputs) > 1 {
+		names = append(names, fmt.Sprintf("inputs %d", len(inputs)))
+	}
+	return append(names, fmt.Sprintf("chunks %d", chunks))
+}
+
+// batchOutcome returns an embeddings request's outcome as its progress line gives it: rejected,
+// as the run's warnings name a chunk the endpoint rejected, when it had refused of its chunks
+// rejected, which only a request of one chunk has, or ok.
+func batchOutcome(refused int) string {
+	if refused > 0 {
+		return "rejected"
+	}
+	return "ok"
 }
 
 // describe names o's source for the terminal: its output's ref, its input's metadata, the

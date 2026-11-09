@@ -356,8 +356,33 @@ docinfer exits with one of three codes:
 ### Terminal output
 
 docinfer first prints the models table, `CAPABILITY ENDPOINT MODEL STATE`, and its warnings, then
-the docproc run it read, `docproc run <id>: outputs <n>: <counts by kind>`. As each input's work
-ends, it prints one line for it:
+the docproc run it read, `docproc run <id>: outputs <n>: <counts by kind>`. As each capability's
+phase begins, vision, then transcription, then embeddings, it prints how many distinct images,
+windows, or chunks the phase has, and how many it sends and how many earlier runs hold:
+
+```
+<capability>: distinct <images|windows|chunks> <n>: to send <n>, held <n>
+<capability>: distinct <images|windows|chunks> <n>: held <n>, nothing to send
+```
+
+A phase with nothing at all prints no such line, and an unconfigured one none either. Then, as
+each request completes, one line for it:
+
+```
+vision <done>/<to send>  <path>  <output ref>  ok|incomplete|empty|refused  <time>
+transcription <done>/<to send>  <path>  <output ref>  ok|failed  <time>
+embeddings <done>/<to send>  <path>[  inputs <n>]  chunks <n>  ok|rejected  <time>
+```
+
+`<done>` counts the images, windows, or chunks answered so far, rising to the phase's `to send`;
+an embeddings request counts each chunk it carried. Vision and transcription name the input and
+output ref the image or window was first seen under; embeddings names the first input waiting for
+the request's chunks and, when more than one waits, how many. `empty` is an incomplete reply with
+no text. `<time>` is the request's own, from its sending to its reply. A held result sends no
+request and prints no line, so a re-run prints only the phase lines.
+
+As each input's work ends, it prints one line for it, after the line of the request that ended
+it:
 
 ```
 <path>  images <n>  windows <n>  chunks <n>  failures <n>  <time>

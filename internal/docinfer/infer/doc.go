@@ -49,6 +49,14 @@
 // requests took, as the replies report them, and its failures, each image or window output line
 // whose image or window the endpoint refused, which have no chunk line.
 //
+// As each capability's phase begins, the terminal prints how many distinct images, windows, or
+// chunks it has, how many it sends, and how many earlier runs hold, and, as each request
+// completes, its line: the capability, how many of the phase's items to send are answered, the
+// input and output ref the image or window was first seen under, or the first input an
+// embeddings request's chunks belong to, how many inputs, and how many chunks, the outcome, and
+// how long the request took. A held result sends no request and prints no line, so a re-run
+// prints only the phase lines.
+//
 // As each input's work ends, the terminal prints its line: its path, its image and audio window
 // output lines, its chunk lines, its failures, refused images and windows and rejected chunks,
 // and how long after the run began its work ended. The capabilities run one after another over

@@ -26,11 +26,11 @@ func transcriptionSettings(t *config.Transcription) string {
 	return fmt.Sprintf("language=%q\nprompt=%q", t.Language, t.Prompt)
 }
 
-// window is one distinct audio window, by content: the ref it was first seen under, and its
-// result.
+// window is one distinct audio window, by content: the input and ref it was first seen under,
+// and its result.
 type window struct {
-	ref    string
-	result *outdir.Transcription
+	input, ref string
+	result     *outdir.Transcription
 }
 
 // transcriptionTexts makes the transcript of each part's audio windows in occs, counting the
@@ -55,7 +55,10 @@ type window struct {
 // to cut. The joined text is stored whole in dir, the same text the same file, and recorded in
 // m's transcripts with how each seam was merged. Joining reads only held and stored texts, so it
 // runs again, unchanged, on every run.
-func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence) ([]occurrence, []string, error) {
+//
+// It writes the phase's progress lines to p: the windows it sends and holds as it begins, and
+// each request's line as it completes, naming the input and ref the window was first seen under.
+func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence, p *progress) ([]occurrence, []string, error) {
 	for _, o := range occs {
 		if o.audio != "" {
 			m.Counts.Windows++
@@ -95,7 +98,7 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 		if windows[s] != nil {
 			continue
 		}
-		w := &window{ref: o.output.Ref}
+		w := &window{input: o.input, ref: o.output.Ref}
 		windows[s], order = w, append(order, s)
 		var held outdir.Transcription
 		ok, err := dir.Held(transcriptionName, outdir.Key(transcriptionName, t.Model, settings, s), &held)
@@ -110,6 +113,9 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 		pending, pendingSums = append(pending, o.audio), append(pendingSums, s)
 	}
 	tc.Distinct = len(windows)
+	if err := p.phase(transcriptionName, "windows", tc.Distinct, len(pending), tc.Held); err != nil {
+		return nil, nil, err
+	}
 
 	if len(pending) > 0 {
 		cl, err := j.cfg.Endpoints[t.Endpoint].Client(j.http)
@@ -117,10 +123,20 @@ func transcriptionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.M
 			return nil, nil, err
 		}
 		tr := transcribe.Transcriber{Client: cl, Model: t.Model, Prompt: t.Prompt, Language: t.Language, Concurrency: *t.Concurrency}
+		answered := 0
 		tc.Requests, err = tr.Run(ctx, pending, func(i int, r transcribe.Result) error {
 			s := pendingSums[i]
+			w := windows[s]
+			answered++
+			outcome := "ok"
+			if r.Rejected != nil {
+				outcome = "failed" // as the run's warning and summary name a refused window
+			}
+			if err := p.request(transcriptionName, answered, len(pending), []string{w.input, w.ref}, outcome, r.Took); err != nil {
+				return err
+			}
 			held := &outdir.Transcription{Model: t.Model, Settings: settings, Content: s}
-			windows[s].result = held
+			w.result = held
 			if r.Rejected != nil {
 				held.Error = r.Rejected.Error()
 				if !verdict(r.Rejected) {

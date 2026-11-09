@@ -3,6 +3,7 @@ package infer
 import (
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/JaimeStill/spike-ai-pipeline/internal/docinfer/outdir"
@@ -19,11 +20,17 @@ import (
 // its failures, its output lines whose image or window was refused and its chunk lines whose
 // chunk was rejected, and its time: how long after the run began its work ended, since an input's
 // work is spread over the run's phases, each over every input, and has no start of its own.
+//
+// It writes the run's progress lines too: as each capability's phase begins, how many distinct
+// images, windows, or chunks it has and how many of them it sends and how many earlier runs hold;
+// and as each request completes, its line. A held result sends no request and has no line, so a
+// re-run's terminal stays short.
 type progress struct {
 	w     io.Writer
 	start time.Time
 	order []string // the inputs, in the order of their first line in the record
 	tally map[string]*inputTally
+	ended []string // the inputs whose work ended with the request whose results are being taken
 }
 
 // inputTally is one input's line, as its work goes: what it counts, and the chunks, by SHA-256,
@@ -100,8 +107,9 @@ func (p *progress) waiters() map[string][]string {
 }
 
 // embedded marks the chunk s embedded, or rejected, for each input waiting for it, inputs, and
-// writes the line of each whose work that ends.
-func (p *progress) embedded(inputs []string, s string, rejected bool) error {
+// keeps each whose work that ends for flush, so the line of the request that carried s comes
+// before the input lines it ends.
+func (p *progress) embedded(inputs []string, s string, rejected bool) {
 	for _, in := range inputs {
 		t := p.tally[in]
 		if rejected {
@@ -109,12 +117,45 @@ func (p *progress) embedded(inputs []string, s string, rejected bool) error {
 		}
 		delete(t.waiting, s)
 		if len(t.waiting) == 0 {
-			if err := p.end(in); err != nil {
-				return err
-			}
+			p.ended = append(p.ended, in)
+		}
+	}
+}
+
+// flush writes the line of each input embedded kept, in the order its work ended.
+func (p *progress) flush() error {
+	ended := p.ended
+	p.ended = nil
+	for _, in := range ended {
+		if err := p.end(in); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// phase writes the line that begins capability's phase: its distinct items, what, n of them, the
+// number it sends, send, and the number earlier runs hold, held. A phase with no item writes
+// none.
+func (p *progress) phase(capability, what string, n, send, held int) error {
+	if n == 0 {
+		return nil
+	}
+	sending := fmt.Sprintf("to send %d, held %d", send, held)
+	if send == 0 {
+		sending = fmt.Sprintf("held %d, nothing to send", held)
+	}
+	_, err := fmt.Fprintf(p.w, "%s: distinct %s %d: %s\n", capability, what, n, sending)
+	return err
+}
+
+// request writes the line of one of capability's requests, as it completes: done of the phase's
+// total items to send, now with an answer, the request's; what names the request's items, an
+// input's path and, where it helps, an output's ref; and its outcome, and how long it took.
+func (p *progress) request(capability string, done, total int, what []string, outcome string, took time.Duration) error {
+	_, err := fmt.Fprintf(p.w, "%s %d/%d  %s  %s  %s\n",
+		capability, done, total, strings.Join(what, "  "), outcome, took.Round(time.Millisecond))
+	return err
 }
 
 // idle writes the line of each input, in the order of its first line, that waits for no chunk.

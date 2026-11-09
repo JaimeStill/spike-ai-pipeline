@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/JaimeStill/spike-ai-pipeline-client"
 	"github.com/JaimeStill/spike-ai-pipeline-client/protocol"
@@ -34,12 +35,14 @@ type Image struct {
 // Result is one image's reply: its Text, and, when the model stopped before finishing,
 // Incomplete, the reason the response gives, such as "max_output_tokens", and Usage, the tokens
 // the response says the request took; or, when the endpoint refused the image, Rejected, the
-// endpoint's reply, with no Usage.
+// endpoint's reply, with no Usage. Took is how long the request took, from its sending to its
+// reply, refused or not.
 type Result struct {
 	Text       string
 	Incomplete string
 	Usage      protocol.Usage
 	Rejected   *client.APIError
+	Took       time.Duration
 }
 
 // Run sends images, in their order, one a request, keeping at most Concurrency requests in
@@ -107,15 +110,17 @@ func (d Describer) describe(ctx context.Context, img Image) (Result, bool, error
 		MaxOutputTokens: d.MaxTokens,
 		Reasoning:       protocol.ReasoningParam{Effort: d.Reasoning},
 	}
+	sent := time.Now()
 	resp, err := d.Client.Generate(ctx, req)
+	took := time.Since(sent)
 	var rejected *client.APIError
 	switch {
 	case errors.As(err, &rejected):
-		return Result{Rejected: rejected}, true, nil
+		return Result{Rejected: rejected, Took: took}, true, nil
 	case err != nil:
 		return Result{}, true, err
 	}
-	r := Result{Text: text(resp), Usage: resp.Usage}
+	r := Result{Text: text(resp), Usage: resp.Usage, Took: took}
 	if resp.Status == protocol.StatusIncomplete {
 		r.Incomplete = "incomplete"
 		if resp.IncompleteDetails != nil && resp.IncompleteDetails.Reason != "" {

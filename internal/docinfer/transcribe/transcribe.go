@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/JaimeStill/spike-ai-pipeline-client"
 )
@@ -21,11 +22,13 @@ type Transcriber struct {
 }
 
 // Result is one window's reply: its Text and Usage, the tokens the reply says the request took,
-// or, when the endpoint refused the window, Rejected, the endpoint's reply, with no Usage.
+// or, when the endpoint refused the window, Rejected, the endpoint's reply, with no Usage. Took
+// is how long the request took, from its sending to its reply, refused or not.
 type Result struct {
 	Text     string
 	Usage    client.TranscriptionUsage
 	Rejected *client.APIError
+	Took     time.Duration
 }
 
 // Run sends windows, each the path of an audio file, in their order, one a request, keeping at
@@ -86,15 +89,17 @@ func (t Transcriber) transcribe(ctx context.Context, path string) (Result, bool,
 		return Result{}, false, err
 	}
 	defer func() { _ = f.Close() }() // read only: a close error loses nothing
+	sent := time.Now()
 	reply, err := t.Client.Transcribe(ctx, &client.TranscriptionRequest{
 		Model: t.Model, File: f, FileName: filepath.Base(path), Prompt: t.Prompt, Language: t.Language,
 	})
+	took := time.Since(sent)
 	var rejected *client.APIError
 	switch {
 	case errors.As(err, &rejected):
-		return Result{Rejected: rejected}, true, nil
+		return Result{Rejected: rejected, Took: took}, true, nil
 	case err != nil:
 		return Result{}, true, err
 	}
-	return Result{Text: reply.Text, Usage: reply.Usage}, true, nil
+	return Result{Text: reply.Text, Usage: reply.Usage, Took: took}, true, nil
 }

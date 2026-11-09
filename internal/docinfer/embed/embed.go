@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/JaimeStill/spike-ai-pipeline-client"
 )
@@ -18,10 +19,15 @@ type Embedder struct {
 }
 
 // Result is one text's embedding: its Vector, as the endpoint returned it, or, when the endpoint
-// rejected the text, Rejected, the endpoint's reply.
+// rejected the text, Rejected, the endpoint's reply. Took is how long the request that carried
+// the text took, from its sending to its reply, and Last whether the text is that request's last:
+// done is called with each of a request's results in turn, one after another, so the caller can
+// tell one request's results from the next's.
 type Result struct {
 	Vector   []float32
 	Rejected *client.APIError
+	Took     time.Duration
+	Last     bool
 }
 
 // Run embeds texts, in their order, Batch a request, keeping at most Concurrency requests in
@@ -79,7 +85,9 @@ func (r *run) batch(ctx context.Context, first int, texts []string) error {
 	r.mu.Lock()
 	r.requests++
 	r.mu.Unlock()
+	sent := time.Now()
 	reply, err := r.e.Client.Embed(ctx, &client.EmbeddingRequest{Model: r.e.Model, Input: texts})
+	took := time.Since(sent)
 	var rejected *client.APIError
 	switch {
 	case err == nil:
@@ -88,7 +96,7 @@ func (r *run) batch(ctx context.Context, first int, texts []string) error {
 		r.usage.PromptTokens += reply.Usage.PromptTokens
 		r.usage.TotalTokens += reply.Usage.TotalTokens
 		for i, v := range reply.Vectors {
-			if err := r.done(first+i, Result{Vector: v}); err != nil {
+			if err := r.done(first+i, Result{Vector: v, Took: took, Last: i == len(reply.Vectors)-1}); err != nil {
 				return err
 			}
 		}
@@ -98,7 +106,7 @@ func (r *run) batch(ctx context.Context, first int, texts []string) error {
 	case len(texts) == 1:
 		r.mu.Lock()
 		defer r.mu.Unlock()
-		return r.done(first, Result{Rejected: rejected})
+		return r.done(first, Result{Rejected: rejected, Took: took, Last: true})
 	}
 	for i := range texts {
 		if err := r.batch(ctx, first+i, texts[i:i+1]); err != nil {

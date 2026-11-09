@@ -44,7 +44,10 @@ func visionSettings(v *config.Vision) string {
 // held, a verdict on the image, while one it gives with any other is not, so the next run sends
 // that image again. An image whose reply was cut at the output cap keeps its text, marked
 // incomplete, and is embedded like any other.
-func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence) ([]occurrence, []string, error) {
+//
+// It writes the phase's progress lines to p: the images it sends and holds as it begins, and
+// each request's line as it completes, naming the input and ref the image was first seen under.
+func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest, occs []occurrence, p *progress) ([]occurrence, []string, error) {
 	for _, o := range occs {
 		if o.image != "" {
 			m.Counts.Images++
@@ -66,10 +69,10 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 	tokens := &outdir.Usage{}
 	m.Counts.Tokens.Vision = tokens
 
-	// image is one distinct image: the ref it was first seen under, and its result.
+	// image is one distinct image: the input and ref it was first seen under, and its result.
 	type image struct {
-		ref    string
-		result *outdir.Vision
+		input, ref string
+		result     *outdir.Vision
 	}
 	sums := map[string]string{}   // each image file's SHA-256, by its path, each read once
 	images := map[string]*image{} // by SHA-256
@@ -92,7 +95,7 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 		if images[s] != nil {
 			continue
 		}
-		img := &image{ref: o.output.Ref}
+		img := &image{input: o.input, ref: o.output.Ref}
 		images[s], order = img, append(order, s)
 		var held outdir.Vision
 		ok, err := dir.Held(visionName, outdir.Key(visionName, v.Model, settings, s), &held)
@@ -108,6 +111,9 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 		pendingSums = append(pendingSums, s)
 	}
 	vc.Images = len(images)
+	if err := p.phase(visionName, "images", vc.Images, len(pending), vc.Held); err != nil {
+		return nil, nil, err
+	}
 
 	if len(pending) > 0 {
 		cl, err := j.cfg.Endpoints[v.Endpoint].Client(j.http)
@@ -116,10 +122,16 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 		}
 		d := vision.Describer{Client: cl, Model: v.Model, Prompt: v.Prompt, MaxTokens: *v.MaxTokens,
 			Reasoning: protocol.ReasoningEffort(v.Reasoning), Concurrency: *v.Concurrency}
+		answered := 0
 		vc.Requests, err = d.Run(ctx, pending, func(i int, r vision.Result) error {
 			s := pendingSums[i]
+			img := images[s]
+			answered++
+			if err := p.request(visionName, answered, len(pending), []string{img.input, img.ref}, visionOutcome(r), r.Took); err != nil {
+				return err
+			}
 			held := &outdir.Vision{Model: v.Model, Settings: settings, Content: s}
-			images[s].result = held
+			img.result = held
 			if r.Rejected != nil {
 				held.Error = r.Rejected.Error()
 				if !verdict(r.Rejected) {
@@ -186,6 +198,20 @@ func visionTexts(ctx context.Context, j job, dir *outdir.Dir, m *outdir.Manifest
 		out = append(out, o)
 	}
 	return out, warnings, nil
+}
+
+// visionOutcome returns r's outcome as its progress line gives it: refused, empty when the model
+// stopped before finishing with no text, incomplete when it stopped with some, or ok.
+func visionOutcome(r vision.Result) string {
+	switch {
+	case r.Rejected != nil:
+		return "refused"
+	case r.Incomplete != "" && r.Text == "":
+		return "empty"
+	case r.Incomplete != "":
+		return "incomplete"
+	}
+	return "ok"
 }
 
 // mediaType returns the media type of o's image, whose bytes are data, for its data URL: the
