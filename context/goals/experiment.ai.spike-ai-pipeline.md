@@ -2596,7 +2596,13 @@ slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap cl
   libraries and infrastructure that emerge from them to support the capstone, with thorough reviews
   of what is promoted, so the code is optimally structured, aligns with the architecture standards,
   and fits the ~/architecture workspace; (c) run the capstone build itself; and (d) continue the
-  ~/architecture marathon roadmap. A first sort, as input: before the capstone,
+  ~/architecture marathon roadmap. Between (b) and (c), the architect asks for appropriate time
+  designing the protocols and practices that let the capstone execute well (2026-11-09): the
+  output formats of docproc's and docinfer's directories, settled at the experiment's intake
+  rather than in the spike; the chunk record and embedding spaces the pgvector load reads; the
+  choice between a page's text layer and its vision text (the docinfer finding: two-column text
+  layers interleave their columns, and 24 of 1,289 text-heavy pages came back described); and
+  the vision prompt and sampling. A first sort, as input: before the capstone,
   spike-hosting-upgrades (active), spike-model-layout and spike-model-gateway (the capstone's
   gates), an intake for spike-ai-pipeline alone, promoting go-ai's client and processing (today
   experiment.ai's one intake waits on all four spikes, the harness spikes included), and
