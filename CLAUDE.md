@@ -11,10 +11,13 @@ from `context/README.md`.
   tests against whatever router `SPIKE_ROUTER_URL` names. Its default still names gb10-2's,
   which now serves spike-model-layout's preset, so results there may differ from set A.
 - **Currency:** `mise run currency`.
-- **Goals:** the spike is planned in the coordinator's roadmap,
-  `standards-lab/context/roadmap.toml`, under `experiment.ai.spike-ai-pipeline`. Its goal record
-  was deleted at the docinfer sync; its last version is at
-  https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md. A `marathon plan` session starts the next one.
+- **Goals:** the spike is `experiment.ai.spike-ai-pipeline` in the coordinator's roadmap,
+  `standards-lab/context/roadmap.toml`, and has answered (`README.md`, "The answer"). Its goal
+  record was deleted at the docinfer sync and again at the answer's sync; the docinfer-era
+  version is at
+  https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md.
+  experiment.ai's intake, `marathon intake experiment.ai`, runs next and archives this
+  repository.
 - **Dependencies:** published versions only, never a `replace` directive; the layers by tag.
 - **Host:** gb10-2 served set A for the spike until 2026-11-09, when it left for
   experiment.hosting's spike-model-layout, run in its own session

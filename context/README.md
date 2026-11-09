@@ -1,11 +1,14 @@
 # spike-ai-pipeline
 
 The root of spike-ai-pipeline. The spike is the sub-goal `experiment.ai.spike-ai-pipeline` in the
-coordinator's roadmap, `standards-lab/context/roadmap.toml`, where it is planned; its goal record
-was deleted at the docinfer sync, and its last version is
-[in the history](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md). Its question is framed in
-`standards-lab/context/ai-strategy.md`, "Experiment: spike-ai-pipeline", and the system-tools
-principle its processing layer follows is `standards-lab/context/system-tools.md`.
+coordinator's roadmap, `standards-lab/context/roadmap.toml`, and has answered its question in
+`README.md`, "The answer". experiment.ai's intake, `marathon intake experiment.ai`, takes the
+answer in next and archives the repository. The goal record was deleted at the answer's sync;
+its docinfer-era version is
+[in the history](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md).
+The question is framed in `standards-lab/context/ai-strategy.md`, "Experiment: spike-ai-pipeline",
+and the system-tools principle its processing layer follows is
+`standards-lab/context/system-tools.md`.
 
 ## The question
 

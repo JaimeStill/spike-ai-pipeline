@@ -83,7 +83,7 @@ Door          two-way: prose and one module bump, no tag; the coordinator edit l
 
 ## Progress
 
-slices 0/5 committed · standards — · spec — · editor —
+slices 5/5 committed · standards ✓ · spec — · editor ✓
 
 ## Decisions
 
@@ -97,7 +97,90 @@ https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c
 - answer: the root's host prose says gb10-2 left the spike on 2026-11-09 for experiment.hosting's spike-model-layout.
 - answer: no host-update this session; the task sends no model request, and gb10-2 is spike-model-layout's.
 - answer: held llama.cpp at b12098: b12100 and later (latest b12211) can't resolve Google's QAT -hf tags (llama.cpp #31620, #31639).
+- answer: the answer line says "every image, audio window, and text prepared from a real share", not "every input of a real share", since docproc prepared 515 of ~/docs' 592 inputs.
+- answer: the root names the capstone repository, `JaimeStill/data-intelligence`, without a link until it exists.
+- answer: mise.toml's gb10-2 comments (`SPIKE_ROUTER_URL` and the `host-update` task) say gb10-2 left the spike, alongside the README and CLAUDE.md.
 
 ## Pending edits
 
-(slice 5 adds the answer section for standards-lab/context/ai-strategy.md)
+- coordinator · context/ai-strategy.md: insert under "## Answers · experiment.ai":
+
+```markdown
+### Answer · experiment.ai.spike-ai-pipeline
+
+**Question:** Can a Go model client and a message, document, and stream processing layer, built
+under go-elemental, carry a transactional, evented pipeline (metadata capture, inference
+extraction, and embeddings stored in PostgreSQL with pgvector for semantic search) that a browser
+follows stage by stage in real time?
+
+**Answer:** Yes for the two layers it kept: a standard-library Go client over three wire formats
+and a processing layer of owned system-tool adapters carried every image, audio window, and text
+prepared from a real share, ~/docs, through vision, transcription and embeddings with no request
+failed; the transactional, evented pipeline in pgvector and the browser that follows it moved,
+unproven, to capstone.data-intelligence.
+
+The items keep the spike's own evidence numbers.
+
+1. The client: chat with tools and a reasoning round trip, streamed and unstreamed, vision,
+   audio input, embeddings, and transcription each pass against set A; its retry policy is
+   proven only by tests. docinfer ran 3,470 images, 1,254 audio windows, and 28,937 chunk lines
+   of ~/docs through it in 21,634 s, 0 of 6,172 requests failed. Proven by the client's
+   integration tier (b11669) and a running demo, docinfer over ~/docs (b12098, 2026-11-08).
+2. Anthropic Messages and Open Responses fit under Chat Completions' request and response model
+   with no change to callers; the router drops some hints on both (reasoning effort, structured
+   output's schema, `strict`, the `none` tool choice, `text`). Proven by the client's integration
+   tier (b11669, 2026-10-27 and 2026-10-28).
+3. The client's base module is standard library only. Proven only by the check: a strict
+   depguard rule over every Go file.
+4. A PDF's pages go through vision whole and as a page stream; Ghostscript wins the renderer
+   bake-off (0.126 s and 27 MiB a page), run as a separate program since it is AGPL, and the
+   model reads with reasoning off; page 7's NOFORN marking is read on no build. Proven by
+   processing's integration and bake-off tiers
+   (b11669, 2026-10-29 and 2026-10-30).
+5. Mixed: long audio cut at silences and transcribed in windows is 2.6 to 3.4 times faster than
+   one unsplit pass, but less accurate on many speakers (word error rate 0.298 against 0.258 on
+   a 4-speaker meeting); the gpt-oss seam pass is falsified, making every run worse. Proven by
+   processing's findings tier (b12098, 2026-11-05 and 2026-11-06).
+6. Skype for Business conversation history in a PST passes through as conversation records, each
+   of 4 equal to the hand truth. Fixture only: the PST is generated, its transcript HTML
+   invented, and no real store read. Proven only by processing's findings tier (2026-11-07, no
+   model).
+9. The dependency runs one way, processing to client: processing imports the client only in test
+   code and runs no inference; the root's docinfer imports both. Proven by the check and by
+   docinfer's running demo (item 1). Where the layer lives is experiment.ai's intake's decision.
+11. ImageMagick's corrections don't help vision reliably: which help and which hurt flips with
+    the DPI and the build. Proven by processing's bake-off tier (b11669, 2026-10-29 and
+    2026-10-30).
+12. The Open XML CLI keeps 1,768 of 1,768 elements where markitdown and xberg lose most, at a
+    17.2 ms median from a 28.80 MiB binary; LibreOffice's legacy round trip loses structure in
+    .doc, a little in .xls, nothing in .ppt, from a 1.02 GB container. Proven by office's bench
+    (2026-10-31, no model) and processing's integration tier (b11669, 2026-11-02).
+13. Live media is processed as it arrives: three videos read at real time with no window, frame,
+    or request failed, each window transcribed 0.8 to 4.6 s after it is yielded, and a
+    cancellation stops the stream within 0.5 s. Proven by processing's findings tier's paced runs
+    (b12098, 2026-11-06).
+14. One tool, ffprobe, runs through the exec and container runners under the same contract;
+    docproc wired all ten stages over ~/docs, 515 of 592 inputs prepared and 4 failed. Proven by
+    processing's integration tier and a running demo, docproc over ~/docs (2026-11-07, no
+    model).
+16. The mail CLI recovers every stored field of the generated fixtures' truth (147 of 180, 33
+    not stored, none wrong) and reads a 2.1 GB store in 13.27 s; the adapter rebuilds 11 of 11
+    threads and routes 51 of 51 attachments. Proven by mail's bench (from 2026-11-03, no model)
+    and processing's findings and integration tiers (b11669, 2026-11-03 and 2026-11-04).
+17. The OneNote CLI recovers every expected field of the public fixtures (236 of 236 over the
+    sections) and reads a 161 MB section in 0.24 s; vision reads a page's ink at a character
+    error rate of 0.028 against 0.68 for OneNote's own recognition. No authored notebook exists,
+    so no authored hand truth. Proven by onenote's bench (2026-11-04, no model) and processing's
+    findings tier (b11669, 2026-11-05).
+
+Moved to capstone.data-intelligence, not failed: 7 (the transactional pipeline into pgvector,
+its events and UI), 8 (the client through a gateway), 10 (pgvector as a native-tier extension),
+15 (the browser's consumption of the events), and the gates (`data-intelligence.md`, "Evidence"
+and "Gates").
+
+Architect's input to the intake, not a spike finding: the architect expects the processing
+library and its tools to become supplemental repositories, like sqlate and blobfs.
+
+[The answer](https://github.com/JaimeStill/spike-ai-pipeline#the-answer) ·
+[spike-ai-pipeline](https://github.com/JaimeStill/spike-ai-pipeline)
+```
