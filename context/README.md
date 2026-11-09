@@ -147,5 +147,5 @@ to prove, not the spike's failures.
   `docs/findings/docinfer.md`, records it over ~/docs through set A on gb10-2.
 - **consumers**: the check that builds on the layers at their released tags.
 - **capstone**: the backend and web UI, now capstone.data-intelligence in its own repository,
-  [JaimeStill/data-intelligence](https://github.com/JaimeStill/data-intelligence), checked out at
+  `JaimeStill/data-intelligence` (created when the goal is staged), checked out at
   `~/capstones/data-intelligence`. It reads docinfer's directory.

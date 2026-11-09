@@ -48,7 +48,7 @@ This repository holds the spike's record, gb10-2's host scripts, the consumer ch
 on the layers by tag, and two CLIs on the layers: docproc, which prepares an input set, and
 docinfer, which runs inference over what docproc prepared. The capstone, a backend on the layers
 and a web UI on experiment.html's stack, is capstone.data-intelligence, in its own repository,
-[JaimeStill/data-intelligence](https://github.com/JaimeStill/data-intelligence); docinfer's
+`JaimeStill/data-intelligence` (created when the goal is staged); docinfer's
 directory is its input.
 
 ## docproc
