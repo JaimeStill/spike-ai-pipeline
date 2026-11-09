@@ -1,6 +1,6 @@
 # Finding: docproc over ~/docs, and its re-run
 
-Task `docproc`, behavior 9 (`context/goals/experiment.ai.spike-ai-pipeline.md`, "Task brief ·
+Task `docproc`, behavior 9 ([the goal record](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md), "Task brief ·
 experiment.ai.spike-ai-pipeline · docproc"). Measured 2026-11-07 on the laptop, with no inference
 and no gb10-2.
 

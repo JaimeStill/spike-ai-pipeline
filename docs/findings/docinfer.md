@@ -1,6 +1,6 @@
 # Finding: docinfer over ~/docs through set A on gb10-2, and its re-run
 
-Task `docinfer`, behavior 12 (`context/goals/experiment.ai.spike-ai-pipeline.md`, "Task brief ·
+Task `docinfer`, behavior 12 ([the goal record](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md), "Task brief ·
 experiment.ai.spike-ai-pipeline · docinfer"). Measured 2026-11-07 and 2026-11-08, from the laptop,
 against gb10-2's llama.cpp router serving set A.
 

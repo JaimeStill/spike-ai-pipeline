@@ -10,9 +10,10 @@ from `context/README.md`.
 - **Check:** `mise run check` (hermetic). `mise run integration` runs the integration-tagged
   tests against the router `SPIKE_ROUTER_URL` names, gb10-2's by default.
 - **Currency:** `mise run currency`.
-- **Goals:** the spike's tasks live in the coordinator's roadmap,
+- **Goals:** the spike is planned in the coordinator's roadmap,
   `standards-lab/context/roadmap.toml`, under `experiment.ai.spike-ai-pipeline`. Its goal record
-  is `context/goals/experiment.ai.spike-ai-pipeline.md`.
+  was deleted at the docinfer sync; its last version is at
+  https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md. A `marathon plan` session starts the next one.
 - **Dependencies:** published versions only, never a `replace` directive; the layers by tag.
 - **Host:** gb10-2, reserved for this spike (`standards-lab/context/ai-hosting.md`, "Hosts and
   access"). Sessions run steps that need no root over Tailscale SSH; root stays the architect's,

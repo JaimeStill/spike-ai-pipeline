@@ -1,6 +1,6 @@
 # Finding: set A on gb10-2, responses and transcription timestamps
 
-Task `host`, behaviors 9 to 11 (`context/goals/experiment.ai.spike-ai-pipeline.md`, "Task brief ·
+Task `host`, behaviors 9 to 11 ([the goal record](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md), "Task brief ·
 host"). Measured 2026-10-26, from the laptop, against gb10-2's llama.cpp router serving set A.
 
 The commands here name the scripts' current directory, `host/`. They ran on gb10-2 from
@@ -240,7 +240,7 @@ mise run check 2>&1 | tail -6
 Task `client-core`. Set A's embedding model changed from EmbeddingGemma 2
 (`ggml-org/embeddinggemma-2-GGUF:Q8_0`) to IBM's granite-embedding-english-r2
 (`mrutkows/granite-embedding-english-r2-GGUF:BF16`), because vLLM can't serve EmbeddingGemma 2 on
-the GB10 and set A has to serve on both engines (`context/goals/experiment.ai.spike-ai-pipeline.md`,
+the GB10 and set A has to serve on both engines ([the goal record](https://github.com/JaimeStill/spike-ai-pipeline/blob/075b9a0bae37165340a534d162c7d1c5704d6320/context/goals/experiment.ai.spike-ai-pipeline.md),
 Decisions, "client-core: set A's embedding model…"). The sections above record the first run, with
 EmbeddingGemma 2, and stay as measured. The preset's section and its reasons are in
 `host/llama-preset/models.ini`: c 32768 over 4 slots, each its trained 8192; b = ub = 8192;
