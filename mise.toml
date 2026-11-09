@@ -20,8 +20,9 @@ shellcheck = "0.11.0"
 [env]
 # The repository's Go modules, as directories; tasks run in each one.
 GO_MODULES = "."
-# The router the integration tier reads: gb10-2's llama.cpp router, serving set A, named by its
-# MagicDNS short name. A shell may point it elsewhere.
+# The router the integration tier reads, by default gb10-2's llama.cpp router, named by its
+# MagicDNS short name. It served set A until 2026-11-09 and now serves spike-model-layout's
+# preset (README.md, "gb10-2"). A shell may point it elsewhere.
 SPIKE_ROUTER_URL = "{{ get_env(name='SPIKE_ROUTER_URL', default='http://gb10-2:8080') }}"
 
 [tasks.check]
@@ -66,7 +67,8 @@ done
 '''
 
 # Brings gb10-2 up to date and leaves set A loaded on its router, driving it over Tailscale SSH
-# from the laptop; run at each session's start. scripts/host-update.sh says what it does.
+# from the laptop. Run at each of the spike's sessions until gb10-2 left it on 2026-11-09; kept
+# as the record, no longer run (README.md, "gb10-2"). scripts/host-update.sh says what it does.
 [tasks.host-update]
 description = "Bring gb10-2 current and load set A on its router, over Tailscale SSH"
 run = "scripts/host-update.sh"
