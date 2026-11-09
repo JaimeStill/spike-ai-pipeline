@@ -51,12 +51,13 @@ stage by stage in real time?
    as a message, though it doesn't prove a real store's transcript HTML (no open sample exists, so
    the fixture's shape is invented), the turns within a transcript (they aren't parsed), or voice
    items and Teams (the deployment doesn't use them).
-7. Capstone, after its gates: metadata capture, inference extraction, and embeddings in pgvector
-   with a semantic search, each stage transactional. The event layer tracks every stage event in
+7. Moved to capstone.data-intelligence ([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md), "Evidence"): metadata capture, inference
+   extraction, and embeddings in pgvector with a semantic search, each stage transactional. The event layer tracks every stage event in
    sequence, in real time, and the UI shows each stage as it runs.
-8. After the gates: the client runs unchanged through spike-model-gateway's gateway.
+8. Moved to capstone.data-intelligence: the client runs unchanged through spike-model-gateway's
+   gateway.
 9. Where the processing layer should live, and which way it depends on the client.
-10. pgvector as a declared native-tier extension: its install, migration, image pin, and the
+10. Moved to capstone.data-intelligence: pgvector as a declared native-tier extension: its install, migration, image pin, and the
     packages allowed to use it.
 11. Image correction: vision extraction accuracy with and without each ImageMagick correction, on
     the fixed documents. Processing's
@@ -82,7 +83,7 @@ stage by stage in real time?
     audio's file path under the same detector (AMI word error rate 0.322 against 0.323), and a
     cancellation stops the stream within 0.5 s, leaving only the events yielded.
 14. One tool run through each runner, exec and container, under the same tool contract.
-15. Capstone: the browser's consumption of the event sequence, NATS over WebSocket against a
+15. Moved to capstone.data-intelligence: the browser's consumption of the event sequence, NATS over WebSocket against a
     backend relay, compared on latency, ordering, auth, ports, and native-tier use.
 16. Mail stores and messages: Outlook .pst stores, .msg messages, .eml messages, and mbox files
     read by the spike's mail CLI, .pst through Microsoft's outlook-pst, .msg through the CLI's own
@@ -119,12 +120,9 @@ stage by stage in real time?
 
 ## Gates
 
-The capstone waits for two answers: experiment.hosting's spike-model-layout and
-spike-model-gateway. The host, client, and processing tasks it also needs are done, the last of
-them two CLIs: docproc, which runs the processing suite over an input set, and docinfer, which
-runs inference over docproc's run directory. spike-model-engines and experiment.html's
-spike-html-apps have answered, and neither experiment's intake is a gate. With docinfer shipped,
-the spike returns to `planned` until the answers arrive.
+The gates moved with the capstone to capstone.data-intelligence ([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md), "Gates"),
+and the spike has none left. Evidence 7, 8, 10, and 15 moved with them: they are the capstone's
+to prove, not the spike's failures.
 
 ## Capability map
 
@@ -148,5 +146,6 @@ the spike returns to `planned` until the answers arrive.
   "docinfer"; `docs/docinfer-schema.md`), the capstone's input. Its finding,
   `docs/findings/docinfer.md`, records it over ~/docs through set A on gb10-2.
 - **consumers**: the check that builds on the layers at their released tags.
-- **capstone**: the backend and web UI, once the gates clear, planned for a non-experimental
-  repository of its own, which a `marathon plan` session sets up. It reads docinfer's directory.
+- **capstone**: the backend and web UI, now capstone.data-intelligence in its own repository,
+  [JaimeStill/data-intelligence](https://github.com/JaimeStill/data-intelligence), checked out at
+  `~/capstones/data-intelligence`. It reads docinfer's directory.
