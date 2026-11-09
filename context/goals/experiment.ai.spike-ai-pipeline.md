@@ -1,8 +1,8 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** brief ready
-- **Task:** docinfer
-- **Branch:** docinfer
+- **State:** idle
+- **Task:** none
+- **Branch:** none
 
 ## Tasks
 
@@ -27,7 +27,7 @@
 19. [x] streams
 20. [x] formats
 21. [x] docproc
-22. [ ] docinfer
+22. [x] docinfer
 
 ## Task brief · experiment.ai.spike-ai-pipeline · docinfer
 
@@ -201,10 +201,6 @@ Door          two-way: code on a branch, no tag, the
               requirement reverts, and the contract and finding
               are text
 ```
-
-## Progress
-
-slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap closed in b044ad8; behavior 12's 8 finding gaps closed in e50541a) · editor ✓
 
 ## Decisions
 
@@ -2116,6 +2112,10 @@ slices 7/7 committed · standards ✓ (3 commits) · spec ✓ (behavior 8 gap cl
   total, input, output ref, outcome, duration), so a long run is never silent; held items print
   none. Amends behavior 10's terminal output. The architect: the output formats are settled at
   the experiment's intake.
+- docinfer (accept): the architect accepted the session brief on 2026-11-09 after a manual run
+  of their own (docproc and docinfer over six documents, a re-run, a stricter vision prompt) and a
+  semantic search over the full run's vectors. No tag. The sync follows: the spike returns to
+  `planned`, nothing is staged, and a `marathon plan` session reorganizes the experiments.
 
 ## Pending edits
 
