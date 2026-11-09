@@ -1,6 +1,6 @@
 # goal · experiment.ai.spike-ai-pipeline
 
-- **State:** idle
+- **State:** handoff
 - **Task:** none
 - **Branch:** none
 
@@ -201,6 +201,20 @@ Door          two-way: code on a branch, no tag, the
               requirement reverts, and the contract and finding
               are text
 ```
+
+## Handoff
+
+Next move: merge `sync-experiment.ai.spike-ai-pipeline`, then delete the record. Paused by the
+architect on 2026-11-09, mid-sync, after docinfer merged (root PR #29) and gb10-2's clone went
+back to main.
+
+- spike-ai-pipeline-onenote: branch pushed, PR #2 open, its checks passed; merge it with
+  `gh pr merge 2 --merge --delete-branch`, then switch to main, pull, delete the local branch.
+- standards-lab (coordinator): branch `sync-experiment.ai.spike-ai-pipeline` committed locally
+  (b0972a5), not pushed: push it, `gh pr create` with the Sync section as the body, merge.
+- root, after both merge: rewrite the links to this record in docs/findings/docproc.md and
+  docs/findings/docinfer.md to a permalink at the last commit before deletion (pending edit),
+  then delete this record as a direct commit on main.
 
 ## Decisions
 
