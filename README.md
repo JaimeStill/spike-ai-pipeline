@@ -47,8 +47,9 @@ each released by tag:
 This repository holds the spike's record, gb10-2's host scripts, the consumer check that builds
 on the layers by tag, and two CLIs on the layers: docproc, which prepares an input set, and
 docinfer, which runs inference over what docproc prepared. The capstone, a backend on the layers
-and a web UI on experiment.html's stack, is planned for a non-experimental repository of its own,
-which a `marathon plan` session sets up; docinfer's directory is its input.
+and a web UI on experiment.html's stack, is capstone.data-intelligence, in its own repository,
+`JaimeStill/data-intelligence` (created when the goal is staged); docinfer's directory is its
+input.
 
 ## docproc
 
@@ -262,7 +263,8 @@ fragment, a count below 1, an unknown key, or an override that doesn't parse.
 `http://gb10-2:8080/v1` in the `completions` format with `autoload=false`, granite-embedding
 English R2 (BF16) for embeddings, Gemma 4 26B-A4B (Q4_0) for vision, and Gemma 4 E4B (Q8_0) for
 transcription, each at its defaults. `secrets.json.example` shows the secrets file's shape, its
-token empty. `mise run host-update` leaves set A loaded.
+token empty. `mise run host-update` left set A loaded while gb10-2 served the spike
+("gb10-2").
 
 The configuration isn't tied to gb10-2. To point docinfer at another workstation's server, or at
 one per capability, copy the directory and change the endpoints and models: any server that lists
@@ -449,9 +451,16 @@ and joined into a transcript that isn't empty, and every chunk embedded at the s
 
 ## gb10-2
 
-gb10-2 serves set A from llama.cpp's router container, run from this repository's clone there,
+gb10-2 left the spike on 2026-11-09 for experiment.hosting's spike-model-layout, which runs in its
+own session. spike-model-layout's `hosts` task moved gb10-2's router preset mount onto
+spike-model-engines' clone there and removed this repository's clone from gb10-2
+(spike-model-layout's `docs/findings/hosts.md`, section D). `mise run host-update` is therefore no
+longer run: it would pull the removed clone and point gb10-2's router back at this spike's preset.
+The host scripts stay as the record of how the spike ran set A, described below as they ran.
+
+gb10-2 served set A from llama.cpp's router container, run from this repository's clone there,
 `~/repos/spike-ai-pipeline`, by spike-model-engines' scripts copied into `host/` (`host/README.md`).
-Each session starts with `mise run host-update`, on the laptop, which drives gb10-2 over Tailscale
+Each session started with `mise run host-update`, on the laptop, which drove gb10-2 over Tailscale
 SSH (`scripts/host-update.sh` says each step). It stops before touching the router when gb10-2 needs
 a root step, an apt upgrade, a fresh CDI spec, or a reboot, and prints the exact commands for the
 architect; otherwise it pulls the clone, moves the router to gb10's pin, reloads a changed preset,
@@ -463,21 +472,23 @@ with the mount moved, by `host/engines llama update`. A running one that can't s
 preset, because a delivery recreated `host/llama-preset/` under its bind mount, is restarted.
 `HOST_UPDATE_HOST` names another host.
 
-host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged has
-no upstream, so a session delivers it from the laptop by push before running host-update:
+host-update fast-forwards the clone's branch from its upstream. A task branch not yet merged had
+no upstream, so a session delivered it from the laptop by push before running host-update:
 
 ```sh
 git push ssh://gb10-2/~/repos/spike-ai-pipeline <branch>:refs/heads/<branch>
 ```
 
-host-update sets the clone's `receive.denyCurrentBranch` to `updateInstead`, so the push updates
-the checked-out branch and its files. Once the task merges, switch the clone to `main`, which
-tracks `origin/main`, and host-update pulls it from then on:
+host-update sets the clone's `receive.denyCurrentBranch` to `updateInstead`, so the push updated
+the checked-out branch and its files. Once a task merged, the clone was switched to `main`, which
+tracks `origin/main`, and host-update pulled it from then on:
 `ssh gb10-2 git -C repos/spike-ai-pipeline switch main`.
 
-`mise run integration` probes the router from the laptop (`probe/`). It checks every set A
-capability, and checks the build, sampling, slots, and prompt cache against the pin and the
-preset.
+`mise run integration` probes the router `SPIKE_ROUTER_URL` names from the laptop (`probe/`). It
+checks every set A capability, and checks the build, sampling, slots, and prompt cache against the
+pin and the preset. Its default still names gb10-2's router, `http://gb10-2:8080`, which now
+serves spike-model-layout's preset rather than this spike's, so a run there may differ from set A
+as the spike ran it.
 [The host finding](docs/findings/host.md) records its runs, including whether the router answers
 `/v1/responses` and whether transcription returns timestamps, and what the router's
 `/v1/messages` and `/v1/responses` drop, from the client's integration runs.
@@ -488,4 +499,146 @@ See `context/README.md`, "The question", and "The evidence".
 
 ## The answer
 
-Not yet.
+**Question:** Can a Go model client and a message, document, and stream processing layer, built
+under go-elemental, carry a transactional, evented pipeline (metadata capture, inference
+extraction, and embeddings stored in PostgreSQL with pgvector for semantic search) that a browser
+follows stage by stage in real time?
+
+**Answer:** Yes for the two layers it kept: a standard-library Go client over three wire formats
+and a processing layer of owned system-tool adapters carried every image, audio window, and text
+prepared from a real share, ~/docs, through vision, transcription and embeddings with no request
+failed; the transactional, evented pipeline in pgvector and the browser that follows it moved,
+unproven, to capstone.data-intelligence.
+
+The items keep the spike's own numbers (`context/README.md`, "The evidence"). P stands for
+spike-ai-pipeline-processing, and "the findings tier" for a test tier that runs the measurements
+and commits their results.
+
+**1.** The client: chat with tools and a reasoning round trip, streamed and unstreamed, vision,
+audio input (asserted on Chat Completions), embeddings, and transcription each pass against set A
+on gb10-2; the retry policy is proven by unit tests only. docinfer then ran vision, transcription,
+and embeddings through the client over all of ~/docs: 3,470 images, 1,254 audio windows, and
+28,937 chunk lines in 21,634 s, 0 of 6,172 requests failed, and the re-run sent no inference
+request (3.1 s). 272 vision answers stopped at the 2,048-token cap, 262 of them synthetic pages of
+random letters, and a first run with the model reasoning was stopped after 454 empty answers of
+2,086. Proven by the client's integration tier (`integration/`, b11669) and a running demo,
+docinfer over ~/docs (b12098, 2026-11-08): [docinfer finding](docs/findings/docinfer.md).
+
+**2.** Anthropic Messages and Open Responses fit under the same request and response model as
+Chat Completions with no change to callers: every `Generate` and `GenerateStream` scenario runs
+through all three from one piece of test code
+([`integration/router_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/integration/router_test.go)).
+The router behind them drops hints: its `/v1/messages` drops `output_config`, so reasoning effort
+and structured output's schema reach no model, a tool's `strict`, and the `none` tool choice; its
+`/v1/responses` drops `text` and reasoning's summary, reports every reply completed, and refuses
+audio. Proven only by tests: the client's integration tier against gb10-2 (b11669, 2026-10-27 and
+2026-10-28): [host finding](docs/findings/host.md). docinfer's run (b12098, 2026-11-08) adds that
+Messages also ignores `thinking: disabled`: [docinfer finding](docs/findings/docinfer.md).
+
+**3.** The client's base module is standard library only. Proven by the check only: a strict
+depguard rule in the client's lint, over every Go file, tests included, allows nothing but the
+standard library and the module
+([`.golangci.yml`](https://github.com/JaimeStill/spike-ai-pipeline-client/blob/main/.golangci.yml)).
+
+**4.** A PDF's pages go through vision whole and as a page stream. Ghostscript wins the renderer
+bake-off: it ties the others on accuracy and leads on time (0.126 s a page) and memory (27 MiB);
+it is AGPL, so the package runs it as a separate program. The model reads with reasoning off: with
+it on, 8 of 105 scanned-page transcriptions came back empty and it invented seal text. Page 7's
+NOFORN is read on no build at any image budget. P releases preparation only; the inference is test
+code. Proven only by tests: P's integration and bake-off tiers against gb10-2 (b11669, 2026-10-29
+and 2026-10-30):
+[documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md).
+
+**5.** Mixed. Long audio cut at its silences and transcribed 4 windows at once is 2.6 to 3.4 times
+faster than one unsplit pass, with no window failed up to a 4.4 h audiobook, but less accurate on
+many speakers (word error rate 0.298 against 0.258 on a 4-speaker meeting, 0.069 against 0.053 on
+an 8-speaker call) and the same or slightly better on read speech and an accented call; most of
+the seams' excess edits are at seams with no words to align. The gpt-oss seam pass is falsified:
+it made every run worse. Proven only by tests: P's findings tier against gb10-2 (b12098,
+2026-11-05 and 2026-11-06):
+[audio finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/audio.md).
+
+**6.** Skype for Business conversation history in a PST passes through as conversation records:
+each of the fixture's 4 conversation items equals the hand truth, and a message beside them stays
+a message. Fixture only: the PST is generated, its transcript HTML is invented, since no open
+sample exists, the turns within a transcript aren't parsed, and no real store was read. Proven by
+P's findings tier only (2026-11-07, no model):
+[formats finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/formats.md).
+
+**9.** The dependency runs one way, processing to client. P v0.9.0 requires client v0.4.0 but
+imports it only in its test-support packages (`internal/visiontest`, `internal/audiotest`) and
+tests; its released packages prepare content and run no inference. The root's docinfer imports the
+client (its `config`, `embed`, `infer`, `transcribe`, and `vision` packages) and P. Proven by the
+check, whose depguard rule keeps the client from importing anything but the standard library (P's
+rule allows the client anywhere, so the test-only import is how v0.9.0 stands, not a rule), and by
+docinfer's running demo (item 1). Where the layer lives is experiment.ai's intake's decision.
+([P's `go.mod`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/go.mod))
+
+**11.** ImageMagick's corrections don't help vision reliably: at 150 dpi the synthetic faults
+leave nothing to fix, at 72 dpi Unsharp helps the hardest page while Deskew and Despeckle hurt it,
+and on the real scans which corrections help and hurt flips with the DPI and the build. Proven
+only by tests: P's bake-off tier against gb10-2 (b11669, 2026-10-29 and 2026-10-30):
+[documents finding, "Evidence 11"](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md#evidence-11-do-image-corrections-help).
+
+**12.** The Open XML CLI keeps every element the pool's truth holds, 1,768 of 1,768, where
+markitdown and xberg lose most slide lists, chart data, headers, footers, and comments; its median
+file takes 17.2 ms (xberg 12.3 ms, markitdown 675 ms) at 35.4 MiB, from a 28.80 MiB binary. The
+legacy round trip through LibreOffice loses structure in .doc (headings become one-item lists), a
+little in .xls, nothing in .ppt; its container is 441 MB to pull and 1.02 GB on disk, at 0.75 to
+1.04 s a conversion. Proven by office's bench (2026-10-31, no model) and P's integration tier
+against gb10-2 (b11669, 2026-11-02):
+[office-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-office/blob/main/docs/findings/office-cli.md),
+[office finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/office.md).
+
+**13.** Live media is processed as it arrives: three videos read at real time, with no window,
+frame, or request failed; a window is yielded once the stream passes its 30 s limit (at most 15 s
+after its last sample, on NASA), transcribed 0.8 to 4.6 s later, a frame described within 4 s,
+and a cancellation stops the stream within 0.5 s. The live transcript matches the file path's
+under the same detector, and is 0.015 worse on AMI than the file path's default. Proven only by
+tests: P's findings tier's paced runs against gb10-2 (b12098, 2026-11-06):
+[streams finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/streams.md).
+
+**14.** One tool runs through each runner under the same contract: ffprobe through the exec
+runner and through the container runner, in a digest-pinned image
+([`tool/ffprobe_integration_test.go`](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/tool/ffprobe_integration_test.go)).
+docproc's run over ~/docs wired all ten stages, soffice in a digest-pinned container and the rest
+on the host: 592 inputs, 515 prepared, 4 failed (three malformed or form-broken PDFs and OneNote's
+encryption fixture). Proven by P's integration tier and a running demo, docproc over ~/docs
+(2026-11-07, no model): [docproc finding](docs/findings/docproc.md).
+
+**16.** The mail CLI recovers every field the generated fixtures' truth expects that the generator
+stores (147 of 180, 33 not stored, none wrong), 47 of 47 of Tika's threading truth, and 21 of 22
+and 31 of 31 .msg assertions, missing only an Exchange recipient's SMTP address, by design; it
+reads a 2.1 GB store in 13.27 s at 65 to 67 MiB. The adapter places 11 of 11 messages under the
+parent the hand truth gives, routes 51 of 51 attachments as the hand truth says, and adds 1 to 3%
+to mail's time. Proven by the mail bench (from 2026-11-03, no model) and P's findings and
+integration tiers, vision against gb10-2 (b11669, 2026-11-03 and 2026-11-04):
+[mail-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-mail/blob/main/docs/findings/mail-cli.md),
+[email finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/email.md).
+
+**17.** The OneNote CLI recovers every expected field of the public fixtures (236 of 236 over the
+sections, 138 of 138 over the notebooks, 129 of 129 content fields) and reads a 161 MB section in
+0.24 s at 135 MiB; there is no authored notebook, so no authored hand truth. Every OneNote medium
+routes to its real stage, 225 parts from 119 inputs with no mismatch; vision reads a page's ink at
+a character error rate of 0.028 against 0.68 for OneNote's own recognition. Proven by the onenote
+bench (2026-11-04, no model) and P's findings tier, vision against gb10-2 (b11669, 2026-11-05):
+[onenote-cli finding](https://github.com/JaimeStill/spike-ai-pipeline-onenote/blob/main/docs/findings/onenote-cli.md),
+[onenote finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/onenote.md).
+
+The original evidence's other items moved:
+
+- 7, the transactional pipeline into pgvector with its events and UI: the capstone's build on
+  the client and processing layer experiment.ai's intake promotes, after its design tasks.
+- 8, the client unchanged through a gateway: spike-model-gateway's answer.
+- 10, pgvector as a declared native-tier extension: the capstone, and the pgvector v1.data task
+  that lands the Postgres-extension strategy.
+- 15, the browser's consumption of the event sequence: the capstone's events design task, on
+  the web client stack experiment.html's intake and v1.client promote.
+- The gates, spike-model-layout's and spike-model-gateway's answers: the capstone's gates, which
+  add experiment.hosting's intake and v1.ai.hosting building ai-hosting from it; experiment.ai's
+  intake, with a design review closing each library it promotes; experiment.html's intake and
+  v1.client promoting the web client stack; graph-ergonomics; and the pgvector v1.data task.
+
+Each moved with the capstone, not failed:
+[`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md),
+"Evidence" and "Gates".
