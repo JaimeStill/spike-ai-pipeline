@@ -51,14 +51,16 @@ stage by stage in real time?
    as a message, though it doesn't prove a real store's transcript HTML (no open sample exists, so
    the fixture's shape is invented), the turns within a transcript (they aren't parsed), or voice
    items and Teams (the deployment doesn't use them).
-7. Moved to capstone.data-intelligence ([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md), "Evidence"): metadata capture, inference
-   extraction, and embeddings in pgvector with a semantic search, each stage transactional. The event layer tracks every stage event in
+7. Moved to capstone.data-intelligence
+   ([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md),
+   "Evidence"): metadata capture, inference extraction, and embeddings in pgvector with a
+   semantic search, each stage transactional. The event layer tracks every stage event in
    sequence, in real time, and the UI shows each stage as it runs.
 8. Moved to capstone.data-intelligence: the client runs unchanged through spike-model-gateway's
    gateway.
 9. Where the processing layer should live, and which way it depends on the client.
-10. Moved to capstone.data-intelligence: pgvector as a declared native-tier extension: its install, migration, image pin, and the
-    packages allowed to use it.
+10. Moved to capstone.data-intelligence: pgvector as a declared native-tier extension: its
+    install, migration, image pin, and the packages allowed to use it.
 11. Image correction: vision extraction accuracy with and without each ImageMagick correction, on
     the fixed documents. Processing's
     [documents finding](https://github.com/JaimeStill/spike-ai-pipeline-processing/blob/main/docs/findings/documents.md)
@@ -83,8 +85,9 @@ stage by stage in real time?
     audio's file path under the same detector (AMI word error rate 0.322 against 0.323), and a
     cancellation stops the stream within 0.5 s, leaving only the events yielded.
 14. One tool run through each runner, exec and container, under the same tool contract.
-15. Moved to capstone.data-intelligence: the browser's consumption of the event sequence, NATS over WebSocket against a
-    backend relay, compared on latency, ordering, auth, ports, and native-tier use.
+15. Moved to capstone.data-intelligence: the browser's consumption of the event sequence, NATS
+    over WebSocket against a backend relay, compared on latency, ordering, auth, ports, and
+    native-tier use.
 16. Mail stores and messages: Outlook .pst stores, .msg messages, .eml messages, and mbox files
     read by the spike's mail CLI, .pst through Microsoft's outlook-pst, .msg through the CLI's own
     MS-OXMSG reader over cfb, and .eml and mbox through Stalwart's mail-parser, into
@@ -120,9 +123,10 @@ stage by stage in real time?
 
 ## Gates
 
-The gates moved with the capstone to capstone.data-intelligence ([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md), "Gates"),
-and the spike has none left. Evidence 7, 8, 10, and 15 moved with them: they are the capstone's
-to prove, not the spike's failures.
+The gates moved with the capstone to capstone.data-intelligence
+([`standards-lab/context/data-intelligence.md`](https://github.com/standards-lab/org/blob/main/context/data-intelligence.md),
+"Gates"), and the spike has none left. Evidence 7, 8, 10, and 15 moved with them: they are the
+capstone's to prove, not the spike's failures.
 
 ## Capability map
 
@@ -130,7 +134,8 @@ to prove, not the spike's failures.
   llama.cpp container scripts, copied from its commit dfc1d3d into `host/` beside the set A
   preset and the root's own pins, `host/llama.env`, which hold gb10 at b12098
   (`host/README.md`). `mise.host.toml` pins `hf`, which stages the models on gb10-2.
-  `mise run host-update` brings gb10-2 current and loads set A at each session's start. It
+  `mise run host-update` brought gb10-2 current and loaded set A at each of the spike's sessions
+  until gb10-2 left the spike on 2026-11-09, and is no longer run (`README.md`, "gb10-2"). It
   restarts a running router whose preset mount is dead, and re-creates one whose preset mount is
   sourced anywhere but `host/llama-preset/`, as after the scripts moved from `engines/`, with
   `host/engines llama update`. `mise run integration` probes every capability (`probe/`), and
